@@ -54,6 +54,7 @@ namespace RDTrackR.Application.UseCases.StockItems.Register
             var stockItem = _mapper.Map<StockItem>(request);
             stockItem.UpdatedAt = DateTime.UtcNow;
             stockItem.CreatedByUserId = loggedUser.Id;
+            stockItem.OrganizationId = loggedUser.OrganizationId;
             
 
             await _writeRepository.AddAsync(stockItem);

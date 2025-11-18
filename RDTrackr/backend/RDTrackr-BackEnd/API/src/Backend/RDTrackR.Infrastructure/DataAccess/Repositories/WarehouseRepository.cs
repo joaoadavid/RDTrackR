@@ -27,15 +27,16 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             _context.Warehouses.Remove(warehouse);
         }
-        public async Task<int> CountAsync()
+        public async Task<int> CountAsync(User user)
         {
-            return await _context.Products.CountAsync();
+            return await _context.Warehouses.Where(w=>w.OrganizationId == user.OrganizationId).CountAsync();
         }
 
-        public async Task<List<Warehouse>> GetAllAsync()
+        public async Task<List<Warehouse>> GetAllAsync(User user)
         {
             return await _context.Warehouses
                 .AsNoTracking()
+                .Where(w=>w.OrganizationId == user.OrganizationId)
                 .Include(w => w.StockItems)
                 .Include(w => w.CreatedBy)
                 .OrderBy(w => w.Name)

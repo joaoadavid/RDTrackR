@@ -345,4 +345,7 @@
   <data name="REPLENISHMENT_UNITPRICE_INVALID" xml:space="preserve">
     <value>O preço unitário deve ser maior que zero.</value>
   </data>
+  <data name="ORGANIZATION_NAME_EMPTY" xml:space="preserve">
+    <value>o nome da organização não pode ser vazio.</value>
+  </data>
 </root>

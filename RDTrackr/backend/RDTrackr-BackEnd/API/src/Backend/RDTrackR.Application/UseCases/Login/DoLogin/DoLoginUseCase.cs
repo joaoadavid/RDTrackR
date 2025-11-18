@@ -49,7 +49,7 @@ namespace RDTrackR.Application.UseCases.Login.DoLogin
 
             var tokenId = Guid.NewGuid().ToString();
 
-            var accessToken = _accessTokenGenerator.GenerateWithTokenId(user.UserIdentifier, tokenId);
+            var accessToken = _accessTokenGenerator.GenerateWithTokenId(user, tokenId);
 
             var refreshToken = await CreateAndSaveRefreshToken(user, tokenId);
 

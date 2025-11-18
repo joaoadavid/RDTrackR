@@ -1,19 +1,18 @@
-﻿using RDTrackR.Infrastructure.Migrations.Versions;
+﻿using FluentMigrator;
 using RDTrackR.Infrastructure.Migrations;
-using FluentMigrator;
 
-[Migration(DatabaseVersions.TABLE_SUPPLIERS, "Create Suppliers Table")]
-public class Version0000013_CreateSuppliersTable : VersionBase
+namespace RDTrackR.Infrastructure.Migrations.Versions
 {
-    public override void Up()
+    [Migration(DatabaseVersions.ADD_PRODUCT_REPLENISHMENT_FIELDS)]
+    public class Version0000013 : ForwardOnlyMigration
     {
-        CreateTable("Suppliers")
-            .WithColumn("Name").AsString(255).NotNullable()
-            .WithColumn("Contact").AsString(255).NotNullable()
-            .WithColumn("Email").AsString(255).NotNullable()
-            .WithColumn("Phone").AsString(30).Nullable()
-            .WithColumn("Address").AsString(500).Nullable()
-            .WithColumn("CreatedByUserId").AsInt64().NotNullable()
-                .ForeignKey("FK_Suppliers_User_Id", "Users", "Id");
+        public override void Up()
+        {
+            Alter.Table("Products")
+                .AddColumn("DailyConsumption").AsDecimal(18, 2).NotNullable().WithDefaultValue(0)
+                .AddColumn("LeadTimeDays").AsInt32().NotNullable().WithDefaultValue(0)
+                .AddColumn("LastPurchasePrice").AsDecimal(18, 2).NotNullable().WithDefaultValue(0)
+                .AddColumn("SafetyStock").AsDecimal(18, 2).NotNullable().WithDefaultValue(0);
+        }
     }
 }

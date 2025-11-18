@@ -2,15 +2,15 @@
 
 namespace RDTrackR.Infrastructure.Migrations.Versions
 {
-    [Migration(DatabaseVersions.TABLE_NOTIFICATIONS, "Create Notifications table")]
+    [Migration(DatabaseVersions.FIX_AUDITLOG_ACTIONTYPE_INT)]
     public class Version0000018 : VersionBase
     {
         public override void Up()
         {
-            CreateTable("Notifications")
-                .WithColumn("UserId").AsInt64().NotNullable()
-                .WithColumn("Message").AsString(500).NotNullable()
-                .WithColumn("Read").AsBoolean().WithDefaultValue(false);
+            Alter.Column("ActionType")
+                .OnTable("AuditLogs")
+                .AsInt32()
+                .NotNullable();
         }
     }
 }

@@ -45,8 +45,9 @@ namespace RDTrackR.Application.UseCases.Products.Register
             var product = _mapper.Map<Domain.Entities.Product>(request);
 
             product.CreatedByUserId = loggedUser.Id;
+            product.OrganizationId = loggedUser.OrganizationId;
             product.CreatedOn = DateTime.UtcNow;
-            product.UpdatedAt = DateTime.UtcNow;
+            product.UpdatedAt = DateTime.UtcNow;       
             product.Active = true;
 
             await _repository.AddAsync(product);

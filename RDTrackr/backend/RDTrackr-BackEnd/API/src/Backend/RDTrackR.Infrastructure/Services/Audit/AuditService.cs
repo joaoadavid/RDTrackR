@@ -25,6 +25,7 @@ namespace RDTrackR.Infrastructure.Services.Audit
                 UserName = _user.UserName,
                 ActionType = type,
                 Description = description,
+                OrganizationId = _user.OrganizationId,
                 Timestamp = DateTime.UtcNow
             });
         }

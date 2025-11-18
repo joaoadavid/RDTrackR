@@ -2,15 +2,19 @@
 
 namespace RDTrackR.Infrastructure.Migrations.Versions
 {
-    [Migration(DatabaseVersions.ALTER_PURCHASE_ORDERS_STAUTS_TO_INT32)]
+    [Migration(DatabaseVersions.ADD_SUPPLIER_PRODUCT)]
+
     public class Version0000020 : VersionBase
     {
         public override void Up()
         {
-            Alter.Column("Status")
-                .OnTable("PurchaseOrders")
-                .AsInt32()
-                .NotNullable();
+            CreateTable("SupplierProducts")
+                .WithColumn("SupplierId").AsInt64().NotNullable().ForeignKey("Suppliers", "Id")
+                .WithColumn("ProductId").AsInt64().NotNullable().ForeignKey("Products", "Id")
+                .WithColumn("UnitPrice").AsDecimal(18, 2).Nullable()
+                .WithColumn("SupplierSKU").AsString(100).Nullable()
+                .WithColumn("OrganizationId").AsInt64().NotNullable()
+                    .ForeignKey("FK_SupplierProducts_Organization", "Organizations", "Id");
         }
     }
 }

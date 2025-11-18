@@ -20,10 +20,10 @@
                 await _context.Notifications.AddAsync(notification);
             }
 
-            public async Task<List<Notification>> GetAllUnreadAsync(long userId)
+            public async Task<List<Notification>> GetAllUnreadAsync(User user)
             {
                 return await _context.Notifications
-                    .Where(n => n.UserId == userId && !n.Read)
+                    .Where(n => n.UserId == user.Id && !n.Read && n.OrganizationId == user.OrganizationId)
                     .AsNoTracking()
                     .OrderByDescending(n => n.CreatedAt)
                     .ToListAsync();

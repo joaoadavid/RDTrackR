@@ -14,6 +14,7 @@ using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Audit;
 using RDTrackR.Domain.Repositories.Movements;
 using RDTrackR.Domain.Repositories.Notifications;
+using RDTrackR.Domain.Repositories.Organization;
 using RDTrackR.Domain.Repositories.Password;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.PurchaseOrders;
@@ -60,6 +61,7 @@ namespace RDTrackR.Infrastructure
             AddTokens(services, configuration);
             AddAuditService(services);
             AddNotificationService(services);
+            AddOrganization(services);
             services.AddAzureStorage(configuration);
             AddRefreshTokenGenerator(services);
             AddQueues(services, configuration);
@@ -197,7 +199,13 @@ namespace RDTrackR.Infrastructure
             services.AddScoped<ISendCodeResetPassword, BrevoSendCodeResetPassword>();
         }
 
-        
+        private static void AddOrganization(IServiceCollection services)
+        {
+            services.AddScoped<IOrganizationWriteOnlyRepository, OrganizationRepository>();
+            services.AddScoped<IOrganizationReadOnlyRepository, OrganizationRepository>();
+        }
+
+
 
         private static void AddRefreshTokenGenerator(IServiceCollection services)
         {

@@ -15,6 +15,8 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
 
         public async Task AddAsync(Supplier supplier)
             => await _context.Suppliers.AddAsync(supplier);
+        public async Task AddSupplierProduct(SupplierProduct supplier)
+           => await _context.SupplierProducts.AddAsync(supplier);
 
         public async Task<List<Supplier>> GetAllAsync()
             => await _context.Suppliers.Include(s => s.CreatedBy).AsNoTracking().ToListAsync();
@@ -25,6 +27,16 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .Include(s => s.CreatedBy)
                 .FirstOrDefaultAsync(s => s.Id == id && s.CreatedByUserId == user.Id);
         }
+
+        public async Task<List<SupplierProduct>> GetSupplierProducts(long supplierId)
+        {
+            return await _context.SupplierProducts
+                .AsNoTracking()
+                .Include(sp => sp.Product)
+                .Where(sp => sp.SupplierId == supplierId)
+                .ToListAsync();
+        }
+
 
         public Task UpdateAsync(Supplier supplier)
         {
@@ -42,6 +54,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
 
         public async Task<bool> ExistsSupplierWithEmail(string email, long id) =>
             await _context.Suppliers.AnyAsync(s => s.Email == email && s.Id != id);
+       
     }
 
 }

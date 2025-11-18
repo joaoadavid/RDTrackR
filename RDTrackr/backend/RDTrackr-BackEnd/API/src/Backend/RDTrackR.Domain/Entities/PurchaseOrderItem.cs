@@ -1,6 +1,6 @@
 ﻿namespace RDTrackR.Domain.Entities
 {
-    public class PurchaseOrderItem : EntityBase
+    public class PurchaseOrderItem : EntityTenantBase
     {
         public long PurchaseOrderId { get; set; }
         public PurchaseOrder PurchaseOrder { get; set; } = null!;

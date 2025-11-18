@@ -7,6 +7,8 @@ using RDTrackR.Application.UseCases.Suppliers.Delete;
 using RDTrackR.Communication.Requests.Supplier;
 using RDTrackR.Communication.Responses.Supplier;
 using RDTrackR.Communication.Responses.Error;
+using RDTrackR.Infrastructure.DataAccess.Repositories;
+using RDTrackR.Application.UseCases.Suppliers.GetSupplierProduct;
 
 namespace RDTrackR.API.Controllers
 {
@@ -19,7 +21,7 @@ namespace RDTrackR.API.Controllers
         public async Task<IActionResult> Register(
             [FromServices] IRegisterSupplierUseCase useCase,
             [FromBody] RequestRegisterSupplierJson request)
-        {
+         {
             var result = await useCase.Execute(request);
             return Created(string.Empty, result);
         }
@@ -34,7 +36,6 @@ namespace RDTrackR.API.Controllers
             return Ok(result);
         }
 
-        // PUT /suppliers/{id}
         [HttpPut("{id:long}")]
         [ProducesResponseType(typeof(ResponseSupplierJson), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ResponseErrorJson), StatusCodes.Status400BadRequest)]
@@ -47,7 +48,6 @@ namespace RDTrackR.API.Controllers
             return Ok(result);
         }
 
-        // DELETE /suppliers/{id}
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ResponseErrorJson), StatusCodes.Status400BadRequest)]
@@ -58,5 +58,26 @@ namespace RDTrackR.API.Controllers
             await useCase.Execute(id);
             return NoContent();
         }
+
+        [HttpPost("{supplierId}/products")]
+        public async Task<IActionResult> AddProductToSupplier(
+        long supplierId,
+        [FromBody] RequestRegisterSupplierProductJson request,
+        [FromServices] IRegisterSupplierProductUseCase useCase)
+        {
+            request.SupplierId = supplierId;
+            var result = await useCase.Execute(request);
+            return Created(string.Empty, result);
+        }
+
+        [HttpGet("{supplierId}/products")]
+        public async Task<IActionResult> GetProductsBySupplier(
+            long supplierId,
+            [FromServices] IGetProductsBySupplierUseCase useCase)
+        {
+            var result = await useCase.Execute(supplierId);
+            return Ok(result);
+        }
+
     }
 }

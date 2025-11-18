@@ -13,7 +13,7 @@ namespace RDTrackR.API.Controllers
             [FromServices] IUserContext user,
             [FromServices] INotificationRepository repo)
         {
-            return Ok(await repo.GetAllUnreadAsync(user.UserId));
+            return Ok(await repo.GetAllUnreadAsync(user));
         }
 
 

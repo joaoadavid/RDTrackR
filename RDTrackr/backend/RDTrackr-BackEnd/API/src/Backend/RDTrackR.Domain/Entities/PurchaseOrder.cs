@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RDTrackR.Domain.Entities
 {
-    public class PurchaseOrder : EntityBase
+    public class PurchaseOrder : EntityTenantBase
     {
         public int Number { get; set; }
 

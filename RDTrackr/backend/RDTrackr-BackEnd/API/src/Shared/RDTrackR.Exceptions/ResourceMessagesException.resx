@@ -345,4 +345,7 @@
   <data name="REPLENISHMENT_UNITPRICE_INVALID" xml:space="preserve">
     <value>Unit price must be greater than zero.</value>
   </data>
+  <data name="ORGANIZATION_NAME_EMPTY" xml:space="preserve">
+    <value>The organization's name cannot be empty.</value>
+  </data>
 </root>

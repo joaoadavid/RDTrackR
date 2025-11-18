@@ -2,7 +2,7 @@
 
 namespace RDTrackR.Domain.Entities
 {
-    public class Product : EntityBase
+    public class Product : EntityTenantBase
     {
         public string Sku { get; set; } = null!;
         public string Name { get; set; } = null!;

@@ -15,6 +15,7 @@ using RDTrackR.Application.UseCases.Login.Logout;
 using RDTrackR.Application.UseCases.Login.ResetPassword;
 using RDTrackR.Application.UseCases.Movements.GetAll;
 using RDTrackR.Application.UseCases.Movements.Register;
+using RDTrackR.Application.UseCases.Organizations;
 using RDTrackR.Application.UseCases.Overview.Get;
 using RDTrackR.Application.UseCases.Product.Delete;
 using RDTrackR.Application.UseCases.Product.GetAll;
@@ -68,6 +69,7 @@ namespace RDTrackR.Application
             AddReportsUseCase(services);
             AddOverviewUseCase(services);
             AddAuditLog(services);
+            AddOrganizationUseCase(services);
         }
 
         private static void AddAutoMapper(this IServiceCollection services)
@@ -134,6 +136,8 @@ namespace RDTrackR.Application
             services.AddScoped<IRegisterSupplierUseCase, RegisterSupplierUseCase>();
             services.AddScoped<IGetAllSuppliersUseCase, GetAllSuppliersUseCase>();
             services.AddScoped<IUpdateSupplierUseCase, UpdateSupplierUseCase>();
+            services.AddScoped<IRegisterSupplierProductUseCase, RegisterSupplierProductUseCase>();
+
         }
         private static void AddMovementsUseCases(IServiceCollection services)
         {
@@ -166,7 +170,6 @@ namespace RDTrackR.Application
         {
             services.AddHttpContextAccessor();
             services.AddScoped<IUserContext, UserContext>();
-
         }
 
         private static void AddRestePassword(IServiceCollection services)
@@ -192,6 +195,11 @@ namespace RDTrackR.Application
         private static void AddAuditLog(IServiceCollection services)
         {
             services.AddScoped<IGetAuditLogsUseCase, GetAuditLogsUseCase>();
+        }
+
+        private static void AddOrganizationUseCase(IServiceCollection services)
+        {
+            services.AddScoped<IRegisterOrganizationUseCase, RegisterOrganizationUseCase>();
         }
     }
 }

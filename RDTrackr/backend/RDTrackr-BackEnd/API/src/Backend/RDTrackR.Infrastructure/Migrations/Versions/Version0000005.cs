@@ -1,14 +1,37 @@
 ﻿using FluentMigrator;
 
-namespace RDTrackR.Infrastructure.Migrations.Versions;
-
-[Migration(DatabaseVersions.TABLE_USER_FORGOT_PASSWORD, "Create table to save a code when the user forgot Password")]
-public class Version0000005 : VersionBase
+namespace RDTrackR.Infrastructure.Migrations.Versions
 {
-    public override void Up()
+    [Migration(DatabaseVersions.TABLE_RDTRACKR_PRODUCTS, "Create table for RDTrackR product management")]
+    public class Version0000005 : VersionBase
     {
-        CreateTable("CodeToPerformActions")
-            .WithColumn("Value").AsString().NotNullable()
-            .WithColumn("UserId").AsInt64().NotNullable().ForeignKey("FK_CodeToPerformAction_User_Id", "Users", "Id");
+        public override void Up()
+        {
+            Create.Table("Products")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("CreatedOn").AsDateTime().NotNullable()
+                .WithColumn("Active").AsBoolean().NotNullable().WithDefaultValue(true)
+                .WithColumn("Sku").AsString(50).NotNullable()
+                .WithColumn("Name").AsString(255).NotNullable()
+                .WithColumn("Category").AsString(100).NotNullable()
+                .WithColumn("UoM").AsString(20).NotNullable()
+                .WithColumn("Price").AsDecimal(18, 2).NotNullable().WithDefaultValue(0)
+                .WithColumn("Stock").AsInt32().NotNullable().WithDefaultValue(0)
+                .WithColumn("ReorderPoint").AsInt32().NotNullable().WithDefaultValue(0)
+                .WithColumn("UpdatedAt").AsDateTime().NotNullable()
+                .WithColumn("CreatedByUserId").AsInt64().NotNullable()
+                    .ForeignKey("FK_Products_CreatedByUser", "Users", "Id")
+                .WithColumn("OrganizationId").AsInt64().NotNullable()
+                    .ForeignKey("FK_Products_Organization", "Organizations", "Id");
+
+            Create.Index("IX_Products_Sku")
+                .OnTable("Products")
+                .OnColumn("Sku").Ascending()
+                .WithOptions().Unique();
+
+            Create.Index("IX_Products_Name")
+                .OnTable("Products")
+                .OnColumn("Name").Ascending();
+        }
     }
 }

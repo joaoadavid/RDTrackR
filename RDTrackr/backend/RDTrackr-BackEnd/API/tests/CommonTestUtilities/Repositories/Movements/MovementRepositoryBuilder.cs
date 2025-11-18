@@ -28,11 +28,6 @@ namespace CommonTestUtilities.Repositories.Movements
             _readMock
                 .Setup(r => r.GetByIdAsync(It.IsAny<long>()))
                 .ReturnsAsync((long id) => _store.FirstOrDefault(x => x.Id == id));
-
-            // Simula GetAllAsync
-            _readMock
-                .Setup(r => r.GetAllAsync())
-                .ReturnsAsync(() => _store.ToList());
         }
 
         public MovementRepositoryBuilder GetById(Movement movement)
@@ -41,15 +36,15 @@ namespace CommonTestUtilities.Repositories.Movements
             return this;
         }
 
-        public MovementRepositoryBuilder List(List<Movement> list)
+        public MovementRepositoryBuilder List(List<Movement> list, User user)
         {
-            _readMock.Setup(r => r.GetAllAsync()).ReturnsAsync(list);
+            _readMock.Setup(r => r.GetAllAsync(user)).ReturnsAsync(list);
             return this;
         }
 
-        public MovementRepositoryBuilder Filter(long? warehouseId, MovementType? type, DateTime? start, DateTime? end, List<Movement> result)
+        public MovementRepositoryBuilder Filter(long? warehouseId, MovementType? type, DateTime? start, DateTime? end, List<Movement> result, User user)
         {
-            _readMock.Setup(r => r.GetFilteredAsync(warehouseId, type, start, end)).ReturnsAsync(result);
+            _readMock.Setup(r => r.GetFilteredAsync(warehouseId, type, start, end,user)).ReturnsAsync(result);
             return this;
         }
 
@@ -59,9 +54,9 @@ namespace CommonTestUtilities.Repositories.Movements
             return this;
         }
 
-        public MovementRepositoryBuilder Count(int count)
+        public MovementRepositoryBuilder Count(int count,User user)
         {
-            _readMock.Setup(r => r.CountAsync()).ReturnsAsync(count);
+            _readMock.Setup(r => r.CountAsync(user)).ReturnsAsync(count);
             return this;
         }
 

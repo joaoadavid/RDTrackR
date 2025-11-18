@@ -347,4 +347,7 @@ Le nom de l'entrepôt est obligatoire.</value>
   <data name="REPLENISHMENT_UNITPRICE_INVALID" xml:space="preserve">
     <value>Le prix unitaire doit être supérieur à zéro.</value>
   </data>
+  <data name="ORGANIZATION_NAME_EMPTY" xml:space="preserve">
+    <value>Le nom de l'organisation ne peut pas être vide.</value>
+  </data>
 </root>

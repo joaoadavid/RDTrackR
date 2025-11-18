@@ -27,7 +27,7 @@ namespace RDTrackR.Infrastructure.Services.LoggedUser
 
             var identifier = jwtSecurityToken.Claims.First(claim => claim.Type == ClaimTypes.Sid).Value;
 
-            var userIdentifier = Guid.Parse(identifier);
+             var userIdentifier = Guid.Parse(identifier);
 
             return await _dbContext.Users
                 .AsNoTracking()

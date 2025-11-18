@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RDTrackR.Domain.Entities
 {
-    public class Movement : EntityBase
+    public class Movement : EntityTenantBase
     {
         public string Reference { get; set; } = null!;
         public long ProductId { get; set; }

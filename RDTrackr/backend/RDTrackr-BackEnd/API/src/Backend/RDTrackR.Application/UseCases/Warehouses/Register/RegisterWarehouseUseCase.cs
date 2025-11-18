@@ -36,6 +36,7 @@ namespace RDTrackR.Application.UseCases.Warehouses.Register
 
             var warehouse = _mapper.Map<Domain.Entities.Warehouse>(request);
             warehouse.CreatedByUserId = loggedUser.Id;
+            warehouse.OrganizationId = loggedUser.OrganizationId;
             warehouse.Utilization = request.Capacity == 0 ? 0 : ((decimal)request.Items / request.Capacity) * 100;
             warehouse.CreatedOn = DateTime.UtcNow;
             warehouse.Active = true;

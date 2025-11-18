@@ -13,9 +13,9 @@
         public long CreatedByUserId { get; set; }
         public string CreatedByName { get; set; } = null!;
 
-        public long? UpdatedByUserId { get; set; }   // 👈 pode ser null (POST)
-        public string? UpdatedByName { get; set; }   // 👈 pode ser null (POST)
-        public DateTime? UpdatedAt { get; set; }     // 👈 pode ser null (POST)
+        public long? UpdatedByUserId { get; set; }
+        public string? UpdatedByName { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 
 }

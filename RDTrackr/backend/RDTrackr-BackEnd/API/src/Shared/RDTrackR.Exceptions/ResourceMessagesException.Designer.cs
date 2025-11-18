@@ -340,6 +340,15 @@ namespace RDTrackR.Exceptions {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The organization&apos;s name cannot be empty..
+        /// </summary>
+        public static string ORGANIZATION_NAME_EMPTY {
+            get {
+                return ResourceManager.GetString("ORGANIZATION_NAME_EMPTY", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The new password must be different from the current password..
         /// </summary>
         public static string PASSWORD_DIFFERENT_CURRENT_PASSWORD {

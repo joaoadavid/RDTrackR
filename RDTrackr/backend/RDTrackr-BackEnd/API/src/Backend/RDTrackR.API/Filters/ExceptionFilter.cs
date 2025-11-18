@@ -14,7 +14,7 @@ namespace RDTrackR.API.Filters
         {
             if (context.Exception is RDTrackRException)
                 HundleProjectException(context);
-            else
+            else 
                 ThrowUnknowException(context);
         }
 

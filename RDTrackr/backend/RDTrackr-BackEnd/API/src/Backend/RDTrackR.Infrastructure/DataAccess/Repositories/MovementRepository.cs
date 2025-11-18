@@ -16,10 +16,11 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             _context = context;
         }
 
-        public async Task<List<Movement>> GetAllAsync()
+        public async Task<List<Movement>> GetAllAsync(User user)
         {
             return await _context.Movements
                 .AsNoTracking()
+                .Where(m => m.OrganizationId == user.OrganizationId)
                 .Include(m => m.Product)
                 .Include(m => m.Warehouse)
                 .Include(m => m.CreatedBy)
@@ -50,9 +51,10 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Movement>> GetFilteredAsync(long? warehouseId, MovementType? type, DateTime? startDate, DateTime? endDate)
+        public async Task<List<Movement>> GetFilteredAsync(long? warehouseId, MovementType? type, DateTime? startDate, DateTime? endDate, User user)
         {
             var query = _context.Movements
+                .Where(m=>m.OrganizationId == user.OrganizationId)
                 .Include(m => m.Product)
                 .Include(m => m.Warehouse)
                 .Include(m => m.CreatedBy)
@@ -76,9 +78,9 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<int> CountAsync()
+        public async Task<int> CountAsync(User user)
         {
-            return await _context.Products.CountAsync();
+            return await _context.Movements.Where(m=>m.OrganizationId == user.OrganizationId).CountAsync();
         }
 
         public async Task AddAsync(Movement movement)

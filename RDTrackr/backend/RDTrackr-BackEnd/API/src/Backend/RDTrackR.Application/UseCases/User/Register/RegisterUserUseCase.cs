@@ -53,16 +53,16 @@ namespace RDTrackR.Application.UseCases.User.Register
         {
             await Validate(request);
 
-            // 1️⃣ Cria e salva o usuário
             var user = _mapper.Map<Domain.Entities.User>(request);
             user.Password = _passwordEncripter.Encrypt(request.Password);
+            user.OrganizationId = request.OrganizationId;
 
             await _writeOnlyRepository.Add(user);
             await _unitOfWork.Commit();
 
             var tokenId = Guid.NewGuid().ToString();
 
-            var accessToken = _accessTokenGenerator.GenerateWithTokenId(user.UserIdentifier, tokenId);
+            var accessToken = _accessTokenGenerator.GenerateWithTokenId(user, tokenId);
 
             var refreshToken = await CreateAndSaveRefreshToken(user, tokenId);
 

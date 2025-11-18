@@ -34,18 +34,19 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             return await _context.Products
                 .AsNoTracking()
+                .Where(p => p.CreatedByUserId == user.Id)
                 .Include(p => p.CreatedBy)
                 .ToListAsync();
         }
 
-        public async Task<int> CountAsync()
+        public async Task<int> CountAsync(User user)
         {
-            return await _context.Products.CountAsync();
+            return await _context.Products.Where(p=>p.OrganizationId == user.OrganizationId).CountAsync();
         }
 
         public async Task<Product?> GetByIdAsync(long id,User user)
         {
-            return await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.CreatedByUserId == user.Id);
+            return await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.CreatedByUserId == user.Id && p.OrganizationId == user.OrganizationId);
         }
 
         public async Task<bool> ExistsActiveProductWithSku(string sku)

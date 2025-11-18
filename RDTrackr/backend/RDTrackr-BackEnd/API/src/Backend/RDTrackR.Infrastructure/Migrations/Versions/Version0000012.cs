@@ -2,15 +2,21 @@
 
 namespace RDTrackR.Infrastructure.Migrations.Versions
 {
-    [Migration(DatabaseVersions.ALTER_MOVEMENT_TYPE_COLUMN, "Change Type column from smallint to int")]
-    public class Version0000012: ForwardOnlyMigration
+    [Migration(DatabaseVersions.TABLE_AUDIT_LOG, "Create AuditLog table")]
+    public class Version0000012 : VersionBase
     {
         public override void Up()
         {
-            Alter.Column("Type")
-                .OnTable("Movements")
-                .AsInt32()
-                .NotNullable();
+            CreateTable("AuditLogs")
+                .WithColumn("UserId").AsInt64().NotNullable()
+                .WithColumn("UserName").AsString(150).NotNullable()
+                .WithColumn("ActionType").AsString(30).NotNullable()
+                .WithColumn("Description").AsString(500).NotNullable()
+                .WithColumn("Timestamp").AsDateTime().NotNullable()
+                .WithColumn("OrganizationId").AsInt64().NotNullable()
+                    .ForeignKey("FK_AuditLogs_Organization", "Organizations", "Id");
         }
+
     }
+
 }

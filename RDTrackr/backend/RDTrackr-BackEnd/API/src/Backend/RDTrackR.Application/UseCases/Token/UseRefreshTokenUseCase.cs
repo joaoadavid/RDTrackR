@@ -64,7 +64,7 @@ namespace MyRecipeBook.Application.UseCases.Token
             await _tokenRepository.SaveNewRefreshToken(newRefreshToken);
             await _unitOfWork.Commit();
 
-            var newAccessToken = _accessTokenGenerator.GenerateWithTokenId(refreshToken.User.UserIdentifier, newTokenId);
+            var newAccessToken = _accessTokenGenerator.GenerateWithTokenId(refreshToken.User, newTokenId);
 
             return new ResponseTokensJson
             {

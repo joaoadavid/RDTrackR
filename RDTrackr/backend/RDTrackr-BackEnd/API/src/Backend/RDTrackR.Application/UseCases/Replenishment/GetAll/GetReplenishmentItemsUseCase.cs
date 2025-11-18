@@ -2,24 +2,30 @@
 using RDTrackR.Domain.Entities;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.StockItems;
+using RDTrackR.Domain.Services.LoggedUser;
 
 namespace RDTrackR.Application.UseCases.Replenishment.GetAll
 {
     public class GetReplenishmentItemsUseCase : IGetReplenishmentItemsUseCase
     {
+        private readonly ILoggedUser _loggedUser;
         private readonly IStockItemReadOnlyRepository _stockRepo;
         private readonly IProductReadOnlyRepository _productRepo;
 
-        public GetReplenishmentItemsUseCase(IStockItemReadOnlyRepository stockRepo,
-                                            IProductReadOnlyRepository productRepo)
+        public GetReplenishmentItemsUseCase(
+            ILoggedUser loggedUser,
+            IStockItemReadOnlyRepository stockRepo,
+            IProductReadOnlyRepository productRepo)
         {
+            _loggedUser = loggedUser;
             _stockRepo = stockRepo;
             _productRepo = productRepo;
         }
 
         public async Task<List<ResponseReplenishmentItemJson>> Execute()
         {
-            var items = await _stockRepo.GetReplenishmentCandidatesAsync();
+            var loggedUser = await _loggedUser.User();
+            var items = await _stockRepo.GetReplenishmentCandidatesAsync(loggedUser);
             return items.Select(i => new ResponseReplenishmentItemJson
             {
                 ProductId = i.Product.Id,

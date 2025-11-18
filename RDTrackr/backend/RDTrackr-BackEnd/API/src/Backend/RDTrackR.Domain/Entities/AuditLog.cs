@@ -8,6 +8,7 @@ namespace RDTrackR.Domain.Entities
         public string UserName { get; set; } = null!;
         public AuditActionType ActionType { get; set; }
         public string Description { get; set; } = null!;
+        public long OrganizationId { get; set; }
         public DateTime Timestamp { get; set; }
     }
 }

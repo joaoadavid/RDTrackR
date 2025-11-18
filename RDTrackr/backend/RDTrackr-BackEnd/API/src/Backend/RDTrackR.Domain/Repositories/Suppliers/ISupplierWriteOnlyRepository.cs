@@ -7,7 +7,9 @@ namespace RDTrackR.Domain.Repositories.Suppliers
         Task AddAsync(Supplier supplier);
         Task UpdateAsync(Supplier supplier);
         Task DeleteAsync(Supplier supplier);
-        
+        Task AddSupplierProduct(SupplierProduct supplier);
+
+
 
     }
 }

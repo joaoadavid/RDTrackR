@@ -2,7 +2,7 @@
 
 namespace RDTrackR.Domain.Entities
 {
-    public class Supplier : EntityBase
+    public class Supplier : EntityTenantBase
     {
         public string Name { get; set; } = null!;
         public string Contact { get; set; } = null!;
@@ -14,5 +14,7 @@ namespace RDTrackR.Domain.Entities
 
         [ForeignKey(nameof(CreatedByUserId))]
         public User CreatedBy { get; set; } = null!;
+
+        public ICollection<SupplierProduct> SupplierProducts { get; set; } = new List<SupplierProduct>();
     }
 }

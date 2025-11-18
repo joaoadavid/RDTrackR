@@ -2,7 +2,7 @@
 
 namespace RDTrackR.Domain.Entities
 {
-    public class SalesOrder : EntityBase
+    public class SalesOrder : EntityTenantBase
     {
         public string CustomerName { get; set; } = null!;
         public decimal Total { get; set; }

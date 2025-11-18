@@ -42,9 +42,9 @@ namespace CommonTestUtilities.Repositories.Warehouses
             return this;
         }
 
-        public WarehouseRepositoryBuilder WithList(List<Warehouse> warehouses)
+        public WarehouseRepositoryBuilder WithList(User user,List<Warehouse> warehouses)
         {
-            _read.Setup(r => r.GetAllAsync()).ReturnsAsync(warehouses);
+            _read.Setup(r => r.GetAllAsync(user)).ReturnsAsync(warehouses);
             return this;
         }
 

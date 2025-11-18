@@ -6,19 +6,19 @@ using RDTrackR.Communication.Responses.User.Admin;
 
 namespace RDTrackR.API.Controllers
 {
+    [AuthenticatedUser("Admin")]
     [Route("users/admin")]
     public class AdminUserController : RDTrackRBaseController
     {
         [HttpGet]
         [ProducesResponseType(typeof(List<ResponseShortUserJson>), StatusCodes.Status200OK)]
-        [AuthenticatedUser]
         public async Task<IActionResult> GetAll(
             [FromServices] IGetAllUsersUseCase useCase)
             => Ok(await useCase.Execute());
 
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [AuthenticatedUser]
+        
         public async Task<IActionResult> Update(
             long id,
             [FromBody] RequestAdminUpdateUserJson request,
@@ -30,7 +30,6 @@ namespace RDTrackR.API.Controllers
 
         [HttpPatch("{id}/toggle")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [AuthenticatedUser]
         public async Task<IActionResult> ToggleActive(
             long id,
             [FromServices] IAdminToggleUserActiveUseCase useCase)

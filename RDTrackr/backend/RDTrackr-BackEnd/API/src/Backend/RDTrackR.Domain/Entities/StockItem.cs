@@ -2,7 +2,7 @@
 
 namespace RDTrackR.Domain.Entities
 {
-    public class StockItem : EntityBase
+    public class StockItem : EntityTenantBase
     {
         public long ProductId { get; set; }
         public Product Product { get; set; } = null!;

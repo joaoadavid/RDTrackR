@@ -24,9 +24,10 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return Task.CompletedTask;
         }
 
-        public async Task<List<StockItem>> GetAllAsync()
+        public async Task<List<StockItem>> GetAllAsync(User user)
         {
             return await _context.StockItems
+                .Where(s => s.OrganizationId == user.OrganizationId)
                 .Include(s => s.Product)
                 .Include(s => s.Warehouse)
                 .AsNoTracking()
@@ -43,9 +44,10 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
-        public async Task<List<StockItem>> GetReplenishmentCandidatesAsync()
+        public async Task<List<StockItem>> GetReplenishmentCandidatesAsync(User user)
         {
             return await _context.StockItems
+                .Where(s => s.OrganizationId == user.OrganizationId)
                 .Include(s => s.Product)
                 .Include(s => s.Warehouse)
                 .AsNoTracking()

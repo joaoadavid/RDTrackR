@@ -2,7 +2,7 @@
 
 namespace RDTrackR.Domain.Entities
 {
-    public class Warehouse : EntityBase
+    public class Warehouse : EntityTenantBase
     {
         public string Name { get; set; } = null!;
         public string Location { get; set; } = null!;

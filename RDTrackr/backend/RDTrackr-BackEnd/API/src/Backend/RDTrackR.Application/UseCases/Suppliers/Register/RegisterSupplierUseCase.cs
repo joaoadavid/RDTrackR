@@ -40,6 +40,7 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
 
             var supplier = _mapper.Map<Supplier>(request);
             supplier.CreatedByUserId = user.Id;
+            supplier.OrganizationId = user.OrganizationId;
 
             await _writeRepository.AddAsync(supplier);
             await _unitOfWork.Commit();
@@ -67,7 +68,6 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
                     result.Errors.Select(e => e.ErrorMessage).Distinct().ToList()
                 );
             }
-        }
-
+        } 
     }
 }
