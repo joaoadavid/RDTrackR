@@ -52,7 +52,7 @@ export function Header() {
             ))}
           </div>
 
-          {/* Desktop Actions (CORRIGIDO!) */}
+          {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "light" ? <Moon /> : <Sun />}
@@ -72,6 +72,12 @@ export function Header() {
                 <span className="text-sm">
                   Olá, <strong>{user}</strong>
                 </span>
+
+                {/* 👇 NOVO BOTÃO — entrar na aplicação */}
+                <Button asChild variant="default">
+                  <Link to="/dashboard">Entrar na aplicação</Link>
+                </Button>
+
                 <Button variant="outline" onClick={logout}>
                   Sair
                 </Button>
@@ -122,6 +128,12 @@ export function Header() {
               ) : (
                 <>
                   <span className="px-2">Olá, {user}</span>
+
+                  {/* 👇 NOVO BOTÃO NO MOBILE */}
+                  <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link to="/dashboard">Entrar na aplicação</Link>
+                  </Button>
+
                   <Button onClick={logout}>Sair</Button>
                 </>
               )}

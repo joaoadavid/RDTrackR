@@ -12,11 +12,17 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
+import {
+  RequestUpdateSupplierJson,
+  ResponseSupplierJson,
+} from "@/generated/apiClient";
+import { api } from "@/lib/api";
+
 interface EditSupplierDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  supplier: any;
-  onSave: (supplier: any) => void;
+  supplier: ResponseSupplierJson | null;
+  onSave: (supplier: ResponseSupplierJson) => void;
 }
 
 export function EditSupplierDialog({
@@ -26,6 +32,7 @@ export function EditSupplierDialog({
   onSave,
 }: EditSupplierDialogProps) {
   const { toast } = useToast();
+
   const [form, setForm] = useState({
     id: 0,
     name: "",
@@ -35,29 +42,46 @@ export function EditSupplierDialog({
     address: "",
   });
 
+  // PREENCHE O FORMULARIO AO ABRIR
   useEffect(() => {
     if (supplier) {
-      setForm(supplier);
+      setForm({
+        id: supplier.id,
+        name: supplier.name,
+        contact: supplier.contact,
+        email: supplier.email,
+        phone: supplier.phone,
+        address: supplier.address,
+      });
     }
   }, [supplier]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // <- AGORA SIM! AQUI É SEGURO COLOCAR
+  if (!supplier) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name || !form.contact || !form.email) {
+    const dto = RequestUpdateSupplierJson.fromJS({
+      name: form.name,
+      contact: form.contact,
+      email: form.email,
+      phone: form.phone,
+      address: form.address,
+    });
+
+    try {
+      const updated = await api.supplierPUT(form.id, dto);
+      onSave(updated);
+      onOpenChange(false);
+    } catch {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha nome, contato e e-mail.",
+        title: "Erro ao salvar",
+        description: "Não foi possível atualizar o fornecedor.",
         variant: "destructive",
       });
-      return;
     }
-
-    onSave(form);
-    onOpenChange(false);
   };
-
-  if (!supplier) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -65,7 +89,7 @@ export function EditSupplierDialog({
         <DialogHeader>
           <DialogTitle>Editar Fornecedor</DialogTitle>
           <DialogDescription>
-            Atualize as informações do fornecedor selecionado.
+            Atualize os dados do fornecedor selecionado.
           </DialogDescription>
         </DialogHeader>
 

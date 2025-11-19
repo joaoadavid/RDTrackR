@@ -1,12 +1,5 @@
-import { useState } from "react";
-import {
-  Search,
-  Plus,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Package,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,87 +34,115 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+
+import {
+  RequestRegisterProductJson,
+  ResponseProductJson,
+} from "@/generated/apiClient";
+
+import { api } from "@/lib/api";
 import { NewItemDialog } from "@/components/inventory/NewItemDialog";
 import { EditItemDialog } from "@/components/inventory/EditItemDialog";
 
-// Mock data - will be replaced with API data
-const mockProducts = [
-  {
-    id: 1,
-    sku: "NB-001",
-    name: "Notebook Dell",
-    category: "Eletrônicos",
-    uom: "UN",
-    price: 3499.0,
-    stock: 45,
-    reorderPoint: 15,
-    updatedAt: "2025-10-29",
-  },
-  {
-    id: 2,
-    sku: "MS-002",
-    name: "Mouse Logitech",
-    category: "Eletrônicos",
-    uom: "UN",
-    price: 129.0,
-    stock: 8,
-    reorderPoint: 20,
-    updatedAt: "2025-10-28",
-  },
-  {
-    id: 3,
-    sku: "KB-003",
-    name: "Teclado Mecânico",
-    category: "Eletrônicos",
-    uom: "UN",
-    price: 459.0,
-    stock: 0,
-    reorderPoint: 10,
-    updatedAt: "2025-10-27",
-  },
-];
-
 export default function InventoryItems() {
   const { toast } = useToast();
-  const [products, setProducts] = useState(mockProducts);
+
+  const [products, setProducts] = useState<ResponseProductJson[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<ResponseProductJson | null>(
+    null
+  );
 
-  // Adicionar item
-  const handleAddItem = (item: any) => {
-    setProducts((prev) => [...prev, item]);
+  // 🔥 Carregar produtos
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const result = await api.productAll();
+        setProducts(result);
+      } catch (err) {
+        toast({
+          title: "Erro ao carregar produtos",
+          description: "Não foi possível conectar ao servidor.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    load();
+  }, []);
+
+  // 🔥 Criar produto
+  const handleAddItem = async (dto: RequestRegisterProductJson) => {
+    try {
+      const created = await api.productPOST(dto);
+      setProducts((prev) => [...prev, created]);
+
+      toast({
+        title: "Produto criado",
+        description: `O produto "${created.name}" foi adicionado.`,
+      });
+    } catch {
+      toast({
+        title: "Erro ao criar produto",
+        description: "Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Editar item
-  const handleUpdateItem = (updated: any) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    toast({
-      title: "Item atualizado",
-      description: `O produto "${updated.name}" foi atualizado com sucesso.`,
-    });
+  const handleUpdateItem = async (
+    updatedEntity: ResponseProductJson,
+    dto: RequestRegisterProductJson
+  ) => {
+    try {
+      await api.productPUT(Number(updatedEntity.id), dto);
+
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updatedEntity.id ? updatedEntity : p))
+      );
+
+      toast({
+        title: "Produto atualizado",
+        description: `O produto "${updatedEntity.name}" foi salvo.`,
+      });
+    } catch {
+      toast({
+        title: "Erro ao atualizar produto",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // Excluir item
-  const handleDelete = (id: number) => {
-    const product = products.find((p) => p.id === id);
-    if (!product) return;
+  const handleDelete = async (id: number | string) => {
+    try {
+      await api.productDELETE(Number(id));
 
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    toast({
-      title: "Item excluído",
-      description: `O produto "${product.name}" foi removido do inventário.`,
-      variant: "destructive",
-    });
+      setProducts((prev) => prev.filter((p) => Number(p.id) !== Number(id)));
+
+      toast({
+        title: "Produto excluído",
+        description: "O item foi removido do inventário.",
+        variant: "destructive",
+      });
+    } catch {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o produto.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredProducts = products.filter(
-    (product) =>
-      (product.name.toLowerCase().includes(search.toLowerCase()) ||
-        product.sku.toLowerCase().includes(search.toLowerCase())) &&
-      (category === "all" || product.category === category)
+    (p) =>
+      (p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku.toLowerCase().includes(search.toLowerCase())) &&
+      (category === "all" || p.category === category)
   );
 
   const getStockStatus = (stock: number, reorderPoint: number) => {
@@ -137,16 +158,11 @@ export default function InventoryItems() {
       {/* Cabeçalho */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            Itens do Estoque
-          </h2>
-          <p className="text-muted-foreground">
-            Gerencie produtos e níveis de estoque
-          </p>
+          <h2 className="text-3xl font-bold">Itens do Estoque</h2>
+          <p className="text-muted-foreground">Gerencie seus produtos</p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Item
+          <Plus className="mr-2 h-4 w-4" /> Adicionar Item
         </Button>
       </div>
 
@@ -156,6 +172,7 @@ export default function InventoryItems() {
         onOpenChange={setIsDialogOpen}
         onCreate={handleAddItem}
       />
+
       <EditItemDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
@@ -167,10 +184,9 @@ export default function InventoryItems() {
       <Card>
         <CardHeader>
           <CardTitle>Catálogo de Produtos</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todos os produtos do inventário
-          </CardDescription>
+          <CardDescription>Visualize e gerencie o seu estoque</CardDescription>
         </CardHeader>
+
         <CardContent>
           {/* Filtros */}
           <div className="mb-4 flex flex-col gap-4 sm:flex-row">
@@ -183,10 +199,12 @@ export default function InventoryItems() {
                 className="pl-8"
               />
             </div>
+
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
+
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
@@ -219,6 +237,7 @@ export default function InventoryItems() {
                     product.stock,
                     product.reorderPoint
                   );
+
                   return (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">
@@ -226,19 +245,24 @@ export default function InventoryItems() {
                       </TableCell>
                       <TableCell>{product.name}</TableCell>
                       <TableCell>{product.category}</TableCell>
-                      <TableCell>{product.uom}</TableCell>
+                      <TableCell>{product.uoM}</TableCell>
+
                       <TableCell className="text-right">
                         R$ {product.price.toFixed(2)}
                       </TableCell>
+
                       <TableCell className="text-right">
                         {product.stock}
                       </TableCell>
+
                       <TableCell className="text-right">
                         {product.reorderPoint}
                       </TableCell>
+
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </TableCell>
+
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -246,9 +270,11 @@ export default function InventoryItems() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+
+                          <DropdownMenuContent>
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+
                             <DropdownMenuItem
                               onClick={() => {
                                 setSelectedItem(product);
@@ -258,8 +284,9 @@ export default function InventoryItems() {
                               <Pencil className="mr-2 h-4 w-4" />
                               Editar
                             </DropdownMenuItem>
+
                             <DropdownMenuItem
-                              onClick={() => handleDelete(product.id)}
+                              onClick={() => handleDelete(product.id!)}
                               className="text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />

@@ -1,11 +1,10 @@
 import {
-  ApiClient,
   RequestLoginJson,
   RequestRegisterUserJson,
   RequestNewTokenJson,
 } from "@/generated/apiClient";
 
-import { api } from "@/lib/api"; // ApiClient com interceptor
+import { api } from "@/lib/api";
 
 export const authService = {
   login: async (email: string, password: string) => {

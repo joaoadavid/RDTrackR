@@ -17,12 +17,19 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  RequestRegisterProductJson,
+  ResponseProductJson,
+} from "@/generated/apiClient";
 
 interface EditItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: any;
-  onUpdate: (item: any) => void;
+  item: ResponseProductJson | null;
+  onUpdate: (
+    item: ResponseProductJson,
+    payload: RequestRegisterProductJson
+  ) => void;
 }
 
 export function EditItemDialog({
@@ -31,24 +38,51 @@ export function EditItemDialog({
   item,
   onUpdate,
 }: EditItemDialogProps) {
-  const [form, setForm] = useState(item);
+  const [form, setForm] = useState<any>(null);
 
   useEffect(() => {
-    setForm(item);
+    if (item) {
+      setForm({
+        id: item.id,
+        sku: item.sku,
+        name: item.name,
+        category: item.category,
+        uoM: item.uoM,
+        price: item.price.toString(),
+        stock: item.stock.toString(),
+        reorderPoint: item.reorderPoint.toString(),
+      });
+    }
   }, [item]);
 
   if (!form) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = {
-      ...form,
-      price: parseFloat(form.price),
-      stock: parseInt(form.stock),
-      reorderPoint: parseInt(form.reorderPoint),
-      updatedAt: new Date().toISOString().split("T")[0],
-    };
-    onUpdate(updated);
+
+    const payload = new RequestRegisterProductJson({
+      sku: form.sku,
+      name: form.name,
+      category: form.category,
+      uoM: form.uoM,
+      price: Number(form.price),
+      stock: Number(form.stock),
+      reorderPoint: Number(form.reorderPoint),
+    });
+
+    // Esse objeto é exibido na tabela
+    const updatedEntity = new ResponseProductJson({
+      id: form.id,
+      sku: payload.sku!,
+      name: payload.name!,
+      category: payload.category!,
+      uoM: payload.uoM!,
+      price: payload.price!,
+      stock: payload.stock!,
+      reorderPoint: payload.reorderPoint!,
+    });
+
+    onUpdate(updatedEntity, payload);
     onOpenChange(false);
   };
 
@@ -92,12 +126,12 @@ export function EditItemDialog({
               />
             </div>
             <div>
-              <Label htmlFor="uom">Unidade</Label>
+              <Label htmlFor="uoM">Unidade</Label>
               <Select
-                value={form.uom}
-                onValueChange={(val) => setForm({ ...form, uom: val })}
+                value={form.uoM}
+                onValueChange={(val) => setForm({ ...form, uoM: val })}
               >
-                <SelectTrigger id="uom">
+                <SelectTrigger id="uoM">
                   <SelectValue placeholder="Unidade" />
                 </SelectTrigger>
                 <SelectContent>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  ResponseProductJson,
+  ResponseWarehouseJson,
+} from "@/generated/apiClient";
+
+import { api } from "@/lib/api";
+
 interface NewMovementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,39 +36,52 @@ export function NewMovementDialog({
   onOpenChange,
   onCreate,
 }: NewMovementDialogProps) {
+  const [products, setProducts] = useState<ResponseProductJson[]>([]);
+  const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
+
   const [form, setForm] = useState({
     type: "INBOUND",
     reference: "",
-    product: "",
-    warehouse: "",
-    quantity: 0,
-    user: "Admin",
+    productId: 0,
+    warehouseId: 0,
+    quantity: 1,
   });
+
+  // 🔥 Carregar produtos e depósitos
+  useEffect(() => {
+    if (!open) return;
+
+    api.productAll().then(setProducts);
+    api.warehouseAll().then(setWarehouses);
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const now = new Date().toLocaleString("pt-BR");
+
+    if (!form.productId || !form.warehouseId) return;
+
+    // Ajuste automático do sinal
+    const qty =
+      form.type === "OUTBOUND"
+        ? -Math.abs(form.quantity)
+        : Math.abs(form.quantity);
 
     const newMovement = {
-      id: Date.now(),
       ...form,
-      quantity:
-        form.type === "OUTBOUND"
-          ? -Math.abs(form.quantity)
-          : Math.abs(form.quantity),
-      createdAt: now,
+      quantity: qty,
     };
 
-    onCreate(newMovement);
+    onCreate(newMovement); // quem chama enviará ao backend
+    onOpenChange(false);
+
+    // Reset
     setForm({
       type: "INBOUND",
       reference: "",
-      product: "",
-      warehouse: "",
-      quantity: 0,
-      user: "Admin",
+      productId: 0,
+      warehouseId: 0,
+      quantity: 1,
     });
-    onOpenChange(false);
   };
 
   return (
@@ -70,18 +90,19 @@ export function NewMovementDialog({
         <DialogHeader>
           <DialogTitle>Nova Movimentação</DialogTitle>
           <DialogDescription>
-            Registre uma entrada, saída ou ajuste de estoque.
+            Registre entradas, saídas ou ajustes de estoque.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* TYPE */}
           <div>
-            <Label htmlFor="type">Tipo</Label>
+            <Label>Tipo</Label>
             <Select
               value={form.type}
               onValueChange={(v) => setForm({ ...form, type: v })}
             >
-              <SelectTrigger id="type">
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -92,45 +113,65 @@ export function NewMovementDialog({
             </Select>
           </div>
 
+          {/* REFERENCE */}
           <div>
-            <Label htmlFor="reference">Referência</Label>
+            <Label>Referência</Label>
             <Input
-              id="reference"
-              placeholder="Ex: PO-010"
+              placeholder="Ex: PO-1093"
               value={form.reference}
               onChange={(e) => setForm({ ...form, reference: e.target.value })}
               required
             />
           </div>
 
+          {/* PRODUCT */}
           <div>
-            <Label htmlFor="product">Produto</Label>
-            <Input
-              id="product"
-              placeholder="Ex: Monitor LG"
-              value={form.product}
-              onChange={(e) => setForm({ ...form, product: e.target.value })}
-              required
-            />
+            <Label>Produto</Label>
+            <Select
+              value={form.productId ? form.productId.toString() : undefined}
+              onValueChange={(v) => setForm({ ...form, productId: Number(v) })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um produto" />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id!.toString()}>
+                    {p.name} — {p.sku}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* WAREHOUSE */}
           <div>
-            <Label htmlFor="warehouse">Depósito</Label>
-            <Input
-              id="warehouse"
-              placeholder="Ex: CD São Paulo"
-              value={form.warehouse}
-              onChange={(e) => setForm({ ...form, warehouse: e.target.value })}
-              required
-            />
+            <Label>Depósito</Label>
+            <Select
+              value={form.warehouseId ? form.warehouseId.toString() : undefined}
+              onValueChange={(v) =>
+                setForm({ ...form, warehouseId: Number(v) })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um depósito" />
+              </SelectTrigger>
+              <SelectContent>
+                {warehouses.map((w) => (
+                  <SelectItem key={w.id} value={w.id!.toString()}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* QUANTITY */}
           <div>
-            <Label htmlFor="quantity">Quantidade</Label>
+            <Label>Quantidade</Label>
             <Input
-              id="quantity"
               type="number"
-              placeholder="Ex: 25"
+              min={1}
               value={form.quantity}
               onChange={(e) =>
                 setForm({ ...form, quantity: Number(e.target.value) })
@@ -140,7 +181,7 @@ export function NewMovementDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit">Salvar Movimentação</Button>
+            <Button type="submit">Registrar Movimentação</Button>
           </DialogFooter>
         </form>
       </DialogContent>

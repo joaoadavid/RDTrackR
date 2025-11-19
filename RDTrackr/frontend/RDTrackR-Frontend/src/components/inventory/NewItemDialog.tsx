@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
+import { RequestRegisterProductJson } from "@/generated/apiClient";
+
 interface NewItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (item: any) => void;
+  onCreate: (item: RequestRegisterProductJson) => void;
 }
 
 export function NewItemDialog({
@@ -36,7 +38,7 @@ export function NewItemDialog({
     sku: "",
     name: "",
     category: "",
-    uom: "UN",
+    uoM: "UN", // ⚠ campo correto exigido pelo backend
     price: "",
     stock: "",
     reorderPoint: "",
@@ -44,6 +46,7 @@ export function NewItemDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!form.name || !form.sku) {
       toast({
         title: "Campos obrigatórios",
@@ -53,30 +56,35 @@ export function NewItemDialog({
       return;
     }
 
-    const newItem = {
-      id: Date.now(),
-      ...form,
-      price: parseFloat(form.price),
-      stock: parseInt(form.stock),
-      reorderPoint: parseInt(form.reorderPoint),
-      updatedAt: new Date().toISOString().split("T")[0],
-    };
-
-    onCreate(newItem);
-    toast({
-      title: "Item adicionado",
-      description: `O produto "${form.name}" foi adicionado ao inventário com sucesso.`,
+    // 🔥 Agora usando o construtor do NSwag
+    const payload = new RequestRegisterProductJson({
+      sku: form.sku,
+      name: form.name,
+      category: form.category,
+      uoM: form.uoM,
+      price: Number(form.price),
+      stock: Number(form.stock),
+      reorderPoint: Number(form.reorderPoint),
     });
 
+    onCreate(payload);
+
+    toast({
+      title: "Item adicionado",
+      description: `O produto "${form.name}" foi cadastrado com sucesso.`,
+    });
+
+    // reset form
     setForm({
       sku: "",
       name: "",
       category: "",
-      uom: "UN",
+      uoM: "UN",
       price: "",
       stock: "",
       reorderPoint: "",
     });
+
     onOpenChange(false);
   };
 
@@ -90,12 +98,7 @@ export function NewItemDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-          role="form"
-          noValidate
-        >
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="sku">SKU</Label>
@@ -128,15 +131,17 @@ export function NewItemDialog({
                 placeholder="Ex: Eletrônicos"
               />
             </div>
+
             <div>
-              <Label htmlFor="uom">Unidade</Label>
+              <Label htmlFor="uoM">Unidade</Label>
               <Select
-                value={form.uom}
-                onValueChange={(val) => setForm({ ...form, uom: val })}
+                value={form.uoM}
+                onValueChange={(val) => setForm({ ...form, uoM: val })}
               >
-                <SelectTrigger id="uom">
+                <SelectTrigger id="uoM">
                   <SelectValue placeholder="Unidade" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectItem value="UN">Unidade</SelectItem>
                   <SelectItem value="KG">Kg</SelectItem>
@@ -157,6 +162,7 @@ export function NewItemDialog({
                 required
               />
             </div>
+
             <div>
               <Label htmlFor="stock">Estoque</Label>
               <Input
@@ -167,6 +173,7 @@ export function NewItemDialog({
                 required
               />
             </div>
+
             <div>
               <Label htmlFor="reorderPoint">Ponto de Reposição</Label>
               <Input
@@ -182,9 +189,7 @@ export function NewItemDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit" data-testid="submit">
-              Salvar Item
-            </Button>
+            <Button type="submit">Salvar Item</Button>
           </DialogFooter>
         </form>
       </DialogContent>

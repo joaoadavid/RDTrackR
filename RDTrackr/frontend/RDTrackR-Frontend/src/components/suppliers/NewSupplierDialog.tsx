@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { RequestRegisterSupplierJson } from "@/generated/apiClient";
+import { api } from "@/lib/api";
 
 interface NewSupplierDialogProps {
   open: boolean;
@@ -32,27 +34,17 @@ export function NewSupplierDialog({
     address: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name || !form.contact || !form.email) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha nome, contato e e-mail.",
-        variant: "destructive",
-      });
-      return;
-    }
+    const dto = RequestRegisterSupplierJson.fromJS(form);
 
-    const newSupplier = {
-      id: Date.now(),
-      ...form,
-    };
+    const created = await api.supplierPOST(dto);
 
-    onCreate(newSupplier);
+    onCreate(created);
     toast({
-      title: "Fornecedor criado",
-      description: `O fornecedor "${form.name}" foi adicionado com sucesso.`,
+      title: "Criado",
+      description: `O fornecedor "${created.name}" foi adicionado.`,
     });
 
     setForm({ name: "", contact: "", email: "", phone: "", address: "" });

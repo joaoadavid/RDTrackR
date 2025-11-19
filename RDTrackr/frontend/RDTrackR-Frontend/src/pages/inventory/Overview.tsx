@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   Package,
   Warehouse,
@@ -6,16 +6,19 @@ import {
   Activity,
   ShoppingBag,
 } from "lucide-react";
+
+import { Link } from "react-router-dom";
 import { KpiCard } from "@/components/dashboard/KpiCard";
+
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -24,108 +27,126 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
-  Area,
+  ResponseOverviewJson,
+  ResponseProductJson,
+  ResponseMovementJson,
+} from "@/generated/apiClient";
+import { api } from "@/lib/api";
+
+import {
   AreaChart,
-  ResponsiveContainer,
-  Tooltip,
+  Area,
   XAxis,
   YAxis,
+  Tooltip,
+  ResponsiveContainer,
   Legend,
 } from "recharts";
 
-// Mock data - will be replaced with real API data
-const movementsData = [
-  { month: "Jan", inbound: 450, outbound: 320 },
-  { month: "Fev", inbound: 380, outbound: 290 },
-  { month: "Mar", inbound: 520, outbound: 410 },
-  { month: "Abr", inbound: 490, outbound: 380 },
-  { month: "Mai", inbound: 610, outbound: 520 },
-  { month: "Jun", inbound: 580, outbound: 490 },
-];
-
-const lowStockItems = [
-  {
-    id: 1,
-    sku: "PRD-001",
-    name: "Notebook Dell",
-    current: 8,
-    reorder: 15,
-    status: "critical",
-  },
-  {
-    id: 2,
-    sku: "PRD-002",
-    name: "Mouse Logitech",
-    current: 12,
-    reorder: 20,
-    status: "warning",
-  },
-  {
-    id: 3,
-    sku: "PRD-003",
-    name: "Teclado Mecânico",
-    current: 0,
-    reorder: 10,
-    status: "critical",
-  },
-  {
-    id: 4,
-    sku: "PRD-004",
-    name: 'Monitor LG 27"',
-    current: 18,
-    reorder: 25,
-    status: "warning",
-  },
-];
-
 export default function InventoryOverview() {
+  const [overview, setOverview] = useState<ResponseOverviewJson | null>(null);
+  const [lowStockItems, setLowStockItems] = useState<ResponseProductJson[]>([]);
+  const [movementStats, setMovementStats] = useState<any[]>([]);
+
+  // =============================================================================
+  // 🔄 LOAD OVERVIEW (KPIs)
+  // =============================================================================
+  useEffect(() => {
+    api.overview().then(setOverview);
+  }, []);
+
+  // =============================================================================
+  // 🔄 LOW STOCK ITEMS — from /product (5 mais críticos)
+  // =============================================================================
+  useEffect(() => {
+    api.productAll().then((products) => {
+      const criticalList = products
+        .filter((p) => p.stock < p.reorderPoint)
+        .sort((a, b) => a.stock - b.stock)
+        .slice(0, 5);
+      setLowStockItems(criticalList);
+    });
+  }, []);
+
+  // =============================================================================
+  // 🔄 MOVEMENTS GRAPH — from /movement
+  // =============================================================================
+  useEffect(() => {
+    api.movementAll().then((movements) => {
+      const grouped: Record<
+        string,
+        { month: string; inbound: number; outbound: number }
+      > = {};
+
+      movements.forEach((m: ResponseMovementJson) => {
+        const month = new Date(m.createdAt!).toLocaleString("pt-BR", {
+          month: "short",
+        });
+
+        if (!grouped[month]) {
+          grouped[month] = { month, inbound: 0, outbound: 0 };
+        }
+
+        if (m.type === "INBOUND") grouped[month].inbound += m.quantity ?? 0;
+        if (m.type === "OUTBOUND")
+          grouped[month].outbound += Math.abs(m.quantity ?? 0);
+      });
+
+      setMovementStats(Object.values(grouped));
+    });
+  }, []);
+
   return (
     <div className="space-y-6">
+      {/* HEADER */}
       <div>
         <h2 className="text-3xl font-bold tracking-tight">
-          Estoque - Visão Geral
+          Estoque – Visão Geral
         </h2>
         <p className="text-muted-foreground">
-          Acompanhe métricas e alertas do inventário
+          Acompanhe métricas, movimentações e itens críticos do inventário.
         </p>
       </div>
 
+      {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Produtos Ativos"
-          value="247"
+          value={overview?.totalProducts ?? "--"}
           icon={Package}
-          description="Total de SKUs cadastrados"
+          description="SKUs cadastrados"
         />
         <KpiCard
-          title="Estoque Total"
-          value="12.458"
+          title="Depósitos"
+          value={overview?.totalWarehouses ?? "--"}
           icon={Warehouse}
-          description="Unidades em todos os depósitos"
+          description="Locais de armazenamento"
         />
         <KpiCard
-          title="Abaixo do Reorder"
-          value="4"
-          icon={TrendingDown}
-          description="Itens com estoque baixo"
-        />
-        <KpiCard
-          title="Movimentações (7d)"
-          value="183"
+          title="Movimentações"
+          value={overview?.totalMovements ?? "--"}
           icon={Activity}
-          description="Entradas e saídas"
+          description="Entradas e saídas registradas"
+        />
+        <KpiCard
+          title="Quantidade em Estoque"
+          value={overview?.totalInventoryQuantity ?? "--"}
+          icon={TrendingDown}
+          description="Soma total de itens"
         />
       </div>
 
+      {/* GRAPH – ENTRADAS vs SAÍDAS */}
       <Card>
         <CardHeader>
           <CardTitle>Entradas vs Saídas</CardTitle>
-          <CardDescription>Movimentações mensais do estoque</CardDescription>
+          <CardDescription>Movimentações mensais</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={movementsData}>
+            <AreaChart data={movementStats}>
               <defs>
                 <linearGradient id="colorInbound" x1="0" y1="0" x2="0" y2="1">
                   <stop
@@ -139,6 +160,7 @@ export default function InventoryOverview() {
                     stopOpacity={0}
                   />
                 </linearGradient>
+
                 <linearGradient id="colorOutbound" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
@@ -152,35 +174,26 @@ export default function InventoryOverview() {
                   />
                 </linearGradient>
               </defs>
-              <XAxis
-                dataKey="month"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-              />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                }}
-              />
+
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
               <Legend />
+
               <Area
                 type="monotone"
                 dataKey="inbound"
                 name="Entradas"
                 stroke="hsl(var(--chart-2))"
-                fillOpacity={1}
                 fill="url(#colorInbound)"
                 strokeWidth={2}
               />
+
               <Area
                 type="monotone"
                 dataKey="outbound"
                 name="Saídas"
                 stroke="hsl(var(--chart-3))"
-                fillOpacity={1}
                 fill="url(#colorOutbound)"
                 strokeWidth={2}
               />
@@ -189,6 +202,7 @@ export default function InventoryOverview() {
         </CardContent>
       </Card>
 
+      {/* LOW STOCK TABLE */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -197,6 +211,7 @@ export default function InventoryOverview() {
               Produtos abaixo do ponto de reposição
             </CardDescription>
           </div>
+
           <Button asChild>
             <Link to="/inventory/purchase-orders">
               <ShoppingBag className="mr-2 h-4 w-4" />
@@ -204,35 +219,39 @@ export default function InventoryOverview() {
             </Link>
           </Button>
         </CardHeader>
+
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>SKU</TableHead>
                 <TableHead>Produto</TableHead>
-                <TableHead>Atual</TableHead>
+                <TableHead>Estoque</TableHead>
                 <TableHead>Reorder Point</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {lowStockItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.sku}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.current}</TableCell>
-                  <TableCell>{item.reorder}</TableCell>
+                  <TableCell>{item.stock}</TableCell>
+                  <TableCell>{item.reorderPoint}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        item.status === "critical" ? "destructive" : "secondary"
-                      }
-                    >
-                      {item.status === "critical" ? "Crítico" : "Baixo"}
-                    </Badge>
+                    <Badge variant="destructive">Crítico</Badge>
                   </TableCell>
                 </TableRow>
               ))}
+
+              {lowStockItems.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6">
+                    Sem itens críticos 🎉
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

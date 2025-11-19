@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   AlertTriangle,
   Package,
@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { KpiCard } from "@/components/inventory/KpiCard";
 import { ControlsBar } from "@/components/inventory/ControlsBar";
 import {
@@ -21,83 +22,82 @@ import {
   ReplenishmentItem,
 } from "@/components/inventory/ReplenishmentTable";
 import { GeneratePoDialog } from "@/components/inventory/GeneratePoDialog";
+
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+
 import {
-  mockProducts,
-  mockStockSummary,
-  mockConsumption,
-} from "@/lib/mock-data";
+  ResponseReplenishmentItemJson,
+  RequestGeneratePoFromReplenishmentJson,
+} from "@/generated/apiClient";
 
 export default function Replenishment() {
   const { toast } = useToast();
 
-  // Parâmetros
+  // parâmetros
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
   const [window, setWindow] = useState(60);
   const [seasonality, setSeasonality] = useState(0);
   const [coverageDays, setCoverageDays] = useState(0);
 
-  // Seleção e edição
+  // seleção e edição
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editedQty, setEditedQty] = useState<Record<string, number>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Cálculo dos itens
-  const replenishmentItems = useMemo(() => {
-    return mockProducts.map((product) => {
-      const stock = mockStockSummary.find((s) => s.productId === product.id);
-      const consumption = mockConsumption.find(
-        (c) => c.productId === product.id
+  // dados da API
+  const [apiItems, setApiItems] = useState<ResponseReplenishmentItemJson[]>([]);
+
+  // ----------- LOAD API -------------------
+  useEffect(() => {
+    api
+      .replenishment()
+      .then((response) => setApiItems(response))
+      .catch(() =>
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível obter os itens de reposição.",
+          variant: "destructive",
+        })
       );
+  }, []);
 
-      const currentStock = stock?.currentStock || 0;
-      const totalConsumed = consumption?.totalConsumed || 0;
-      const periodRatio = window / (consumption?.period || 60);
-      const adjustedConsumption = totalConsumed * periodRatio;
-      const dailyConsumption =
-        (adjustedConsumption / window) * (1 + seasonality / 100);
+  // ----------- MAP API → FRONT ITEMS -------------------
+  const replenishmentItems: ReplenishmentItem[] = useMemo(() => {
+    return apiItems.map((i) => ({
+      id: i.productId!.toString(),
+      sku: i.sku ?? "",
+      name: i.name ?? "",
+      category: i.category ?? "",
+      uom: i.uom ?? "",
+      currentStock: i.currentStock ?? 0,
+      reorderPoint: i.reorderPoint ?? 0,
+      dailyConsumption: i.dailyConsumption ?? 0,
 
-      const demandLeadTime = dailyConsumption * product.leadTime;
-      const effectiveROP = product.safetyStock + demandLeadTime;
-      const coverageExtra = dailyConsumption * coverageDays;
+      // 👇 Ajuste importante
+      leadTime: i.leadTimeDays ?? 0,
 
-      const suggestedQty = Math.max(
-        0,
-        effectiveROP + coverageExtra - currentStock
-      );
+      suggestedQty: editedQty[i.productId!] ?? i.suggestedQty ?? 0,
+      isCritical: i.isCritical ?? false,
+      unitPrice: i.unitPrice ?? 0,
+    }));
+  }, [apiItems, editedQty]);
 
-      const isCritical = currentStock <= effectiveROP;
-
-      return {
-        id: product.id,
-        sku: product.sku,
-        name: product.name,
-        category: product.category,
-        uom: product.uom,
-        currentStock,
-        reorderPoint: effectiveROP,
-        dailyConsumption,
-        leadTime: product.leadTime,
-        suggestedQty: editedQty[product.id] ?? suggestedQty,
-        isCritical,
-        unitPrice: product.unitPrice,
-      } as ReplenishmentItem;
-    });
-  }, [window, seasonality, coverageDays, editedQty]);
-
-  // Filtros
+  // ----------- FILTROS -------------------
   const filteredItems = useMemo(() => {
     return replenishmentItems.filter((item) => {
       const matchesSearch =
         item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.name.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesCategory = category === "all" || item.category === category;
+
       return matchesSearch && matchesCategory;
     });
   }, [replenishmentItems, searchTerm, category]);
 
-  // KPIs
+  // ----------- KPIs -------------------
   const kpis = useMemo(() => {
     const criticalCount = filteredItems.filter((i) => i.isCritical).length;
     const totalStock = filteredItems.reduce(
@@ -121,11 +121,11 @@ export default function Replenishment() {
     };
   }, [filteredItems]);
 
-  // Handlers
+  // ----------- HANDLERS -------------------
   const handleRecalculate = () => {
     toast({
       title: "Recalculado",
-      description: "Os valores foram atualizados com os novos parâmetros.",
+      description: "Os valores foram atualizados.",
     });
   };
 
@@ -160,7 +160,7 @@ export default function Replenishment() {
     if (selectedIds.size === 0) {
       toast({
         title: "Nenhum item selecionado",
-        description: "Selecione ao menos um item para gerar o pedido.",
+        description: "Selecione ao menos um item.",
         variant: "destructive",
       });
       return;
@@ -168,44 +168,53 @@ export default function Replenishment() {
     setIsDialogOpen(true);
   };
 
-  const handleConfirmPo = (
+  const handleConfirmPo = async (
     supplierId: string,
     notes: string,
     groupBySupplier: boolean
   ) => {
-    const selectedItems = filteredItems.filter((i) => selectedIds.has(i.id));
+    try {
+      const selectedItems = filteredItems.filter((i) => selectedIds.has(i.id));
 
-    console.log("Gerando PO:", {
-      supplierId,
-      notes,
-      groupBySupplier,
-      items: selectedItems.map((i) => ({
-        productId: i.id,
-        qty: i.suggestedQty,
-        unitPrice: i.unitPrice,
-      })),
-    });
+      const dto = RequestGeneratePoFromReplenishmentJson.fromJS({
+        supplierId: Number(supplierId),
+        notes,
+        groupBySupplier,
+        items: selectedItems.map((i) => ({
+          productId: Number(i.id),
+          quantity: i.suggestedQty,
+          unitPrice: i.unitPrice,
+        })),
+      });
 
-    toast({
-      title: "Pedido criado",
-      description: `Pedido de compra criado com ${selectedItems.length} item(ns).`,
-    });
+      await api.generatePo(dto);
 
-    setIsDialogOpen(false);
-    setSelectedIds(new Set());
+      toast({
+        title: "Pedido criado",
+        description: `${selectedItems.length} item(ns) foram enviados para gerar um novo pedido de compra.`,
+      });
+
+      setIsDialogOpen(false);
+      setSelectedIds(new Set());
+    } catch {
+      toast({
+        title: "Erro ao gerar pedido",
+        description: "Ocorreu um problema ao criar o pedido de compra.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Título e botão de ação */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
             Planejamento de Reposição
           </h2>
           <p className="text-muted-foreground">
-            Calcule sugestões de compra baseadas em consumo médio, lead time e
-            estoque de segurança.
+            Sugestões baseadas em consumo, estoque atual e lead time.
           </p>
         </div>
         <Button variant="outline" onClick={handleRecalculate}>
@@ -238,13 +247,11 @@ export default function Replenishment() {
         />
       </div>
 
-      {/* Filtros */}
+      {/* CONTROLS */}
       <Card>
         <CardHeader>
           <CardTitle>Parâmetros de Simulação</CardTitle>
-          <CardDescription>
-            Ajuste os filtros e parâmetros para recalcular as sugestões
-          </CardDescription>
+          <CardDescription>Ajuste filtros e parâmetros</CardDescription>
         </CardHeader>
         <CardContent>
           <ControlsBar
@@ -263,7 +270,7 @@ export default function Replenishment() {
         </CardContent>
       </Card>
 
-      {/* Tabela */}
+      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Itens de Reposição</CardTitle>
@@ -283,7 +290,7 @@ export default function Replenishment() {
         </CardContent>
       </Card>
 
-      {/* Botão Gerar PO */}
+      {/* ACTION BUTTON */}
       {selectedIds.size > 0 && (
         <div className="flex justify-end">
           <Button onClick={handleGeneratePo} size="lg">
@@ -293,7 +300,7 @@ export default function Replenishment() {
         </div>
       )}
 
-      {/* Dialog */}
+      {/* DIALOG */}
       <GeneratePoDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

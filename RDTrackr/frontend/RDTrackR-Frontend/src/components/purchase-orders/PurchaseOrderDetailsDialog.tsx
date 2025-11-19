@@ -20,41 +20,48 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-interface PurchaseOrderDetailsDialogProps {
+import {
+  ResponsePurchaseOrderJson,
+  ResponsePurchaseOrderItemJson,
+} from "@/generated/apiClient";
+
+// 🎯 INTERFACE CORRETA
+export interface PurchaseOrderDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  order: any;
+  order: ResponsePurchaseOrderJson | null;
+  onUpdateStatus: (id: number, newStatus: string) => void | Promise<void>;
 }
-
-// 🔹 Itens de pedido mockados (simulação)
-const mockItems = [
-  { id: 1, product: "Notebook Dell Inspiron 15", qty: 2, price: 3499.0 },
-  { id: 2, product: "Mouse Logitech M170", qty: 3, price: 129.0 },
-  { id: 3, product: 'Monitor LG Ultrawide 29"', qty: 1, price: 1299.0 },
-];
 
 export function PurchaseOrderDetailsDialog({
   open,
   onOpenChange,
   order,
+  onUpdateStatus,
 }: PurchaseOrderDetailsDialogProps) {
   if (!order) return null;
 
-  const formattedDate = format(
-    new Date(order.createdAt),
-    "dd 'de' MMMM 'de' yyyy",
-    {
-      locale: ptBR,
-    }
-  );
+  const formattedDate = order.createdAt
+    ? format(order.createdAt, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+    : "—";
 
-  // 🔸 Calcula subtotal e total simulados
-  const subtotal = mockItems.reduce(
-    (acc, item) => acc + item.price * item.qty,
-    0
-  );
-  const taxes = subtotal * 0.12; // imposto simulado
+  // 💰 Cálculo com itens REAIS
+  const subtotal =
+    order.items?.reduce(
+      (acc, item) => acc + (item.unitPrice ?? 0) * (item.quantity ?? 0),
+      0
+    ) ?? 0;
+
+  const taxes = subtotal * 0.12;
   const total = subtotal + taxes;
+
+  const statusMap: Record<string, string> = {
+    CANCELLED: "Cancelado",
+    PENDING: "Pendente",
+    DRAFT: "Rascunho",
+    APPROVED: "Aprovado",
+    RECEIVED: "Recebido",
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,25 +71,28 @@ export function PurchaseOrderDetailsDialog({
             Detalhes do Pedido
           </DialogTitle>
           <DialogDescription>
-            Informações completas sobre o pedido de compra selecionado.
+            Informações completas sobre o pedido selecionado.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-2">
-          {/* 📋 Informações gerais */}
+          {/* 📋 Informações Gerais */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Número do Pedido</p>
               <p className="font-semibold">{order.number}</p>
             </div>
+
             <div>
               <p className="text-sm text-muted-foreground">Data</p>
               <p className="font-semibold">{formattedDate}</p>
             </div>
+
             <div>
               <p className="text-sm text-muted-foreground">Fornecedor</p>
-              <p className="font-semibold">{order.supplier}</p>
+              <p className="font-semibold">{order.supplierName}</p>
             </div>
+
             <div>
               <p className="text-sm text-muted-foreground">Status</p>
               <Badge
@@ -96,52 +106,63 @@ export function PurchaseOrderDetailsDialog({
                     : "default"
                 }
               >
-                {order.status === "CANCELLED"
-                  ? "Cancelado"
-                  : order.status === "PENDING"
-                  ? "Pendente"
-                  : order.status === "DRAFT"
-                  ? "Rascunho"
-                  : "Aprovado"}
+                {statusMap[order.status ?? ""] ?? order.status}
               </Badge>
             </div>
           </div>
 
           <Separator />
 
-          {/* 🧾 Tabela de itens */}
+          {/* 🧾 Itens */}
           <div>
             <p className="text-sm font-semibold mb-2">Itens do Pedido</p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead className="text-right">Qtd.</TableHead>
-                  <TableHead className="text-right">Preço Unitário</TableHead>
-                  <TableHead className="text-right">Subtotal</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.product}</TableCell>
-                    <TableCell className="text-right">{item.qty}</TableCell>
-                    <TableCell className="text-right">
-                      R${" "}
-                      {item.price.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R${" "}
-                      {(item.qty * item.price).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </TableCell>
+
+            {order.items && order.items.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead className="text-right">Qtd.</TableHead>
+                    <TableHead className="text-right">Preço Unitário</TableHead>
+                    <TableHead className="text-right">Subtotal</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+
+                <TableBody>
+                  {order.items.map(
+                    (item: ResponsePurchaseOrderItemJson, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{item.productName}</TableCell>
+
+                        <TableCell className="text-right">
+                          {item.quantity}
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          R${" "}
+                          {(item.unitPrice ?? 0).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          R${" "}
+                          {(
+                            (item.quantity ?? 0) * (item.unitPrice ?? 0)
+                          ).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhum item cadastrado.
+              </p>
+            )}
           </div>
 
           {/* 💰 Totais */}
@@ -156,6 +177,7 @@ export function PurchaseOrderDetailsDialog({
                   })}
                 </span>
               </div>
+
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">
                   Impostos (12%)
@@ -165,7 +187,9 @@ export function PurchaseOrderDetailsDialog({
                   {taxes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-sm font-semibold">Total</span>
                 <span className="text-lg font-bold text-primary">
@@ -186,3 +210,4 @@ export function PurchaseOrderDetailsDialog({
     </Dialog>
   );
 }
+export default PurchaseOrderDetailsDialog;

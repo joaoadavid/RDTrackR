@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,13 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -24,61 +17,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { NewMovementDialog } from "@/components/movements/NewMovementDialog";
+import { api } from "@/lib/api";
 
-const mockMovements = [
-  {
-    id: 1,
-    type: "INBOUND",
-    reference: "PO-001",
-    product: "Notebook Dell",
-    warehouse: "Depósito Principal",
-    quantity: 50,
-    createdAt: "2025-10-30 14:30",
-    user: "Admin",
-  },
-  {
-    id: 2,
-    type: "OUTBOUND",
-    reference: "ORD-1234",
-    product: "Mouse Logitech",
-    warehouse: "CD Rio",
-    quantity: -15,
-    createdAt: "2025-10-30 12:15",
-    user: "Vendas",
-  },
-  {
-    id: 3,
-    type: "ADJUST",
-    reference: "ADJ-005",
-    product: "Teclado Mecânico",
-    warehouse: "Depósito Principal",
-    quantity: -3,
-    createdAt: "2025-10-29 16:45",
-    user: "Estoque",
-  },
-  {
-    id: 4,
-    type: "INBOUND",
-    reference: "PO-002",
-    product: "Monitor LG",
-    warehouse: "CD Sul",
-    quantity: 25,
-    createdAt: "2025-10-29 10:20",
-    user: "Admin",
-  },
-  {
-    id: 5,
-    type: "OUTBOUND",
-    reference: "ORD-1235",
-    product: "Webcam HD",
-    warehouse: "Depósito Principal",
-    quantity: -8,
-    createdAt: "2025-10-28 15:30",
-    user: "Vendas",
-  },
-];
+import { ResponseMovementJson, MovementType } from "@/generated/apiClient";
 
 const movementTypeMap = {
   INBOUND: { label: "Entrada", variant: "default" as const },
@@ -87,21 +37,57 @@ const movementTypeMap = {
 };
 
 export default function Movements() {
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [movements, setMovements] = useState(mockMovements);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [movements, setMovements] = useState<ResponseMovementJson[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // 🔄 Carrega os movimentos ao montar a página
+  async function loadMovements() {
+    try {
+      const data = await api.movementAll(
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
+      setMovements(data);
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar movimentações",
+        description: "Não foi possível obter os dados do servidor.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  useEffect(() => {
+    loadMovements();
+  }, []);
+
+  // 🔄 Filtro por tipo
   const filteredMovements = movements.filter(
-    (movement) => typeFilter === "all" || movement.type === typeFilter
+    (m) => typeFilter === "all" || m.type === typeFilter
   );
 
-  const handleAddMovement = (movement: any) => {
-    setMovements((prev) => [...prev, movement]);
-    toast({
-      title: "Movimentação adicionada",
-      description: `A movimentação ${movement.reference} foi registrada com sucesso.`,
-    });
+  // ➕ Registrar nova movimentação (POST real)
+  const handleAddMovement = async (movementRequest: any) => {
+    try {
+      const created = await api.movement(movementRequest);
+      setMovements((prev) => [...prev, created]);
+
+      toast({
+        title: "Movimentação registrada",
+        description: `A movimentação ${created.reference} foi salva com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao registrar",
+        description: "Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -113,13 +99,14 @@ export default function Movements() {
             Histórico de entradas, saídas e ajustes
           </p>
         </div>
+
         <Button onClick={() => setIsDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Movimentação
         </Button>
       </div>
 
-      {/* Modal de Nova Movimentação */}
+      {/* Modal */}
       <NewMovementDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -130,28 +117,22 @@ export default function Movements() {
         <CardHeader>
           <CardTitle>Histórico de Movimentações</CardTitle>
           <CardDescription>
-            Todas as alterações de estoque registradas
+            Movimentações registradas no sistema
           </CardDescription>
         </CardHeader>
+
         <CardContent>
+          {/* FILTRO */}
           <div className="mb-4 flex gap-4">
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[200px]" data-testid="filter-trigger">
+            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v)}>
+              <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
-              <SelectContent data-testid="filter-menu">
-                <SelectItem value="all" data-testid="filter-all">
-                  Todos
-                </SelectItem>
-                <SelectItem value="INBOUND" data-testid="filter-inbound">
-                  Entradas
-                </SelectItem>
-                <SelectItem value="OUTBOUND" data-testid="filter-outbound">
-                  Saídas
-                </SelectItem>
-                <SelectItem value="ADJUST" data-testid="filter-adjust">
-                  Ajustes
-                </SelectItem>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="INBOUND">Entradas</SelectItem>
+                <SelectItem value="OUTBOUND">Saídas</SelectItem>
+                <SelectItem value="ADJUST">Ajustes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -168,41 +149,34 @@ export default function Movements() {
                 <TableHead>Usuário</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              {filteredMovements.map((movement) => (
-                <TableRow key={movement.id}>
+              {filteredMovements.map((m) => (
+                <TableRow key={m.id}>
                   <TableCell>
-                    <Badge
-                      variant={
-                        movementTypeMap[
-                          movement.type as keyof typeof movementTypeMap
-                        ].variant
-                      }
-                    >
-                      {
-                        movementTypeMap[
-                          movement.type as keyof typeof movementTypeMap
-                        ].label
-                      }
+                    <Badge variant={movementTypeMap[m.type!].variant}>
+                      {movementTypeMap[m.type!].label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {movement.reference}
-                  </TableCell>
-                  <TableCell>{movement.product}</TableCell>
-                  <TableCell>{movement.warehouse}</TableCell>
+
+                  <TableCell className="font-medium">{m.reference}</TableCell>
+                  <TableCell>{m.product}</TableCell>
+                  <TableCell>{m.warehouse}</TableCell>
+
                   <TableCell
                     className={`text-right font-medium ${
-                      movement.quantity > 0
-                        ? "text-success"
-                        : "text-destructive"
+                      m.quantity! > 0 ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    {movement.quantity > 0 ? "+" : ""}
-                    {movement.quantity}
+                    {m.quantity! > 0 ? "+" : ""}
+                    {m.quantity}
                   </TableCell>
-                  <TableCell>{movement.createdAt}</TableCell>
-                  <TableCell>{movement.user}</TableCell>
+
+                  <TableCell>
+                    {m.createdAt?.toLocaleString("pt-BR") ?? "--"}
+                  </TableCell>
+
+                  <TableCell>{m.createdByName}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

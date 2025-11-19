@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,78 +26,110 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import {
+  ResponseSupplierJson,
+  RequestRegisterSupplierJson,
+  RequestUpdateSupplierJson,
+} from "@/generated/apiClient";
 import { NewSupplierDialog } from "@/components/suppliers/NewSupplierDialog";
 import { EditSupplierDialog } from "@/components/suppliers/EditSupplierDialog";
 
-const mockSuppliers = [
-  {
-    id: 1,
-    name: "TechSupply Brasil",
-    contact: "Carlos Silva",
-    email: "carlos@techsupply.com",
-    phone: "(11) 3456-7890",
-    address: "São Paulo - SP",
-  },
-  {
-    id: 2,
-    name: "InfoParts Distribuidora",
-    contact: "Ana Santos",
-    email: "ana@infoparts.com",
-    phone: "(21) 2345-6789",
-    address: "Rio de Janeiro - RJ",
-  },
-  {
-    id: 3,
-    name: "CompuMax Imports",
-    contact: "Roberto Costa",
-    email: "roberto@compumax.com",
-    phone: "(41) 4567-8901",
-    address: "Curitiba - PR",
-  },
-  {
-    id: 4,
-    name: "GlobalTech Solutions",
-    contact: "Mariana Oliveira",
-    email: "mariana@globaltech.com",
-    phone: "(11) 5678-9012",
-    address: "São Paulo - SP",
-  },
-];
-
 export default function Suppliers() {
   const { toast } = useToast();
+
+  const [suppliers, setSuppliers] = useState<ResponseSupplierJson[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
-  const [suppliers, setSuppliers] = useState(mockSuppliers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<ResponseSupplierJson | null>(null);
+
+  useEffect(() => {
+    api
+      .supplierAll()
+      .then(setSuppliers)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAddSupplier = async (form: any) => {
+    try {
+      const dto = RequestRegisterSupplierJson.fromJS(form);
+      await api.supplierPOST(dto);
+
+      // RELOAD real da API
+      const updatedList = await api.supplierAll();
+      setSuppliers(updatedList);
+
+      toast({
+        title: "Fornecedor criado",
+        description: `O fornecedor "${form.name}" foi adicionado.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Erro ao criar fornecedor",
+        description: "Não foi possível cadastrar o fornecedor.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // --- UPDATE ---
+  const handleEditSupplier = async (updated: any) => {
+    try {
+      const dto = RequestUpdateSupplierJson.fromJS(updated);
+
+      const saved = await api.supplierPUT(updated.id, dto);
+
+      setSuppliers((prev) => prev.map((s) => (s.id === saved.id ? saved : s)));
+
+      toast({
+        title: "Fornecedor atualizado",
+        description: `As informações de "${saved.name}" foram atualizadas.`,
+      });
+    } catch {
+      toast({
+        title: "Erro ao editar",
+        description: "Não foi possível atualizar o fornecedor.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // --- DELETE ---
+  const handleDelete = async (id: number) => {
+    try {
+      await api.supplierDELETE(id);
+
+      setSuppliers((prev) => prev.filter((s) => s.id !== id));
+
+      toast({
+        title: "Fornecedor excluído",
+        description: "O fornecedor foi removido.",
+        variant: "destructive",
+      });
+    } catch {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível remover o fornecedor.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredSuppliers = suppliers.filter(
-    (supplier) =>
-      supplier.name.toLowerCase().includes(search.toLowerCase()) ||
-      supplier.contact.toLowerCase().includes(search.toLowerCase())
+    (s) =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.contact.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddSupplier = (supplier: any) => {
-    setSuppliers((prev) => [...prev, supplier]);
-    toast({
-      title: "Fornecedor adicionado",
-      description: `O fornecedor "${supplier.name}" foi criado com sucesso.`,
-    });
-  };
-
-  const handleEditSupplier = (updatedSupplier: any) => {
-    setSuppliers((prev) =>
-      prev.map((s) => (s.id === updatedSupplier.id ? updatedSupplier : s))
-    );
-    toast({
-      title: "Fornecedor atualizado",
-      description: `As informações de "${updatedSupplier.name}" foram atualizadas.`,
-    });
-  };
+  if (loading) return <p>Carregando fornecedores...</p>;
 
   return (
     <div className="space-y-6">
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Fornecedores</h2>
@@ -106,12 +138,11 @@ export default function Suppliers() {
           </p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Fornecedor
+          <Plus className="mr-2 h-4 w-4" /> Adicionar Fornecedor
         </Button>
       </div>
 
-      {/* Modais */}
+      {/* MODALS */}
       <NewSupplierDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -125,14 +156,17 @@ export default function Suppliers() {
         onSave={handleEditSupplier}
       />
 
+      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Fornecedores</CardTitle>
           <CardDescription>
-            Visualize e gerencie todos os fornecedores
+            Visualize e gerencie seus fornecedores
           </CardDescription>
         </CardHeader>
+
         <CardContent>
+          {/* Search */}
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -152,18 +186,20 @@ export default function Suppliers() {
                 <TableHead>Contato</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Localização</TableHead>
+                <TableHead>Endereço</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              {filteredSuppliers.map((supplier) => (
-                <TableRow key={supplier.id}>
-                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.contact}</TableCell>
-                  <TableCell>{supplier.email}</TableCell>
-                  <TableCell>{supplier.phone}</TableCell>
-                  <TableCell>{supplier.address}</TableCell>
+              {filteredSuppliers.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell>{s.contact}</TableCell>
+                  <TableCell>{s.email}</TableCell>
+                  <TableCell>{s.phone}</TableCell>
+                  <TableCell>{s.address}</TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -171,21 +207,25 @@ export default function Suppliers() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
+
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+
                         <DropdownMenuItem
                           onClick={() => {
-                            setSelectedSupplier(supplier);
+                            setSelectedSupplier(s);
                             setIsEditDialogOpen(true);
                           }}
                         >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar
+                          <Pencil className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
+
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDelete(s.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

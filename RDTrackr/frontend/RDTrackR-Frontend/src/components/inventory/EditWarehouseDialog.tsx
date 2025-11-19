@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -10,23 +11,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 
-import { RequestRegisterWarehouseJson } from "@/generated/apiClient";
+import {
+  RequestUpdateWarehouseJson,
+  ResponseWarehouseJson,
+} from "@/generated/apiClient";
 
-interface NewWarehouseDialogProps {
+interface EditWarehouseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (dto: RequestRegisterWarehouseJson) => void;
+  warehouse: ResponseWarehouseJson | null;
+  onUpdate: (
+    updatedEntity: ResponseWarehouseJson,
+    dto: RequestUpdateWarehouseJson
+  ) => void;
 }
 
-export function NewWarehouseDialog({
+export function EditWarehouseDialog({
   open,
   onOpenChange,
-  onCreate,
-}: NewWarehouseDialogProps) {
-  const { toast } = useToast();
-
+  warehouse,
+  onUpdate,
+}: EditWarehouseDialogProps) {
   const [form, setForm] = useState({
     name: "",
     location: "",
@@ -34,33 +40,42 @@ export function NewWarehouseDialog({
     items: "",
   });
 
+  useEffect(() => {
+    if (warehouse) {
+      setForm({
+        name: warehouse.name ?? "",
+        location: warehouse.location ?? "",
+        capacity: String(warehouse.capacity ?? ""),
+        items: String(warehouse.items ?? ""),
+      });
+    }
+  }, [warehouse]);
+
+  if (!warehouse) return null;
+
+  const { user } = useAuth();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name || !form.location || !form.capacity) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Informe nome, localização e capacidade.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const dto = RequestRegisterWarehouseJson.fromJS({
+    const dto = RequestUpdateWarehouseJson.fromJS({
       name: form.name,
       location: form.location,
       capacity: Number(form.capacity),
-      items: Number(form.items || 0),
+      items: Number(form.items),
     });
 
-    onCreate(dto);
-
-    toast({
-      title: "Depósito criado",
-      description: `O depósito "${form.name}" foi criado com sucesso.`,
+    const updatedEntity = ResponseWarehouseJson.fromJS({
+      ...warehouse,
+      name: form.name,
+      location: form.location,
+      capacity: Number(form.capacity),
+      items: Number(form.items),
+      updatedAt: new Date(),
+      updatedByName: user ?? "Usuário",
     });
 
-    setForm({ name: "", location: "", capacity: "", items: "" });
+    onUpdate(updatedEntity, dto);
     onOpenChange(false);
   };
 
@@ -68,9 +83,9 @@ export function NewWarehouseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Depósito</DialogTitle>
+          <DialogTitle>Editar Depósito</DialogTitle>
           <DialogDescription>
-            Cadastre um novo local de armazenamento.
+            Atualize as informações do depósito selecionado.
           </DialogDescription>
         </DialogHeader>
 
@@ -95,7 +110,7 @@ export function NewWarehouseDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Capacidade (itens)</Label>
+              <Label>Capacidade Total (itens)</Label>
               <Input
                 type="number"
                 value={form.capacity}
@@ -105,17 +120,18 @@ export function NewWarehouseDialog({
             </div>
 
             <div>
-              <Label>Itens armazenados</Label>
+              <Label>Itens Armazenados</Label>
               <Input
                 type="number"
                 value={form.items}
                 onChange={(e) => setForm({ ...form, items: e.target.value })}
+                required
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="submit">Salvar Depósito</Button>
+            <Button type="submit">Salvar Alterações</Button>
           </DialogFooter>
         </form>
       </DialogContent>

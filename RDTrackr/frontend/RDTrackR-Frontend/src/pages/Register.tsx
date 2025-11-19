@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/card";
 
 export default function Register() {
-  const { register } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { registerOrganization } = useAuth();
 
   const [formData, setFormData] = useState({
+    organization: "",
     nome: "",
     email: "",
     senha: "",
@@ -34,11 +35,16 @@ export default function Register() {
     e.preventDefault();
 
     try {
-      await register(formData.nome, formData.email, formData.senha);
+      await registerOrganization(
+        formData.organization,
+        formData.nome,
+        formData.email,
+        formData.senha
+      );
 
       toast({
-        title: "Conta criada com sucesso!",
-        description: `Bem-vindo, ${formData.nome}!`,
+        title: "Organização criada com sucesso!",
+        description: `Administrador ${formData.nome} registrado.`,
       });
 
       navigate("/dashboard");
@@ -46,7 +52,7 @@ export default function Register() {
       const msg =
         error?.result?.message ??
         error?.data?.message ??
-        "Erro ao registrar usuário.";
+        "Erro ao registrar organização.";
 
       toast({
         title: "Erro no cadastro",
@@ -69,21 +75,32 @@ export default function Register() {
         <Card>
           <CardHeader className="text-center">
             <img src={LogoR} className="h-20 scale-125" />
-            <CardTitle className="text-2xl">Criar conta</CardTitle>
+            <CardTitle className="text-2xl">Criar organização</CardTitle>
             <CardDescription>
-              Preencha as informações para criar sua conta
+              Preencha as informações para criar sua organização e o
+              administrador
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="organization">Nome da Organização</Label>
+                <Input
+                  id="organization"
+                  name="organization"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="nome">Nome do Administrador</Label>
                 <Input id="nome" name="nome" onChange={handleChange} required />
               </div>
 
               <div>
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">E-mail do Administrador</Label>
                 <Input
                   id="email"
                   name="email"
@@ -105,7 +122,7 @@ export default function Register() {
               </div>
 
               <Button type="submit" className="w-full">
-                Criar conta
+                Criar Organização
               </Button>
 
               <Button asChild variant="outline" className="w-full">

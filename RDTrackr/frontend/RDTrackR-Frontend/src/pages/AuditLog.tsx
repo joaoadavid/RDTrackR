@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -24,37 +24,8 @@ import {
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-const mockLogs = [
-  {
-    id: 1,
-    user: "João Silva",
-    action: "Criou pedido #ORD-2025-001",
-    type: "CREATE",
-    date: "2025-10-28 14:32",
-  },
-  {
-    id: 2,
-    user: "Maria Souza",
-    action: "Atualizou estoque do produto #A123",
-    type: "UPDATE",
-    date: "2025-10-27 09:15",
-  },
-  {
-    id: 3,
-    user: "Admin",
-    action: "Removeu cliente inativo",
-    type: "DELETE",
-    date: "2025-10-26 18:10",
-  },
-  {
-    id: 4,
-    user: "Carlos Pereira",
-    action: "Login realizado",
-    type: "LOGIN",
-    date: "2025-10-25 07:45",
-  },
-];
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const typeMap = {
   CREATE: { label: "Criação", variant: "default" as const },
@@ -64,14 +35,50 @@ const typeMap = {
 };
 
 export default function AuditLog() {
+  const { toast } = useToast();
+
+  const [logs, setLogs] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const filteredLogs = mockLogs.filter(
-    (log) =>
-      (filter === "all" || log.type === filter) &&
-      log.action.toLowerCase().includes(search.toLowerCase())
-  );
+  // ===========================
+  // 🔥 Função que busca logs da API
+  // ===========================
+  async function loadLogs() {
+    setLoading(true);
+
+    try {
+      const result = await api.logs(
+        filter === "all" ? undefined : filter,
+        search || undefined
+      );
+
+      setLogs(Array.isArray(result) ? result : []);
+    } catch (err: any) {
+      const message =
+        err?.result?.messages?.[0] ??
+        err?.result?.message ??
+        err?.body?.message ??
+        "Erro ao carregar logs.";
+
+      toast({
+        title: "Erro ao carregar auditoria",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ===========================
+  // 🔄 Atualiza ao trocar filtro ou pesquisa
+  // ===========================
+  useEffect(() => {
+    const delay = setTimeout(() => loadLogs(), 300); // debounce da busca
+    return () => clearTimeout(delay);
+  }, [filter, search]);
 
   return (
     <div className="space-y-6">
@@ -118,40 +125,49 @@ export default function AuditLog() {
             </Select>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Ação</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="font-medium">{log.user}</TableCell>
-                  <TableCell>{log.action}</TableCell>
-                  <TableCell>
-                    <Badge variant={typeMap[log.type].variant}>
-                      {typeMap[log.type].label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{log.date}</TableCell>
-                </TableRow>
-              ))}
-              {filteredLogs.length === 0 && (
+          {loading ? (
+            <div className="text-center py-6 text-muted-foreground">
+              Carregando logs...
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center text-muted-foreground py-6"
-                  >
-                    Nenhum registro encontrado.
-                  </TableCell>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Ação</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Data</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="font-medium">
+                      {log.userName}
+                    </TableCell>
+                    <TableCell>{log.action}</TableCell>
+                    <TableCell>
+                      <Badge variant={typeMap[log.type].variant}>
+                        {typeMap[log.type].label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{log.createdAt}</TableCell>
+                  </TableRow>
+                ))}
+
+                {logs.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground py-6"
+                    >
+                      Nenhum registro encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
