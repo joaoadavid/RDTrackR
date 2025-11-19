@@ -1,5 +1,6 @@
 ﻿using CommonTestUtilities.Entities;
 using CommonTestUtilities.Entities.Warehouses;
+using CommonTestUtilities.LoggedUser;
 using CommonTestUtilities.Mapper;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.Warehouses;
@@ -14,6 +15,8 @@ namespace UseCases.Test.Warehouse.GetAll
         public async Task Success()
         {
             (var user , _)=UserBuilder.Build();
+
+            var loggedUser = LoggedUserBuilder.Build(user);
             // Arrange
             var warehouse1 = WarehouseBuilder.Build(user);
             var warehouse2 = WarehouseBuilder.Build(user);
@@ -25,11 +28,11 @@ namespace UseCases.Test.Warehouse.GetAll
             };
 
             var repo = new WarehouseRepositoryBuilder()
-                .WithList(warehouses); 
+                .WithList(user,warehouses); 
 
             var mapper = MapperBuilder.Build();
 
-            var useCase = new GetAllWarehousesUseCase(repo.BuildRead(), mapper);
+            var useCase = new GetAllWarehousesUseCase(repo.BuildRead(),loggedUser, mapper);
 
             // Act
             var result = await useCase.Execute();

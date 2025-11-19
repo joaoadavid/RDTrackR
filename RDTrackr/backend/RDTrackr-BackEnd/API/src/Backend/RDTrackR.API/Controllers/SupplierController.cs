@@ -60,6 +60,8 @@ namespace RDTrackR.API.Controllers
         }
 
         [HttpPost("{supplierId}/products")]
+        [ProducesResponseType(typeof(ResponseSupplierProductJson), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ResponseErrorJson), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddProductToSupplier(
         long supplierId,
         [FromBody] RequestRegisterSupplierProductJson request,
@@ -71,13 +73,15 @@ namespace RDTrackR.API.Controllers
         }
 
         [HttpGet("{supplierId}/products")]
+        [ProducesResponseType(typeof(List<ResponseSupplierProductJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetProductsBySupplier(
-            long supplierId,
-            [FromServices] IGetProductsBySupplierUseCase useCase)
+        long supplierId,
+        [FromServices] IGetProductsBySupplierUseCase useCase)
         {
             var result = await useCase.Execute(supplierId);
             return Ok(result);
         }
+
 
     }
 }

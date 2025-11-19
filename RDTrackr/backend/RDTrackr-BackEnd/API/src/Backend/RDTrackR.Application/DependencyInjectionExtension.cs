@@ -33,6 +33,7 @@ using RDTrackR.Application.UseCases.StockItems.GetAll;
 using RDTrackR.Application.UseCases.StockItems.Register;
 using RDTrackR.Application.UseCases.Suppliers.Delete;
 using RDTrackR.Application.UseCases.Suppliers.GetAll;
+using RDTrackR.Application.UseCases.Suppliers.GetSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.Register;
 using RDTrackR.Application.UseCases.Suppliers.Update;
 using RDTrackR.Application.UseCases.User.Admin;
@@ -137,6 +138,7 @@ namespace RDTrackR.Application
             services.AddScoped<IGetAllSuppliersUseCase, GetAllSuppliersUseCase>();
             services.AddScoped<IUpdateSupplierUseCase, UpdateSupplierUseCase>();
             services.AddScoped<IRegisterSupplierProductUseCase, RegisterSupplierProductUseCase>();
+            services.AddScoped<IGetProductsBySupplierUseCase, GetProductsBySupplierUseCase>();
 
         }
         private static void AddMovementsUseCases(IServiceCollection services)

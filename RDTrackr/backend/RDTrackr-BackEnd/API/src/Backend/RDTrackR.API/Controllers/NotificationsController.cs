@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RDTrackR.API.Attributes;
-using RDTrackR.Domain.Context;
-using RDTrackR.Domain.Repositories.Notifications;
+using RDTrackR.Application.UseCases.Notifications;
+using RDTrackR.Communication.Responses.Notifications;
 
 namespace RDTrackR.API.Controllers
 {
@@ -9,21 +9,23 @@ namespace RDTrackR.API.Controllers
     public class NotificationsController : RDTrackRBaseController
     {
         [HttpGet("notifications")]
-        public async Task<IActionResult> GetUnread(
-            [FromServices] IUserContext user,
-            [FromServices] INotificationRepository repo)
-        {
-            return Ok(await repo.GetAllUnreadAsync(user));
-        }
+        [ProducesResponseType(typeof(List<ResponseNotificationJson>), StatusCodes.Status200OK)]
 
+        public async Task<IActionResult> GetUnread(
+            [FromServices] IGetNotificationUseCase useCase)
+        {
+            return Ok(await useCase.Execute());
+        }
 
         [HttpPost("notifications/{id}/read")]
-        public async Task<IActionResult> MarkAsRead(long id,
-            [FromServices] INotificationRepository repo)
+        public async Task<IActionResult> MarkAsRead(
+            long id,
+            [FromServices] IMarkNotificationAsReadUseCase useCase)
         {
-            await repo.MarkAsReadAsync(id);
+            await useCase.Execute(id);
             return NoContent();
         }
-
     }
+
+
 }
