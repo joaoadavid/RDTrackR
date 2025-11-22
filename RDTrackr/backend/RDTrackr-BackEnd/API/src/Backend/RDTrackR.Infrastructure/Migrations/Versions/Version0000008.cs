@@ -12,7 +12,7 @@ namespace RDTrackR.Infrastructure.Migrations.Versions
                     .ForeignKey("FK_StockItems_Product_Id", "Products", "Id")
                 .WithColumn("WarehouseId").AsInt64().NotNullable()
                     .ForeignKey("FK_StockItems_Warehouse_Id", "Warehouses", "Id")
-                .WithColumn("Quantity").AsDecimal(18, 2).NotNullable().WithDefaultValue(0)
+                .WithColumn("Quantity").AsInt32().NotNullable().WithDefaultValue(0)
                 .WithColumn("UpdatedAt").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime)
                 .WithColumn("CreatedByUserId").AsInt64().NotNullable()
                     .ForeignKey("FK_StockItems_CreatedByUser_Id", "Users", "Id")

@@ -15,6 +15,7 @@ using RDTrackR.Application.UseCases.Login.Logout;
 using RDTrackR.Application.UseCases.Login.ResetPassword;
 using RDTrackR.Application.UseCases.Movements.GetAll;
 using RDTrackR.Application.UseCases.Movements.Register;
+using RDTrackR.Application.UseCases.Orders;
 using RDTrackR.Application.UseCases.Organizations;
 using RDTrackR.Application.UseCases.Overview.Get;
 using RDTrackR.Application.UseCases.Product.Delete;
@@ -32,13 +33,18 @@ using RDTrackR.Application.UseCases.Reports;
 using RDTrackR.Application.UseCases.StockItems.GetAll;
 using RDTrackR.Application.UseCases.StockItems.Register;
 using RDTrackR.Application.UseCases.Suppliers.Delete;
+using RDTrackR.Application.UseCases.Suppliers.DeleteSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.GetAll;
 using RDTrackR.Application.UseCases.Suppliers.GetSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.Register;
+using RDTrackR.Application.UseCases.Suppliers.RegisterSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.Update;
+using RDTrackR.Application.UseCases.Suppliers.UpdateSupplierProduct;
 using RDTrackR.Application.UseCases.User.Admin;
 using RDTrackR.Application.UseCases.User.ChangePassword;
+using RDTrackR.Application.UseCases.User.GetAll;
 using RDTrackR.Application.UseCases.User.Register;
+using RDTrackR.Application.UseCases.User.Request;
 using RDTrackR.Application.UseCases.User.Update;
 using RDTrackR.Application.UseCases.Warehouses.Delete;
 using RDTrackR.Application.UseCases.Warehouses.GetAll;
@@ -71,6 +77,8 @@ namespace RDTrackR.Application
             AddOverviewUseCase(services);
             AddAuditLog(services);
             AddOrganizationUseCase(services);
+            AddOrdersUseCase(services);
+            AddSupplierProductUseCases(services);
         }
 
         private static void AddAutoMapper(this IServiceCollection services)
@@ -108,6 +116,7 @@ namespace RDTrackR.Application
             services.AddScoped<ILogoutUseCase, LogoutUseCase>();
             services.AddScoped<IAdminToggleUserActiveUseCase, AdminToggleUserActiveUseCase>();
             services.AddScoped<IAdminUpdateUserUseCase, AdminUpdateUserUseCase>();
+            services.AddScoped<IAdminDeleteUserUseCase, AdminDeleteUserUseCase>();
             services.AddScoped<IGetAllUsersUseCase, GetAllUsersUseCase>();
 
         }
@@ -119,6 +128,8 @@ namespace RDTrackR.Application
             services.AddScoped<IGetAllProductsUseCase, GetAllProductsUseCase>();
             services.AddScoped<IDeleteProductUseCase, DeleteProductUseCase>();
             services.AddScoped<IGetProductByIdUseCase, GetProductByIdUseCase>();
+            services.AddScoped<IGetAllUserProfileUseCase, GetAllUserProfileUseCase>();
+            services.AddScoped<IAdminCreateUserUseCase, AdminCreateUserUseCase>();
         }
 
         private static void AddWarehousesUseCases(IServiceCollection services)
@@ -128,6 +139,7 @@ namespace RDTrackR.Application
             services.AddScoped<IUpdateWarehouseUseCase, UpdateWarehouseUseCase>();
             services.AddScoped<IDeleteWarehouseUseCase, DeleteWarehouseUseCase>();
             services.AddScoped<IGetWarehouseByIdUseCase, GetWarehouseByIdUseCase>();
+            services.AddScoped<IGetWarehouseItemsUseCase, GetWarehouseItemsUseCase>();
 
         }
 
@@ -137,9 +149,6 @@ namespace RDTrackR.Application
             services.AddScoped<IRegisterSupplierUseCase, RegisterSupplierUseCase>();
             services.AddScoped<IGetAllSuppliersUseCase, GetAllSuppliersUseCase>();
             services.AddScoped<IUpdateSupplierUseCase, UpdateSupplierUseCase>();
-            services.AddScoped<IRegisterSupplierProductUseCase, RegisterSupplierProductUseCase>();
-            services.AddScoped<IGetProductsBySupplierUseCase, GetProductsBySupplierUseCase>();
-
         }
         private static void AddMovementsUseCases(IServiceCollection services)
         {
@@ -202,6 +211,22 @@ namespace RDTrackR.Application
         private static void AddOrganizationUseCase(IServiceCollection services)
         {
             services.AddScoped<IRegisterOrganizationUseCase, RegisterOrganizationUseCase>();
+        }
+
+        private static void AddOrdersUseCase(IServiceCollection services)
+        {
+            services.AddScoped<ICreateOrderUseCase, CreateOrderUseCase>();
+            services.AddScoped<IGetAllOrdersUseCase, GetAllOrdersUseCase>();
+            services.AddScoped<IUpdateOrderStatusUseCase, UpdateOrderStatusUseCase>();
+            services.AddScoped<IDeleteOrderUseCase, DeleteOrderUseCase>();
+        }
+
+        private static void AddSupplierProductUseCases(IServiceCollection services)
+        {
+            services.AddScoped<IRegisterSupplierProductUseCase, RegisterSupplierProductUseCase>();
+            services.AddScoped<IGetProductsBySupplierUseCase, GetProductsBySupplierUseCase>();
+            services.AddScoped<IUpdateSupplierProductUseCase, UpdateSupplierProductUseCase>();
+            services.AddScoped<IDeleteSupplierProductUseCase, DeleteSupplierProductUseCase>();
         }
     }
 }

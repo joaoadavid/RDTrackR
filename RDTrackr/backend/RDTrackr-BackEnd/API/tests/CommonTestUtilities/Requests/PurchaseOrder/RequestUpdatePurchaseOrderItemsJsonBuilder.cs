@@ -11,7 +11,7 @@ namespace CommonTestUtilities.Requests.PurchaseOrder
                 .RuleFor(p => p.Items, f => f.Make(2, () => new RequestUpdatePurchaseOrderItemJson
                 {
                     ProductId = f.Random.Long(1, 100),
-                    Quantity = f.Random.Decimal(1, 20),
+                    Quantity = f.Random.Int(1, 20),
                     UnitPrice = f.Random.Decimal(5, 500)
                 }))
                 .Generate();

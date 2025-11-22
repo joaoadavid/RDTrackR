@@ -8,5 +8,6 @@ namespace RDTrackR.Domain.Repositories.Products
         Task<Product?> GetByIdAsync(long id,User user);
         Task<int> CountAsync(User user);
         Task<bool> ExistsActiveProductWithSku(string sku);
+        Task<bool> Exists(long id);
     }
 }

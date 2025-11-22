@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -18,14 +17,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { mockSuppliers } from "@/lib/mock-data";
+
 import { ReplenishmentItem } from "./ReplenishmentTable";
+import { api } from "@/lib/api";
+import {
+  ResponseSupplierJson,
+  ResponseWarehouseJson,
+} from "@/generated/apiClient";
 
 interface GeneratePoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   items: ReplenishmentItem[];
-  onConfirm: (supplierId: string, notes: string, groupBySupplier: boolean) => void;
+  onConfirm: (
+    supplierId: string,
+    warehouseId: number,
+    notes: string,
+    groupBySupplier: boolean
+  ) => void;
+  isSubmitting?: boolean; // 👈 AGORA SUPORTADO
 }
 
 export function GeneratePoDialog({
@@ -33,22 +43,39 @@ export function GeneratePoDialog({
   onOpenChange,
   items,
   onConfirm,
+  isSubmitting = false, // valor padrão
 }: GeneratePoDialogProps) {
   const [supplierId, setSupplierId] = useState("");
-  const [notes, setNotes] = useState("");
+  const [warehouseId, setWarehouseId] = useState<number | null>(null);
   const [groupBySupplier, setGroupBySupplier] = useState(false);
 
-  const totalValue = items.reduce((sum, item) => sum + item.suggestedQty * item.unitPrice, 0);
+  const [suppliers, setSuppliers] = useState<ResponseSupplierJson[]>([]);
+  const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
+
+  // 🔥 Carregar fornecedores e armazéns quando abrir
+  useEffect(() => {
+    if (open) {
+      api.supplierAll().then(setSuppliers);
+      api.warehouseAll().then(setWarehouses);
+    }
+  }, [open]);
+
+  const totalValue = items.reduce(
+    (sum, item) => sum + item.suggestedQty * item.unitPrice,
+    0
+  );
 
   const handleConfirm = () => {
-    if (!supplierId) {
-      return;
-    }
-    onConfirm(supplierId, notes, groupBySupplier);
-    // Reset
+    if (!supplierId || !warehouseId || isSubmitting) return; // evita duplo clique
+
+    onConfirm(supplierId, warehouseId, "", groupBySupplier);
+
+    // Reset após envio
     setSupplierId("");
-    setNotes("");
+    setWarehouseId(null);
     setGroupBySupplier(false);
+
+    onOpenChange(false);
   };
 
   return (
@@ -57,12 +84,12 @@ export function GeneratePoDialog({
         <DialogHeader>
           <DialogTitle>Gerar Pedido de Compra</DialogTitle>
           <DialogDescription>
-            Você está prestes a gerar um rascunho de pedido de compra com {items.length} item(ns).
+            {items.length} item(ns) serão incluídos no pedido.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Resumo dos itens */}
+          {/* RESUMO */}
           <div className="rounded-lg border p-4 space-y-2">
             <h4 className="font-semibold text-sm">Resumo</h4>
             <div className="space-y-1 text-sm">
@@ -72,11 +99,13 @@ export function GeneratePoDialog({
                     {item.sku} - {item.name}
                   </span>
                   <span className="font-medium">
-                    {item.suggestedQty} {item.uom} × R$ {item.unitPrice.toFixed(2)} = R${" "}
+                    {item.suggestedQty} {item.uom} × R$
+                    {item.unitPrice.toFixed(2)} = R$
                     {(item.suggestedQty * item.unitPrice).toFixed(2)}
                   </span>
                 </div>
               ))}
+
               <div className="flex justify-between pt-2 border-t font-semibold">
                 <span>Total estimado</span>
                 <span>R$ {totalValue.toFixed(2)}</span>
@@ -84,54 +113,70 @@ export function GeneratePoDialog({
             </div>
           </div>
 
-          {/* Fornecedor */}
+          {/* FORNECEDOR */}
           <div className="space-y-2">
-            <Label htmlFor="supplier">Fornecedor *</Label>
+            <Label>Fornecedor *</Label>
             <Select value={supplierId} onValueChange={setSupplierId}>
-              <SelectTrigger id="supplier">
-                <SelectValue placeholder="Selecione o fornecedor" />
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {mockSuppliers.map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {supplier.name} ({supplier.email})
+                {suppliers.map((supplier) => (
+                  <SelectItem key={supplier.id} value={supplier.id!.toString()}>
+                    {supplier.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Agrupar por fornecedor */}
+          {/* WAREHOUSE */}
+          <div className="space-y-2">
+            <Label>Armazém *</Label>
+            <Select
+              value={warehouseId?.toString()}
+              onValueChange={(v) => setWarehouseId(Number(v))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {warehouses.map((w) => (
+                  <SelectItem key={w.id} value={w.id!.toString()}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* AGRUPAR */}
           <div className="flex items-center space-x-2">
             <Checkbox
               id="group"
               checked={groupBySupplier}
-              onCheckedChange={(checked) => setGroupBySupplier(checked as boolean)}
+              onCheckedChange={(checked) =>
+                setGroupBySupplier(checked as boolean)
+              }
             />
-            <Label htmlFor="group" className="text-sm cursor-pointer">
-              Agrupar itens por fornecedor preferencial (quando aplicável)
-            </Label>
-          </div>
-
-          {/* Observações */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              placeholder="Informações adicionais para o pedido..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
+            <Label htmlFor="group">Agrupar por fornecedor preferencial</Label>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={!supplierId}>
-            Gerar Pedido (Rascunho)
+
+          <Button
+            onClick={handleConfirm}
+            disabled={!supplierId || !warehouseId || isSubmitting}
+          >
+            {isSubmitting ? "Gerando pedido..." : "Gerar Pedido"}
           </Button>
         </DialogFooter>
       </DialogContent>

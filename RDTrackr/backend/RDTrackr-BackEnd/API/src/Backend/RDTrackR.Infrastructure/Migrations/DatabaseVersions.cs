@@ -23,5 +23,9 @@
         public const int FIX_AUDITLOG_ACTIONTYPE_INT = 18;
         public const int ADD_USER_ROLE_COLUMN = 19;
         public const int ADD_SUPPLIER_PRODUCT = 20;
+        public const int ADD_ORDERS = 21;
+        public const int ADD_DELETE_CASCADE = 22;
+        public const int ADD_WAREHOUSE_TO_PURCHASE_ORDER = 23;
+        public const int ALTER_CREATEDON = 24;
     }
 }

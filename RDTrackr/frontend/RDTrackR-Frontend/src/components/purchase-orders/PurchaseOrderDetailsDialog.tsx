@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,8 +26,8 @@ import {
   ResponsePurchaseOrderJson,
   ResponsePurchaseOrderItemJson,
 } from "@/generated/apiClient";
+import { useToast } from "@/hooks/use-toast";
 
-// 🎯 INTERFACE CORRETA
 export interface PurchaseOrderDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,21 +41,19 @@ export function PurchaseOrderDetailsDialog({
   order,
   onUpdateStatus,
 }: PurchaseOrderDetailsDialogProps) {
+  const { toast } = useToast();
+
   if (!order) return null;
 
   const formattedDate = order.createdAt
     ? format(order.createdAt, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : "—";
 
-  // 💰 Cálculo com itens REAIS
-  const subtotal =
+  const total =
     order.items?.reduce(
       (acc, item) => acc + (item.unitPrice ?? 0) * (item.quantity ?? 0),
       0
     ) ?? 0;
-
-  const taxes = subtotal * 0.12;
-  const total = subtotal + taxes;
 
   const statusMap: Record<string, string> = {
     CANCELLED: "Cancelado",
@@ -62,6 +62,69 @@ export function PurchaseOrderDetailsDialog({
     APPROVED: "Aprovado",
     RECEIVED: "Recebido",
   };
+
+  function renderActions() {
+    const status = order.status;
+
+    async function updateAndClose(newStatus: string) {
+      await onUpdateStatus(order.id!, newStatus);
+      onOpenChange(false); // FECHAR AUTOMATICAMENTE
+    }
+
+    return (
+      <div className="space-y-2 mt-4">
+        {status === "DRAFT" && (
+          <>
+            <Button
+              className="w-full"
+              onClick={() => updateAndClose("PENDING")}
+            >
+              Enviar para Aprovação
+            </Button>
+
+            <Button
+              className="w-full"
+              variant="destructive"
+              onClick={() => updateAndClose("CANCELLED")}
+            >
+              Cancelar Pedido
+            </Button>
+          </>
+        )}
+
+        {status === "PENDING" && (
+          <>
+            <Button
+              className="w-full"
+              onClick={() => updateAndClose("APPROVED")}
+            >
+              Aprovar Pedido
+            </Button>
+
+            <Button
+              className="w-full"
+              variant="destructive"
+              onClick={() => updateAndClose("CANCELLED")}
+            >
+              Cancelar Pedido
+            </Button>
+          </>
+        )}
+
+        {status === "APPROVED" && (
+          <Button className="w-full" onClick={() => updateAndClose("RECEIVED")}>
+            Marcar como Recebido
+          </Button>
+        )}
+
+        {(status === "CANCELLED" || status === "RECEIVED") && (
+          <p className="text-sm text-muted-foreground text-center">
+            Este pedido já foi finalizado.
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,6 +205,7 @@ export function PurchaseOrderDetailsDialog({
                           R${" "}
                           {(item.unitPrice ?? 0).toLocaleString("pt-BR", {
                             minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </TableCell>
 
@@ -151,6 +215,7 @@ export function PurchaseOrderDetailsDialog({
                             (item.quantity ?? 0) * (item.unitPrice ?? 0)
                           ).toLocaleString("pt-BR", {
                             minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </TableCell>
                       </TableRow>
@@ -165,40 +230,24 @@ export function PurchaseOrderDetailsDialog({
             )}
           </div>
 
-          {/* 💰 Totais */}
+          {/* 💰 Total */}
           <div className="flex justify-end mt-4">
-            <div className="w-1/2 space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Subtotal</span>
-                <span className="font-medium">
-                  R${" "}
-                  {subtotal.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Impostos (12%)
-                </span>
-                <span className="font-medium">
-                  R${" "}
-                  {taxes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-
-              <Separator />
-
+            <div className="w-1/2 space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm font-semibold">Total</span>
                 <span className="text-lg font-bold text-primary">
                   R${" "}
-                  {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  {total.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </div>
           </div>
+
+          {/* 🟦 Ações de Status */}
+          {renderActions()}
         </div>
 
         <DialogFooter>
@@ -210,4 +259,5 @@ export function PurchaseOrderDetailsDialog({
     </Dialog>
   );
 }
+
 export default PurchaseOrderDetailsDialog;

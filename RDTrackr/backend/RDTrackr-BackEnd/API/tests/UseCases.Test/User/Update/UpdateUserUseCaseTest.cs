@@ -68,15 +68,30 @@ namespace UseCases.Test.User.Update
 
         private UpdateUserUseCase CreateUseCase(RDTrackR.Domain.Entities.User user, string? email = null)
         {
-            var unityOfWork = UnitOfWorkBuilder.Build();
-            var userUpdateRepository = new UserUpdateOnlyRepositoryBuilder().GetById(user).Build();
+            var unitOfWork = UnitOfWorkBuilder.Build();
+            var writeOnlyRepo = UserWriteOnlyRepositoryBuilder.Build();
+            var updateRepo = new UserUpdateOnlyRepositoryBuilder().Build();
             var loggedUser = LoggedUserBuilder.Build(user);
 
-            var UserReadOnlyRepositoryBuilder = new UserReadOnlyRepositoryBuilder();
-            if (!string.IsNullOrEmpty(email))
-                UserReadOnlyRepositoryBuilder.ExistActiveUserWithEmail(email);
+            // UM ÚNICO repositório ReadOnly para este UseCase
+            var readOnlyRepoBuilder = new UserReadOnlyRepositoryBuilder()
+                .GetById(user); // SEMPRE necessário
 
-            return new UpdateUserUseCase(loggedUser,userUpdateRepository, UserReadOnlyRepositoryBuilder.Build(),unityOfWork);
+            if (!string.IsNullOrEmpty(email))
+                readOnlyRepoBuilder.ExistActiveUserWithEmail(email);
+            else
+                readOnlyRepoBuilder.ExistActiveUserWithEmail(user.Email);
+
+            var readOnlyRepo = readOnlyRepoBuilder.Build();
+
+            return new UpdateUserUseCase(
+                loggedUser,
+                writeOnlyRepo,
+                updateRepo,
+                readOnlyRepo,
+                unitOfWork
+            );
         }
+
     }
 }

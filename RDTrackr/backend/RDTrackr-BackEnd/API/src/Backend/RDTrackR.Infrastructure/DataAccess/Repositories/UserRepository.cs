@@ -25,13 +25,13 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
 
         public async Task<bool> ExistActiveUserWithIdenfier(Guid userIdentifier) => await _dbContext.Users.AnyAsync(user => user.UserIdentifier.Equals(userIdentifier) && user.Active);
 
-        public async Task<User> GetById(long id)
+        public async Task<User> GetUserById(long id)
         {
             return await _dbContext.Users
-                .FirstAsync(user => user.Id == id);
+                .FirstAsync(u => u.Id == id);
         }
 
-        public void Update(User user) => _dbContext.Users.Update(user);
+        public async Task Update(User user) => _dbContext.Users.Update(user);
 
         public async Task DeleteAccoutn(Guid userIdentifier)
         {
@@ -43,6 +43,17 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             var users = _dbContext.Users.Where(users => users.UserIdentifier == userIdentifier);
 
             _dbContext.Users.RemoveRange(users);
+
+            _dbContext.Users.Remove(user);
+        }
+
+        public async Task Delete(long userId)
+        {
+            var user = await _dbContext.Users
+                .FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (user == null)
+                return;
 
             _dbContext.Users.Remove(user);
         }
@@ -62,9 +73,10 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<List<User>> GetAllAsync()
+        public async Task<List<User>> GetAllAsync(User user)
         {
             return await _dbContext.Users
+                .Where(u => u.OrganizationId == user.OrganizationId && u.Role == "User")
                 .AsNoTracking()
                 .OrderBy(u => u.Name)
                 .ToListAsync();
@@ -74,11 +86,6 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             return await _dbContext.Users
                 .AnyAsync(u => u.Email == email && u.Id != id);
-        }
-
-        public async Task UpdateAsync(User user)
-        {
-            _dbContext.Users.Update(user);
         }
 
         public async Task<User?> GetByIdentifier(Guid identifier)

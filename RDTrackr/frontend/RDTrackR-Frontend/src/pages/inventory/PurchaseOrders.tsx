@@ -76,23 +76,13 @@ export default function PurchaseOrders() {
   }, []);
 
   // -------- CREATE --------
-  const handleAddOrder = async (form: any) => {
-    try {
-      const dto = RequestCreatePurchaseOrderJson.fromJS(form);
-      const created = await api.purchaseorderPOST(dto);
+  const handleAddOrder = (createdOrder: ResponsePurchaseOrderJson) => {
+    setOrders((prev) => [...prev, createdOrder]);
 
-      setOrders((prev) => [...prev, created]);
-
-      toast({
-        title: "Pedido criado",
-        description: `Pedido ${created.number} adicionado.`,
-      });
-    } catch {
-      toast({
-        title: "Erro ao criar pedido",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Pedido criado",
+      description: `Pedido ${createdOrder.number} adicionado.`,
+    });
   };
 
   // -------- UPDATE STATUS --------
@@ -102,7 +92,7 @@ export default function PurchaseOrders() {
         status: newStatus,
       });
 
-      await api.purchaseorderPUT(id, dto);
+      await api.status2(id, dto);
 
       setOrders((prev) =>
         prev.map((order) =>

@@ -10,7 +10,8 @@ namespace CommonTestUtilities.Requests
             return new Faker<RequestRegisterUserJson>()
                 .RuleFor(user => user.Name, (f) => f.Person.FirstName)
                 .RuleFor(user => user.Email, (f, u) => f.Internet.Email(u.Name))//U é uma instancia de RequestRegisterUserJson
-                .RuleFor(user => user.Password, (f) => f.Internet.Password(passwordLenght));
+                .RuleFor(user => user.Password, (f) => f.Internet.Password(passwordLenght))
+                .RuleFor(user => user.OrganizationId, () => 1);
         }
     }
 }

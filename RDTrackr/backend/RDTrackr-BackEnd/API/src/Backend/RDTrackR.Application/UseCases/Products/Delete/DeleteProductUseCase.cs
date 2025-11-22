@@ -28,13 +28,17 @@ namespace RDTrackR.Application.UseCases.Product.Delete
         public async Task Execute(long id)
         {
             var loggedUser = await _loggedUser.User();
-            var product = await _readRepository.GetByIdAsync(id,loggedUser);
+            var product = await _readRepository.GetByIdAsync(id, loggedUser);
 
             if (product == null)
                 throw new NotFoundException(ResourceMessagesException.PRODUCT_NOT_FOUND);
 
-            await _writeRepository.DeleteAsync(product);
+            product.Active = false;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            await _writeRepository.UpdateAsync(product);
             await _unitOfWork.Commit();
         }
+
     }
 }

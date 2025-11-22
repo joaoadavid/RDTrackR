@@ -1,7 +1,16 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Package,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -10,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Card,
   CardContent,
@@ -25,15 +36,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+
 import {
   ResponseSupplierJson,
   RequestRegisterSupplierJson,
   RequestUpdateSupplierJson,
 } from "@/generated/apiClient";
+
+// ✔️ Correto: diálogos de Supplier
 import { NewSupplierDialog } from "@/components/suppliers/NewSupplierDialog";
 import { EditSupplierDialog } from "@/components/suppliers/EditSupplierDialog";
+
+// ✔️ Correto: diálogo para produtos do fornecedor
+import { SupplierProductsDialog } from "@/components/suppliersProduct/SupplierProductsDialog";
 
 export default function Suppliers() {
   const { toast } = useToast();
@@ -42,11 +60,16 @@ export default function Suppliers() {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Modais
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isProductsOpen, setIsProductsOpen] = useState(false);
+
   const [selectedSupplier, setSelectedSupplier] =
     useState<ResponseSupplierJson | null>(null);
 
+  // Carregar lista inicial
   useEffect(() => {
     api
       .supplierAll()
@@ -59,46 +82,44 @@ export default function Suppliers() {
       const dto = RequestRegisterSupplierJson.fromJS(form);
       await api.supplierPOST(dto);
 
-      // RELOAD real da API
-      const updatedList = await api.supplierAll();
-      setSuppliers(updatedList);
+      const updated = await api.supplierAll();
+      setSuppliers(updated);
 
       toast({
         title: "Fornecedor criado",
         description: `O fornecedor "${form.name}" foi adicionado.`,
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Erro ao criar fornecedor",
-        description: "Não foi possível cadastrar o fornecedor.",
         variant: "destructive",
       });
     }
   };
 
-  // --- UPDATE ---
-  const handleEditSupplier = async (updated: any) => {
+  // Editar fornecedor
+  const handleEditSupplier = async (form: any) => {
     try {
-      const dto = RequestUpdateSupplierJson.fromJS(updated);
+      const dto = RequestUpdateSupplierJson.fromJS(form);
+      const updatedSupplier = await api.supplierPUT(form.id, dto);
 
-      const saved = await api.supplierPUT(updated.id, dto);
-
-      setSuppliers((prev) => prev.map((s) => (s.id === saved.id ? saved : s)));
+      setSuppliers((prev) =>
+        prev.map((s) => (s.id === updatedSupplier.id ? updatedSupplier : s))
+      );
 
       toast({
         title: "Fornecedor atualizado",
-        description: `As informações de "${saved.name}" foram atualizadas.`,
+        description: `As informações de "${updatedSupplier.name}" foram atualizadas.`,
       });
     } catch {
       toast({
-        title: "Erro ao editar",
-        description: "Não foi possível atualizar o fornecedor.",
+        title: "Erro ao editar fornecedor",
         variant: "destructive",
       });
     }
   };
 
-  // --- DELETE ---
+  // Excluir fornecedor
   const handleDelete = async (id: number) => {
     try {
       await api.supplierDELETE(id);
@@ -106,20 +127,18 @@ export default function Suppliers() {
       setSuppliers((prev) => prev.filter((s) => s.id !== id));
 
       toast({
-        title: "Fornecedor excluído",
-        description: "O fornecedor foi removido.",
+        title: "Fornecedor removido",
         variant: "destructive",
       });
     } catch {
       toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível remover o fornecedor.",
+        title: "Erro ao excluir fornecedor",
         variant: "destructive",
       });
     }
   };
 
-  const filteredSuppliers = suppliers.filter(
+  const filtered = suppliers.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.contact.toLowerCase().includes(search.toLowerCase())
@@ -137,36 +156,45 @@ export default function Suppliers() {
             Gerencie fornecedores e parceiros
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Adicionar Fornecedor
+
+        <Button onClick={() => setIsNewOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Novo Fornecedor
         </Button>
       </div>
 
-      {/* MODALS */}
+      {/* MODAL — NOVO FORNECEDOR */}
       <NewSupplierDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        open={isNewOpen}
+        onOpenChange={setIsNewOpen}
         onCreate={handleAddSupplier}
       />
 
+      {/* MODAL — EDITAR FORNECEDOR */}
       <EditSupplierDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
         supplier={selectedSupplier}
         onSave={handleEditSupplier}
       />
 
-      {/* TABLE */}
+      {/* MODAL — PRODUTOS DO FORNECEDOR */}
+      <SupplierProductsDialog
+        open={isProductsOpen}
+        onOpenChange={setIsProductsOpen}
+        supplierId={selectedSupplier?.id ?? null}
+      />
+
+      {/* LISTA */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Fornecedores</CardTitle>
           <CardDescription>
-            Visualize e gerencie seus fornecedores
+            Gerencie os fornecedores cadastrados
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {/* Search */}
+          {/* SEARCH */}
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -192,7 +220,7 @@ export default function Suppliers() {
             </TableHeader>
 
             <TableBody>
-              {filteredSuppliers.map((s) => (
+              {filtered.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell>{s.contact}</TableCell>
@@ -212,15 +240,27 @@ export default function Suppliers() {
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
+                        {/* Editar */}
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedSupplier(s);
-                            setIsEditDialogOpen(true);
+                            setIsEditOpen(true);
                           }}
                         >
                           <Pencil className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
 
+                        {/* Ver Produtos */}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedSupplier(s);
+                            setIsProductsOpen(true);
+                          }}
+                        >
+                          <Package className="mr-2 h-4 w-4" /> Ver Produtos
+                        </DropdownMenuItem>
+
+                        {/* Excluir */}
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDelete(s.id)}

@@ -348,4 +348,67 @@
   <data name="ORGANIZATION_NAME_EMPTY" xml:space="preserve">
     <value>The organization's name cannot be empty.</value>
   </data>
+  <data name="ADMIN_CREATE_USER" xml:space="preserve">
+    <value>Only administrators can create users.</value>
+  </data>
+  <data name="ORDER_NOT_FOUND" xml:space="preserve">
+    <value>Order not found. </value>
+  </data>
+  <data name="ORDER_ITEMS_REQUIRED" xml:space="preserve">
+    <value>The order must contain at least one item.</value>
+  </data>
+  <data name="ORDER_INVALID_CUSTOMER_NAME" xml:space="preserve">
+    <value>Customer name is required</value>
+  </data>
+  <data name="ORDER_ITEM_INVALID_QUANTITY" xml:space="preserve">
+    <value>Item quantity must be greater than zero.</value>
+  </data>
+  <data name="ORDER_ITEM_INVALID_PRICE" xml:space="preserve">
+    <value>Item price must be greater than zero.</value>
+  </data>
+  <data name="ORDER_PRODUCT_NOT_FOUND" xml:space="preserve">
+    <value>Product not found.</value>
+  </data>
+  <data name="ORDER_OUT_OF_STOCK" xml:space="preserve">
+    <value>Insufficient stock for the product.</value>
+  </data>
+  <data name="ORDER_ALREADY_PAID" xml:space="preserve">
+    <value>The order has already been marked as paid.</value>
+  </data>
+  <data name="ORDER_ALREADY_SHIPPED" xml:space="preserve">
+    <value>The order has already been shipped.</value>
+  </data>
+  <data name="ORDER_ALREADY_CANCELLED" xml:space="preserve">
+    <value>The order has already been cancelled.</value>
+  </data>
+  <data name="ORDER_CANNOT_PAY_CANCELLED" xml:space="preserve">
+    <value>Cannot pay a cancelled order.</value>
+  </data>
+  <data name="ORDER_CANNOT_PAY_SHIPPED" xml:space="preserve">
+    <value>Cannot pay an order that has already been shipped.</value>
+  </data>
+  <data name="ORDER_CANNOT_SHIP_NOT_PAID" xml:space="preserve">
+    <value>Order must be paid before it can be shipped.</value>
+  </data>
+  <data name="ORDER_CANNOT_CANCEL_SHIPPED" xml:space="preserve">
+    <value>Cannot cancel an order that has already been shipped.</value>
+  </data>
+  <data name="ORDER_STOCK_REVERT_ERROR" xml:space="preserve">
+    <value>Error reverting stock for cancelled order.</value>
+  </data>
+  <data name="ORDER_STATUS_INVALID_TRANSITION" xml:space="preserve">
+    <value>Invalid status transition for this order.</value>
+  </data>
+  <data name="ORDER_EMPTY_ITEMS" xml:space="preserve">
+    <value>The order must contain at least one item.</value>
+  </data>
+  <data name="ORDER_CUSTOMER_NAME_MIN_LENGTH" xml:space="preserve">
+    <value>Customer name must have at least 3 characters.</value>
+  </data>
+  <data name="ORDER_INVALID_TOTAL" xml:space="preserve">
+    <value>The order total must be greater than zero.</value>
+  </data>
+  <data name="SUPPLIER_PRODUCT_NOT_FOUND" xml:space="preserve">
+    <value>Supplier product not found.</value>
+  </data>
 </root>

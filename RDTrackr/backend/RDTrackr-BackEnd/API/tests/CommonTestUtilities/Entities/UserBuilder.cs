@@ -18,6 +18,7 @@ namespace CommonTestUtilities.Entities
                 .RuleFor(user => user.Email, (f, user) => f.Internet.Email(user.Name))
                 .RuleFor(user => user.UserIdentifier, _ => Guid.NewGuid())
                 .RuleFor(user => user.Password, (f) => passwordEncripter.Encrypt(password))
+                .RuleFor(user => user.OrganizationId, () => 1)
                 .RuleFor(u => u.Role, "Admin");
 
 

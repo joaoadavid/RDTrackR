@@ -14,18 +14,20 @@ namespace RDTrackR.Application.UseCases.User.Update
     public class UpdateUserUseCase : IUpdateUserUseCase
     {
         private readonly ILoggedUser _loggedUser;
-        private readonly IUserUpdateOnlyRepository _repository;
+        private readonly IUserWriteOnlyRepository _repository;
+        private readonly IUserUpdateOnlyRepository _userUpdateOnlyRepository;
         private readonly IUserReadOnlyRepository _userReadOnlyRepository;
         private readonly IUnitOfWork _unityOfWork;
 
         public UpdateUserUseCase(ILoggedUser loggedUser,
-            IUserUpdateOnlyRepository repository,
+            IUserWriteOnlyRepository repository,
+            IUserUpdateOnlyRepository userUpdateOnlyRepository,
             IUserReadOnlyRepository userReadOnlyRepository,
             IUnitOfWork unityOfWork
             )
         {
             _loggedUser = loggedUser;
-            _repository = repository;
+            _userUpdateOnlyRepository = userUpdateOnlyRepository;
             _userReadOnlyRepository = userReadOnlyRepository;
             _unityOfWork = unityOfWork;
         }
@@ -36,12 +38,14 @@ namespace RDTrackR.Application.UseCases.User.Update
 
             await Validate(request, loggedUser.Email);
 
-            var user = await _repository.GetById(loggedUser.Id);
+            var user = await _userReadOnlyRepository.GetUserById(loggedUser.Id);
 
             user.Name = request.Name;
             user.Email = request.Email;
+            user.Role = request.Role;
+            user.Active = request.IsActive;
 
-            _repository.Update(user);
+            await _userUpdateOnlyRepository.Update(user);
 
             await _unityOfWork.Commit();
         }

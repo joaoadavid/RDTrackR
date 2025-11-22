@@ -10,15 +10,26 @@
 export interface IApiClient {
 
     /**
+     * @param body (optional) 
+     * @return Created
+     */
+    create(body?: RequestAdminCreateUserJson | undefined, signal?: AbortSignal): Promise<ResponseAdminCreateUserJson>;
+
+    /**
      * @return OK
      */
-    adminAll(signal?: AbortSignal): Promise<ResponseShortUserJson[]>;
+    adminAll(signal?: AbortSignal): Promise<ResponseUserListItemJson[]>;
 
     /**
      * @param body (optional) 
      * @return No Content
      */
-    admin(id: number, body?: RequestAdminUpdateUserJson | undefined, signal?: AbortSignal): Promise<void>;
+    adminPUT(id: number, body?: RequestAdminUpdateUserJson | undefined, signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    adminDELETE(id: number, signal?: AbortSignal): Promise<void>;
 
     /**
      * @return No Content
@@ -30,7 +41,7 @@ export interface IApiClient {
      * @param search (optional) 
      * @return OK
      */
-    logs(type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<void>;
+    logs(type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseAuditLogJson[]>;
 
     /**
      * @param body (optional) 
@@ -79,6 +90,28 @@ export interface IApiClient {
      * @return OK
      */
     read(id: number, signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @param body (optional) 
+     * @return Created
+     */
+    ordersPOST(body?: RequestCreateOrderJson | undefined, signal?: AbortSignal): Promise<ResponseOrderJson>;
+
+    /**
+     * @return OK
+     */
+    ordersAll(signal?: AbortSignal): Promise<ResponseOrderJson[]>;
+
+    /**
+     * @param body (optional) 
+     * @return No Content
+     */
+    status(id: number, body?: RequestUpdateOrderStatusJson | undefined, signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @return No Content
+     */
+    ordersDELETE(id: number, signal?: AbortSignal): Promise<void>;
 
     /**
      * @param body (optional) 
@@ -135,15 +168,15 @@ export interface IApiClient {
     purchaseorderGET(id: number, signal?: AbortSignal): Promise<ResponsePurchaseOrderJson>;
 
     /**
-     * @param body (optional) 
-     * @return No Content
-     */
-    purchaseorderPUT(id: number, body?: RequestUpdatePurchaseOrderStatusJson | undefined, signal?: AbortSignal): Promise<void>;
-
-    /**
      * @return No Content
      */
     purchaseorderDELETE(id: number, signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    status2(id: number, body?: RequestUpdatePurchaseOrderStatusJson | undefined, signal?: AbortSignal): Promise<void>;
 
     /**
      * @param body (optional) 
@@ -204,12 +237,23 @@ export interface IApiClient {
      * @param body (optional) 
      * @return Created
      */
-    products(supplierId: number, body?: RequestRegisterSupplierProductJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierProductJson>;
+    productsPOST(supplierId: number, body?: RequestRegisterSupplierProductJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierProductJson>;
 
     /**
      * @return OK
      */
     productsAll(supplierId: number, signal?: AbortSignal): Promise<ResponseSupplierProductJson[]>;
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    productsPUT(supplierId: number, productId: number, body?: RequestUpdateSupplierProductJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierProductJson>;
+
+    /**
+     * @return No Content
+     */
+    productsDELETE(supplierId: number, productId: number, signal?: AbortSignal): Promise<void>;
 
     /**
      * @param body (optional) 
@@ -238,6 +282,11 @@ export interface IApiClient {
      * @return No Content
      */
     userDELETE(signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @return OK
+     */
+    allUsers(signal?: AbortSignal): Promise<ResponseUserProfileJson>;
 
     /**
      * @param body (optional) 
@@ -271,6 +320,11 @@ export interface IApiClient {
      * @return OK
      */
     warehouseGET(id: number, signal?: AbortSignal): Promise<ResponseWarehouseJson>;
+
+    /**
+     * @return OK
+     */
+    itemsAll(id: number, signal?: AbortSignal): Promise<ResponseWarehouseStockItemJson[]>;
 }
 
 export class ApiClient implements IApiClient {
@@ -284,9 +338,52 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param body (optional) 
+     * @return Created
+     */
+    create(body?: RequestAdminCreateUserJson | undefined, signal?: AbortSignal): Promise<ResponseAdminCreateUserJson> {
+        let url_ = this.baseUrl + "/create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<ResponseAdminCreateUserJson> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 201) {
+            return response.text().then((_responseText) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result201 = ResponseAdminCreateUserJson.fromJS(resultData201);
+            return result201;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseAdminCreateUserJson>(null as any);
+    }
+
+    /**
      * @return OK
      */
-    adminAll(signal?: AbortSignal): Promise<ResponseShortUserJson[]> {
+    adminAll(signal?: AbortSignal): Promise<ResponseUserListItemJson[]> {
         let url_ = this.baseUrl + "/users/admin";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -303,7 +400,7 @@ export class ApiClient implements IApiClient {
         });
     }
 
-    protected processAdminAll(response: Response): Promise<ResponseShortUserJson[]> {
+    protected processAdminAll(response: Response): Promise<ResponseUserListItemJson[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -313,7 +410,7 @@ export class ApiClient implements IApiClient {
             if (Array.isArray(resultData200)) {
                 result200 = [] as any;
                 for (let item of resultData200)
-                    result200!.push(ResponseShortUserJson.fromJS(item));
+                    result200!.push(ResponseUserListItemJson.fromJS(item));
             }
             else {
                 result200 = null as any;
@@ -325,14 +422,14 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseShortUserJson[]>(null as any);
+        return Promise.resolve<ResponseUserListItemJson[]>(null as any);
     }
 
     /**
      * @param body (optional) 
      * @return No Content
      */
-    admin(id: number, body?: RequestAdminUpdateUserJson | undefined, signal?: AbortSignal): Promise<void> {
+    adminPUT(id: number, body?: RequestAdminUpdateUserJson | undefined, signal?: AbortSignal): Promise<void> {
         let url_ = this.baseUrl + "/users/admin/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -351,11 +448,48 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processAdmin(_response);
+            return this.processAdminPUT(_response);
         });
     }
 
-    protected processAdmin(response: Response): Promise<void> {
+    protected processAdminPUT(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    adminDELETE(id: number, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/users/admin/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAdminDELETE(_response);
+        });
+    }
+
+    protected processAdminDELETE(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 204) {
@@ -412,7 +546,7 @@ export class ApiClient implements IApiClient {
      * @param search (optional) 
      * @return OK
      */
-    logs(type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<void> {
+    logs(type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseAuditLogJson[]> {
         let url_ = this.baseUrl + "/auditlog/audit/logs?";
         if (type === null)
             throw new globalThis.Error("The parameter 'type' cannot be null.");
@@ -428,6 +562,7 @@ export class ApiClient implements IApiClient {
             method: "GET",
             signal,
             headers: {
+                "Accept": "application/json"
             }
         };
 
@@ -436,19 +571,29 @@ export class ApiClient implements IApiClient {
         });
     }
 
-    protected processLogs(response: Response): Promise<void> {
+    protected processLogs(response: Response): Promise<ResponseAuditLogJson[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ResponseAuditLogJson.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<ResponseAuditLogJson[]>(null as any);
     }
 
     /**
@@ -802,6 +947,180 @@ export class ApiClient implements IApiClient {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Created
+     */
+    ordersPOST(body?: RequestCreateOrderJson | undefined, signal?: AbortSignal): Promise<ResponseOrderJson> {
+        let url_ = this.baseUrl + "/orders";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processOrdersPOST(_response);
+        });
+    }
+
+    protected processOrdersPOST(response: Response): Promise<ResponseOrderJson> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 201) {
+            return response.text().then((_responseText) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result201 = ResponseOrderJson.fromJS(resultData201);
+            return result201;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ResponseErrorJson.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseOrderJson>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    ordersAll(signal?: AbortSignal): Promise<ResponseOrderJson[]> {
+        let url_ = this.baseUrl + "/orders";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processOrdersAll(_response);
+        });
+    }
+
+    protected processOrdersAll(response: Response): Promise<ResponseOrderJson[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ResponseOrderJson.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseOrderJson[]>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return No Content
+     */
+    status(id: number, body?: RequestUpdateOrderStatusJson | undefined, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/orders/{id}/status";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processStatus(_response);
+        });
+    }
+
+    protected processStatus(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    ordersDELETE(id: number, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/orders/orders/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processOrdersDELETE(_response);
+        });
+    }
+
+    protected processOrdersDELETE(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
             return response.text().then((_responseText) => {
             return;
             });
@@ -1260,48 +1579,6 @@ export class ApiClient implements IApiClient {
     }
 
     /**
-     * @param body (optional) 
-     * @return No Content
-     */
-    purchaseorderPUT(id: number, body?: RequestUpdatePurchaseOrderStatusJson | undefined, signal?: AbortSignal): Promise<void> {
-        let url_ = this.baseUrl + "/purchaseorder/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "PUT",
-            signal,
-            headers: {
-                "Content-Type": "application/json",
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processPurchaseorderPUT(_response);
-        });
-    }
-
-    protected processPurchaseorderPUT(response: Response): Promise<void> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 204) {
-            return response.text().then((_responseText) => {
-            return;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<void>(null as any);
-    }
-
-    /**
      * @return No Content
      */
     purchaseorderDELETE(id: number, signal?: AbortSignal): Promise<void> {
@@ -1327,6 +1604,48 @@ export class ApiClient implements IApiClient {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    status2(id: number, body?: RequestUpdatePurchaseOrderStatusJson | undefined, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/purchaseorder/{id}/status";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processStatus2(_response);
+        });
+    }
+
+    protected processStatus2(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
             return response.text().then((_responseText) => {
             return;
             });
@@ -1797,7 +2116,7 @@ export class ApiClient implements IApiClient {
      * @param body (optional) 
      * @return Created
      */
-    products(supplierId: number, body?: RequestRegisterSupplierProductJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierProductJson> {
+    productsPOST(supplierId: number, body?: RequestRegisterSupplierProductJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierProductJson> {
         let url_ = this.baseUrl + "/supplier/{supplierId}/products";
         if (supplierId === undefined || supplierId === null)
             throw new globalThis.Error("The parameter 'supplierId' must be defined.");
@@ -1817,11 +2136,11 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processProducts(_response);
+            return this.processProductsPOST(_response);
         });
     }
 
-    protected processProducts(response: Response): Promise<ResponseSupplierProductJson> {
+    protected processProductsPOST(response: Response): Promise<ResponseSupplierProductJson> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 201) {
@@ -1892,6 +2211,109 @@ export class ApiClient implements IApiClient {
             });
         }
         return Promise.resolve<ResponseSupplierProductJson[]>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    productsPUT(supplierId: number, productId: number, body?: RequestUpdateSupplierProductJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierProductJson> {
+        let url_ = this.baseUrl + "/supplier/{supplierId}/products/{productId}";
+        if (supplierId === undefined || supplierId === null)
+            throw new globalThis.Error("The parameter 'supplierId' must be defined.");
+        url_ = url_.replace("{supplierId}", encodeURIComponent("" + supplierId));
+        if (productId === undefined || productId === null)
+            throw new globalThis.Error("The parameter 'productId' must be defined.");
+        url_ = url_.replace("{productId}", encodeURIComponent("" + productId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processProductsPUT(_response);
+        });
+    }
+
+    protected processProductsPUT(response: Response): Promise<ResponseSupplierProductJson> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ResponseSupplierProductJson.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ResponseErrorJson.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseSupplierProductJson>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    productsDELETE(supplierId: number, productId: number, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/supplier/{supplierId}/products/{productId}";
+        if (supplierId === undefined || supplierId === null)
+            throw new globalThis.Error("The parameter 'supplierId' must be defined.");
+        url_ = url_.replace("{supplierId}", encodeURIComponent("" + supplierId));
+        if (productId === undefined || productId === null)
+            throw new globalThis.Error("The parameter 'productId' must be defined.");
+        url_ = url_.replace("{productId}", encodeURIComponent("" + productId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processProductsDELETE(_response);
+        });
+    }
+
+    protected processProductsDELETE(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ResponseErrorJson.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
     }
 
     /**
@@ -2096,6 +2518,44 @@ export class ApiClient implements IApiClient {
             });
         }
         return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    allUsers(signal?: AbortSignal): Promise<ResponseUserProfileJson> {
+        let url_ = this.baseUrl + "/user/all-users";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAllUsers(_response);
+        });
+    }
+
+    protected processAllUsers(response: Response): Promise<ResponseUserProfileJson> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ResponseUserProfileJson.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseUserProfileJson>(null as any);
     }
 
     /**
@@ -2383,9 +2843,66 @@ export class ApiClient implements IApiClient {
         }
         return Promise.resolve<ResponseWarehouseJson>(null as any);
     }
+
+    /**
+     * @return OK
+     */
+    itemsAll(id: number, signal?: AbortSignal): Promise<ResponseWarehouseStockItemJson[]> {
+        let url_ = this.baseUrl + "/warehouse/{id}/items";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processItemsAll(_response);
+        });
+    }
+
+    protected processItemsAll(response: Response): Promise<ResponseWarehouseStockItemJson[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ResponseWarehouseStockItemJson.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            let resultData404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseWarehouseStockItemJson[]>(null as any);
+    }
 }
 
 export type MovementType = "INBOUND" | "OUTBOUND" | "ADJUST";
+
+export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "CANCELLED";
 
 export class ProblemDetails implements IProblemDetails {
     type?: string | undefined;
@@ -2495,9 +3012,58 @@ export interface IReplenishmentPoItemJson {
     unitPrice?: number;
 }
 
+export class RequestAdminCreateUserJson implements IRequestAdminCreateUserJson {
+    name?: string | undefined;
+    email?: string | undefined;
+    password?: string | undefined;
+    role?: string | undefined;
+
+    constructor(data?: IRequestAdminCreateUserJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.password = _data["password"];
+            this.role = _data["role"];
+        }
+    }
+
+    static fromJS(data: any): RequestAdminCreateUserJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestAdminCreateUserJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["password"] = this.password;
+        data["role"] = this.role;
+        return data;
+    }
+}
+
+export interface IRequestAdminCreateUserJson {
+    name?: string | undefined;
+    email?: string | undefined;
+    password?: string | undefined;
+    role?: string | undefined;
+}
+
 export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
+    role?: string | undefined;
     active?: boolean;
 
     constructor(data?: IRequestAdminUpdateUserJson) {
@@ -2513,6 +3079,7 @@ export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
         if (_data) {
             this.name = _data["name"];
             this.email = _data["email"];
+            this.role = _data["role"];
             this.active = _data["active"];
         }
     }
@@ -2528,6 +3095,7 @@ export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["email"] = this.email;
+        data["role"] = this.role;
         data["active"] = this.active;
         return data;
     }
@@ -2536,6 +3104,7 @@ export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
 export interface IRequestAdminUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
+    role?: string | undefined;
     active?: boolean;
 }
 
@@ -2577,6 +3146,98 @@ export class RequestChangePasswordJson implements IRequestChangePasswordJson {
 export interface IRequestChangePasswordJson {
     password?: string | undefined;
     newPassword?: string | undefined;
+}
+
+export class RequestCreateOrderItemJson implements IRequestCreateOrderItemJson {
+    productId?: number;
+    quantity?: number;
+    price?: number;
+
+    constructor(data?: IRequestCreateOrderItemJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.quantity = _data["quantity"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): RequestCreateOrderItemJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestCreateOrderItemJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["quantity"] = this.quantity;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface IRequestCreateOrderItemJson {
+    productId?: number;
+    quantity?: number;
+    price?: number;
+}
+
+export class RequestCreateOrderJson implements IRequestCreateOrderJson {
+    customerName?: string | undefined;
+    items?: RequestCreateOrderItemJson[] | undefined;
+
+    constructor(data?: IRequestCreateOrderJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.customerName = _data["customerName"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(RequestCreateOrderItemJson.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): RequestCreateOrderJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestCreateOrderJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["customerName"] = this.customerName;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IRequestCreateOrderJson {
+    customerName?: string | undefined;
+    items?: RequestCreateOrderItemJson[] | undefined;
 }
 
 export class RequestCreatePurchaseOrderItemJson implements IRequestCreatePurchaseOrderItemJson {
@@ -2624,7 +3285,9 @@ export interface IRequestCreatePurchaseOrderItemJson {
 }
 
 export class RequestCreatePurchaseOrderJson implements IRequestCreatePurchaseOrderJson {
+    number?: string | undefined;
     supplierId?: number;
+    warehouseId?: number;
     items?: RequestCreatePurchaseOrderItemJson[] | undefined;
 
     constructor(data?: IRequestCreatePurchaseOrderJson) {
@@ -2638,7 +3301,9 @@ export class RequestCreatePurchaseOrderJson implements IRequestCreatePurchaseOrd
 
     init(_data?: any) {
         if (_data) {
+            this.number = _data["number"];
             this.supplierId = _data["supplierId"];
+            this.warehouseId = _data["warehouseId"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -2656,7 +3321,9 @@ export class RequestCreatePurchaseOrderJson implements IRequestCreatePurchaseOrd
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["number"] = this.number;
         data["supplierId"] = this.supplierId;
+        data["warehouseId"] = this.warehouseId;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -2667,12 +3334,15 @@ export class RequestCreatePurchaseOrderJson implements IRequestCreatePurchaseOrd
 }
 
 export interface IRequestCreatePurchaseOrderJson {
+    number?: string | undefined;
     supplierId?: number;
+    warehouseId?: number;
     items?: RequestCreatePurchaseOrderItemJson[] | undefined;
 }
 
 export class RequestGeneratePoFromReplenishmentJson implements IRequestGeneratePoFromReplenishmentJson {
     supplierId?: number;
+    warehouseId?: number;
     notes?: string | undefined;
     items?: ReplenishmentPoItemJson[] | undefined;
 
@@ -2688,6 +3358,7 @@ export class RequestGeneratePoFromReplenishmentJson implements IRequestGenerateP
     init(_data?: any) {
         if (_data) {
             this.supplierId = _data["supplierId"];
+            this.warehouseId = _data["warehouseId"];
             this.notes = _data["notes"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
@@ -2707,6 +3378,7 @@ export class RequestGeneratePoFromReplenishmentJson implements IRequestGenerateP
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["supplierId"] = this.supplierId;
+        data["warehouseId"] = this.warehouseId;
         data["notes"] = this.notes;
         if (Array.isArray(this.items)) {
             data["items"] = [];
@@ -2719,6 +3391,7 @@ export class RequestGeneratePoFromReplenishmentJson implements IRequestGenerateP
 
 export interface IRequestGeneratePoFromReplenishmentJson {
     supplierId?: number;
+    warehouseId?: number;
     notes?: string | undefined;
     items?: ReplenishmentPoItemJson[] | undefined;
 }
@@ -3251,6 +3924,42 @@ export interface IRequestResetYourPasswordJson {
     password?: string | undefined;
 }
 
+export class RequestUpdateOrderStatusJson implements IRequestUpdateOrderStatusJson {
+    status?: OrderStatus;
+
+    constructor(data?: IRequestUpdateOrderStatusJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): RequestUpdateOrderStatusJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestUpdateOrderStatusJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IRequestUpdateOrderStatusJson {
+    status?: OrderStatus;
+}
+
 export class RequestUpdatePurchaseOrderItemJson implements IRequestUpdatePurchaseOrderItemJson {
     productId?: number;
     quantity?: number;
@@ -3427,9 +4136,59 @@ export interface IRequestUpdateSupplierJson {
     address?: string | undefined;
 }
 
+export class RequestUpdateSupplierProductJson implements IRequestUpdateSupplierProductJson {
+    supplierId?: number;
+    productId?: number;
+    unitPrice?: number;
+    active?: boolean;
+
+    constructor(data?: IRequestUpdateSupplierProductJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.supplierId = _data["supplierId"];
+            this.productId = _data["productId"];
+            this.unitPrice = _data["unitPrice"];
+            this.active = _data["active"];
+        }
+    }
+
+    static fromJS(data: any): RequestUpdateSupplierProductJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestUpdateSupplierProductJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["supplierId"] = this.supplierId;
+        data["productId"] = this.productId;
+        data["unitPrice"] = this.unitPrice;
+        data["active"] = this.active;
+        return data;
+    }
+}
+
+export interface IRequestUpdateSupplierProductJson {
+    supplierId?: number;
+    productId?: number;
+    unitPrice?: number;
+    active?: boolean;
+}
+
 export class RequestUpdateUserJson implements IRequestUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
+    role?: string | undefined;
+    isActive?: boolean;
 
     constructor(data?: IRequestUpdateUserJson) {
         if (data) {
@@ -3444,6 +4203,8 @@ export class RequestUpdateUserJson implements IRequestUpdateUserJson {
         if (_data) {
             this.name = _data["name"];
             this.email = _data["email"];
+            this.role = _data["role"];
+            this.isActive = _data["isActive"];
         }
     }
 
@@ -3458,6 +4219,8 @@ export class RequestUpdateUserJson implements IRequestUpdateUserJson {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["email"] = this.email;
+        data["role"] = this.role;
+        data["isActive"] = this.isActive;
         return data;
     }
 }
@@ -3465,6 +4228,8 @@ export class RequestUpdateUserJson implements IRequestUpdateUserJson {
 export interface IRequestUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
+    role?: string | undefined;
+    isActive?: boolean;
 }
 
 export class RequestUpdateWarehouseJson implements IRequestUpdateWarehouseJson {
@@ -3513,6 +4278,106 @@ export interface IRequestUpdateWarehouseJson {
     location?: string | undefined;
     capacity?: number;
     items?: number;
+}
+
+export class ResponseAdminCreateUserJson implements IResponseAdminCreateUserJson {
+    id?: number;
+    name?: string | undefined;
+    email?: string | undefined;
+    role?: string | undefined;
+    active?: boolean;
+
+    constructor(data?: IResponseAdminCreateUserJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.role = _data["role"];
+            this.active = _data["active"];
+        }
+    }
+
+    static fromJS(data: any): ResponseAdminCreateUserJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseAdminCreateUserJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["role"] = this.role;
+        data["active"] = this.active;
+        return data;
+    }
+}
+
+export interface IResponseAdminCreateUserJson {
+    id?: number;
+    name?: string | undefined;
+    email?: string | undefined;
+    role?: string | undefined;
+    active?: boolean;
+}
+
+export class ResponseAuditLogJson implements IResponseAuditLogJson {
+    user?: string | undefined;
+    action?: string | undefined;
+    type?: string | undefined;
+    date?: Date;
+
+    constructor(data?: IResponseAuditLogJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.user = _data["user"];
+            this.action = _data["action"];
+            this.type = _data["type"];
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ResponseAuditLogJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseAuditLogJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["user"] = this.user;
+        data["action"] = this.action;
+        data["type"] = this.type;
+        data["date"] = this.date ? this.date.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IResponseAuditLogJson {
+    user?: string | undefined;
+    action?: string | undefined;
+    type?: string | undefined;
+    date?: Date;
 }
 
 export class ResponseErrorJson implements IResponseErrorJson {
@@ -3675,6 +4540,122 @@ export interface IResponseNotificationJson {
     createdAt?: Date;
 }
 
+export class ResponseOrderItemJson implements IResponseOrderItemJson {
+    productId?: number;
+    productName?: string | undefined;
+    quantity?: number;
+    price?: number;
+
+    constructor(data?: IResponseOrderItemJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.productName = _data["productName"];
+            this.quantity = _data["quantity"];
+            this.price = _data["price"];
+        }
+    }
+
+    static fromJS(data: any): ResponseOrderItemJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseOrderItemJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["productName"] = this.productName;
+        data["quantity"] = this.quantity;
+        data["price"] = this.price;
+        return data;
+    }
+}
+
+export interface IResponseOrderItemJson {
+    productId?: number;
+    productName?: string | undefined;
+    quantity?: number;
+    price?: number;
+}
+
+export class ResponseOrderJson implements IResponseOrderJson {
+    id?: number;
+    orderNumber?: string | undefined;
+    customerName?: string | undefined;
+    total?: number;
+    status?: OrderStatus;
+    createdOn?: Date;
+    items?: ResponseOrderItemJson[] | undefined;
+
+    constructor(data?: IResponseOrderJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.orderNumber = _data["orderNumber"];
+            this.customerName = _data["customerName"];
+            this.total = _data["total"];
+            this.status = _data["status"];
+            this.createdOn = _data["createdOn"] ? new Date(_data["createdOn"].toString()) : undefined as any;
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseOrderItemJson.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ResponseOrderJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseOrderJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["orderNumber"] = this.orderNumber;
+        data["customerName"] = this.customerName;
+        data["total"] = this.total;
+        data["status"] = this.status;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IResponseOrderJson {
+    id?: number;
+    orderNumber?: string | undefined;
+    customerName?: string | undefined;
+    total?: number;
+    status?: OrderStatus;
+    createdOn?: Date;
+    items?: ResponseOrderItemJson[] | undefined;
+}
+
 export class ResponseOverviewJson implements IResponseOverviewJson {
     totalProducts?: number;
     totalWarehouses?: number;
@@ -3734,11 +4715,13 @@ export class ResponseProductJson implements IResponseProductJson {
     category?: string | undefined;
     uoM?: string | undefined;
     price?: number;
-    stock?: number;
+    totalStock?: number;
     reorderPoint?: number;
     updatedAt?: Date;
+    active?: boolean;
     createdByUserId?: number;
     createdByName?: string | undefined;
+    stockItems?: ResponseStockItemJson[] | undefined;
 
     constructor(data?: IResponseProductJson) {
         if (data) {
@@ -3757,11 +4740,17 @@ export class ResponseProductJson implements IResponseProductJson {
             this.category = _data["category"];
             this.uoM = _data["uoM"];
             this.price = _data["price"];
-            this.stock = _data["stock"];
+            this.totalStock = _data["totalStock"];
             this.reorderPoint = _data["reorderPoint"];
             this.updatedAt = _data["updatedAt"] ? new Date(_data["updatedAt"].toString()) : undefined as any;
+            this.active = _data["active"];
             this.createdByUserId = _data["createdByUserId"];
             this.createdByName = _data["createdByName"];
+            if (Array.isArray(_data["stockItems"])) {
+                this.stockItems = [] as any;
+                for (let item of _data["stockItems"])
+                    this.stockItems!.push(ResponseStockItemJson.fromJS(item));
+            }
         }
     }
 
@@ -3780,11 +4769,17 @@ export class ResponseProductJson implements IResponseProductJson {
         data["category"] = this.category;
         data["uoM"] = this.uoM;
         data["price"] = this.price;
-        data["stock"] = this.stock;
+        data["totalStock"] = this.totalStock;
         data["reorderPoint"] = this.reorderPoint;
         data["updatedAt"] = this.updatedAt ? this.updatedAt.toISOString() : undefined as any;
+        data["active"] = this.active;
         data["createdByUserId"] = this.createdByUserId;
         data["createdByName"] = this.createdByName;
+        if (Array.isArray(this.stockItems)) {
+            data["stockItems"] = [];
+            for (let item of this.stockItems)
+                data["stockItems"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -3796,11 +4791,13 @@ export interface IResponseProductJson {
     category?: string | undefined;
     uoM?: string | undefined;
     price?: number;
-    stock?: number;
+    totalStock?: number;
     reorderPoint?: number;
     updatedAt?: Date;
+    active?: boolean;
     createdByUserId?: number;
     createdByName?: string | undefined;
+    stockItems?: ResponseStockItemJson[] | undefined;
 }
 
 export class ResponsePurchaseOrderItemJson implements IResponsePurchaseOrderItemJson {
@@ -3852,6 +4849,8 @@ export class ResponsePurchaseOrderJson implements IResponsePurchaseOrderJson {
     number?: string | undefined;
     supplierName?: string | undefined;
     status?: string | undefined;
+    warehouseId?: number;
+    warehouseName?: string | undefined;
     createdAt?: Date;
     createdByName?: string | undefined;
     items?: ResponsePurchaseOrderItemJson[] | undefined;
@@ -3871,6 +4870,8 @@ export class ResponsePurchaseOrderJson implements IResponsePurchaseOrderJson {
             this.number = _data["number"];
             this.supplierName = _data["supplierName"];
             this.status = _data["status"];
+            this.warehouseId = _data["warehouseId"];
+            this.warehouseName = _data["warehouseName"];
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : undefined as any;
             this.createdByName = _data["createdByName"];
             if (Array.isArray(_data["items"])) {
@@ -3894,6 +4895,8 @@ export class ResponsePurchaseOrderJson implements IResponsePurchaseOrderJson {
         data["number"] = this.number;
         data["supplierName"] = this.supplierName;
         data["status"] = this.status;
+        data["warehouseId"] = this.warehouseId;
+        data["warehouseName"] = this.warehouseName;
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : undefined as any;
         data["createdByName"] = this.createdByName;
         if (Array.isArray(this.items)) {
@@ -3910,6 +4913,8 @@ export interface IResponsePurchaseOrderJson {
     number?: string | undefined;
     supplierName?: string | undefined;
     status?: string | undefined;
+    warehouseId?: number;
+    warehouseName?: string | undefined;
     createdAt?: Date;
     createdByName?: string | undefined;
     items?: ResponsePurchaseOrderItemJson[] | undefined;
@@ -4076,6 +5081,8 @@ export class ResponseReplenishmentItemJson implements IResponseReplenishmentItem
     suggestedQty?: number;
     isCritical?: boolean;
     unitPrice?: number;
+    warehouseId?: number;
+    warehouseName?: string | undefined;
 
     constructor(data?: IResponseReplenishmentItemJson) {
         if (data) {
@@ -4100,6 +5107,8 @@ export class ResponseReplenishmentItemJson implements IResponseReplenishmentItem
             this.suggestedQty = _data["suggestedQty"];
             this.isCritical = _data["isCritical"];
             this.unitPrice = _data["unitPrice"];
+            this.warehouseId = _data["warehouseId"];
+            this.warehouseName = _data["warehouseName"];
         }
     }
 
@@ -4124,6 +5133,8 @@ export class ResponseReplenishmentItemJson implements IResponseReplenishmentItem
         data["suggestedQty"] = this.suggestedQty;
         data["isCritical"] = this.isCritical;
         data["unitPrice"] = this.unitPrice;
+        data["warehouseId"] = this.warehouseId;
+        data["warehouseName"] = this.warehouseName;
         return data;
     }
 }
@@ -4141,6 +5152,8 @@ export interface IResponseReplenishmentItemJson {
     suggestedQty?: number;
     isCritical?: boolean;
     unitPrice?: number;
+    warehouseId?: number;
+    warehouseName?: string | undefined;
 }
 
 export class ResponseReportsJson implements IResponseReportsJson {
@@ -4209,46 +5222,6 @@ export interface IResponseReportsJson {
     pendingPurchaseOrders?: number;
     recentOrders?: ResponseRecentPurchaseOrderJson[] | undefined;
     topSuppliers?: ResponseTopSupplierJson[] | undefined;
-}
-
-export class ResponseShortUserJson implements IResponseShortUserJson {
-    id?: number;
-    name?: string | undefined;
-
-    constructor(data?: IResponseShortUserJson) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.name = _data["name"];
-        }
-    }
-
-    static fromJS(data: any): ResponseShortUserJson {
-        data = typeof data === 'object' ? data : {};
-        let result = new ResponseShortUserJson();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["name"] = this.name;
-        return data;
-    }
-}
-
-export interface IResponseShortUserJson {
-    id?: number;
-    name?: string | undefined;
 }
 
 export class ResponseStockItemJson implements IResponseStockItemJson {
@@ -4503,9 +5476,67 @@ export interface IResponseTopSupplierJson {
     totalPurchased?: number;
 }
 
+export class ResponseUserListItemJson implements IResponseUserListItemJson {
+    id?: number;
+    name?: string | undefined;
+    email?: string | undefined;
+    role?: string | undefined;
+    active?: boolean;
+    createdOn?: Date;
+
+    constructor(data?: IResponseUserListItemJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.role = _data["role"];
+            this.active = _data["active"];
+            this.createdOn = _data["createdOn"] ? new Date(_data["createdOn"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ResponseUserListItemJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseUserListItemJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["role"] = this.role;
+        data["active"] = this.active;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IResponseUserListItemJson {
+    id?: number;
+    name?: string | undefined;
+    email?: string | undefined;
+    role?: string | undefined;
+    active?: boolean;
+    createdOn?: Date;
+}
+
 export class ResponseUserProfileJson implements IResponseUserProfileJson {
     name?: string | undefined;
     email?: string | undefined;
+    role?: string | undefined;
+    createdAt?: Date;
 
     constructor(data?: IResponseUserProfileJson) {
         if (data) {
@@ -4520,6 +5551,8 @@ export class ResponseUserProfileJson implements IResponseUserProfileJson {
         if (_data) {
             this.name = _data["name"];
             this.email = _data["email"];
+            this.role = _data["role"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : undefined as any;
         }
     }
 
@@ -4534,6 +5567,8 @@ export class ResponseUserProfileJson implements IResponseUserProfileJson {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["email"] = this.email;
+        data["role"] = this.role;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : undefined as any;
         return data;
     }
 }
@@ -4541,6 +5576,8 @@ export class ResponseUserProfileJson implements IResponseUserProfileJson {
 export interface IResponseUserProfileJson {
     name?: string | undefined;
     email?: string | undefined;
+    role?: string | undefined;
+    createdAt?: Date;
 }
 
 export class ResponseWarehouseJson implements IResponseWarehouseJson {
@@ -4621,6 +5658,62 @@ export interface IResponseWarehouseJson {
     updatedByUserId?: number | undefined;
     updatedByName?: string | undefined;
     updatedAt?: Date | undefined;
+}
+
+export class ResponseWarehouseStockItemJson implements IResponseWarehouseStockItemJson {
+    productId?: number;
+    sku?: string | undefined;
+    productName?: string | undefined;
+    quantity?: number;
+    reorderPoint?: number;
+    lastPurchasePrice?: number;
+
+    constructor(data?: IResponseWarehouseStockItemJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.sku = _data["sku"];
+            this.productName = _data["productName"];
+            this.quantity = _data["quantity"];
+            this.reorderPoint = _data["reorderPoint"];
+            this.lastPurchasePrice = _data["lastPurchasePrice"];
+        }
+    }
+
+    static fromJS(data: any): ResponseWarehouseStockItemJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseWarehouseStockItemJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["sku"] = this.sku;
+        data["productName"] = this.productName;
+        data["quantity"] = this.quantity;
+        data["reorderPoint"] = this.reorderPoint;
+        data["lastPurchasePrice"] = this.lastPurchasePrice;
+        return data;
+    }
+}
+
+export interface IResponseWarehouseStockItemJson {
+    productId?: number;
+    sku?: string | undefined;
+    productName?: string | undefined;
+    quantity?: number;
+    reorderPoint?: number;
+    lastPurchasePrice?: number;
 }
 
 export class SwaggerException extends Error {

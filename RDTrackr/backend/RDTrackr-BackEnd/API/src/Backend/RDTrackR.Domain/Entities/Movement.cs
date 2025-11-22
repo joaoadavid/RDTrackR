@@ -11,9 +11,7 @@ namespace RDTrackR.Domain.Entities
         public long WarehouseId { get; set; }
         public Warehouse Warehouse { get; set; } = null!;
         public MovementType Type { get; set; }
-        public decimal Quantity { get; set; }
-        public DateTime CreatedAt { get; set; }
-
+        public int Quantity { get; set; }
         public long CreatedByUserId { get; set; }
 
         [ForeignKey(nameof(CreatedByUserId))]

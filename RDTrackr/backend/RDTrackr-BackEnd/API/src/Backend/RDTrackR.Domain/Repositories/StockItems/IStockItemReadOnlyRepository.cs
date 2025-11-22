@@ -8,5 +8,6 @@ namespace RDTrackR.Domain.Repositories.StockItems
         Task<StockItem?> GetByIdAsync(long id);
         Task<StockItem?> GetByProductAndWarehouseAsync(long productId, long warehouseId);
         Task<List<StockItem>> GetReplenishmentCandidatesAsync(User user);
+        Task<List<StockItem>> GetByWarehouseAsync(long warehouseId, User user);
     }
 }

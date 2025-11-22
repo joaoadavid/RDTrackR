@@ -18,6 +18,7 @@ namespace CommonTestUtilities.PurchaseOrders
             var order = new PurchaseOrder
             {
                 SupplierId = supplierId ?? faker.Random.Long(1, 100),
+                WarehouseId = faker.Random.Long(1, 10),
                 CreatedByUserId = createdByUserId ?? faker.Random.Long(1, 100),
                 Status = status,
                 CreatedAt = DateTime.UtcNow,
@@ -29,7 +30,7 @@ namespace CommonTestUtilities.PurchaseOrders
                 order.Items.Add(new PurchaseOrderItem
                 {
                     ProductId = productId ?? faker.Random.Long(1, 1000), // <--- agora alinhado!
-                    Quantity = faker.Random.Decimal(1, 50),
+                    Quantity = faker.Random.Int(1, 50),
                     UnitPrice = faker.Random.Decimal(5, 500)
                 });
             }

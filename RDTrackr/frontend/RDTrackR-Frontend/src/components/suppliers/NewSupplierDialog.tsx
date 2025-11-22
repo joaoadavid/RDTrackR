@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,14 +10,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { RequestRegisterSupplierJson } from "@/generated/apiClient";
-import { api } from "@/lib/api";
 
 interface NewSupplierDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (supplier: any) => void;
+  onCreate: (form: any) => void; // apenas devolve form para o pai
 }
 
 export function NewSupplierDialog({
@@ -25,7 +22,6 @@ export function NewSupplierDialog({
   onOpenChange,
   onCreate,
 }: NewSupplierDialogProps) {
-  const { toast } = useToast();
   const [form, setForm] = useState({
     name: "",
     contact: "",
@@ -34,21 +30,23 @@ export function NewSupplierDialog({
     address: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Resetar form quando o modal fechar
+  useEffect(() => {
+    if (!open) {
+      setForm({
+        name: "",
+        contact: "",
+        email: "",
+        phone: "",
+        address: "",
+      });
+    }
+  }, [open]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const dto = RequestRegisterSupplierJson.fromJS(form);
-
-    const created = await api.supplierPOST(dto);
-
-    onCreate(created);
-    toast({
-      title: "Criado",
-      description: `O fornecedor "${created.name}" foi adicionado.`,
-    });
-
-    setForm({ name: "", contact: "", email: "", phone: "", address: "" });
-    onOpenChange(false);
+    onCreate(form); // devolve para o pai
+    onOpenChange(false); // fecha modal
   };
 
   return (

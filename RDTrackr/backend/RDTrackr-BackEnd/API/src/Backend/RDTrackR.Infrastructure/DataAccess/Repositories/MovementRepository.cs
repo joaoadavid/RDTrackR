@@ -24,7 +24,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .Include(m => m.Product)
                 .Include(m => m.Warehouse)
                 .Include(m => m.CreatedBy)
-                .OrderByDescending(m => m.CreatedAt)
+                .OrderByDescending(m => m.CreatedOn)
                 .ToListAsync();
         }
 
@@ -47,7 +47,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .Include(m => m.Warehouse)
                 .Include(m => m.CreatedBy)
                 .Where(m => m.Type.ToString().ToUpper() == type.ToUpper()!)
-                .OrderByDescending(m => m.CreatedAt)
+                .OrderByDescending(m => m.CreatedOn)
                 .ToListAsync();
         }
 
@@ -67,13 +67,13 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 query = query.Where(m => m.Type == type.Value);
 
             if (startDate.HasValue)
-                query = query.Where(m => m.CreatedAt >= startDate.Value);
+                query = query.Where(m => m.CreatedOn >= startDate.Value);
 
             if (endDate.HasValue)
-                query = query.Where(m => m.CreatedAt <= endDate.Value);
+                query = query.Where(m => m.CreatedOn <= endDate.Value);
 
             return await query
-                .OrderByDescending(m => m.CreatedAt)
+                .OrderByDescending(m => m.CreatedOn)
                 .AsNoTracking()
                 .ToListAsync();
         }

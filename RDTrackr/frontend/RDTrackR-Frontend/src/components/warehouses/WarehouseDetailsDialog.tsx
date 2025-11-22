@@ -1,0 +1,102 @@
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { ResponseWarehouseStockItemJson } from "@/generated/apiClient";
+
+interface WarehouseDetailsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  warehouseId: number | null;
+  warehouseName: string;
+}
+
+export function WarehouseDetailsDialog({
+  open,
+  onOpenChange,
+  warehouseId,
+  warehouseName,
+}: WarehouseDetailsDialogProps) {
+  const { toast } = useToast();
+  const [items, setItems] = useState<ResponseWarehouseStockItemJson[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !warehouseId) return;
+
+    setLoading(true);
+
+    api
+      .itemsAll(warehouseId)
+      .then(setItems)
+      .catch(() => {
+        toast({
+          title: "Erro ao carregar itens",
+          description: "Não foi possível obter os produtos deste depósito.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [open, warehouseId]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Itens do Depósito • {warehouseName}</DialogTitle>
+        </DialogHeader>
+
+        {loading ? (
+          <p className="py-6 text-center text-muted-foreground">
+            Carregando...
+          </p>
+        ) : items.length === 0 ? (
+          <p className="py-6 text-center text-muted-foreground">
+            Este depósito não possui itens.
+          </p>
+        ) : (
+          <div className="rounded-lg border mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Quantidade</TableHead>
+                  <TableHead>Reorder Point</TableHead>
+                  <TableHead>Último Preço</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {items.map((i) => (
+                  <TableRow key={i.productId}>
+                    <TableCell>{i.sku}</TableCell>
+                    <TableCell>{i.productName}</TableCell>
+                    <TableCell>{i.quantity}</TableCell>
+                    <TableCell>{i.reorderPoint}</TableCell>
+                    <TableCell>
+                      R$ {i.lastPurchasePrice?.toFixed(2) ?? "0.00"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

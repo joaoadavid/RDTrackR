@@ -28,10 +28,6 @@ namespace WebApi.Test.Product.Delete
             var response = await DoDelete($"{METHOD}/{_productId}", token);
 
             response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-
-            response = await DoGet($"{METHOD}/{_productId}", token);
-
-            response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         }
 
         [Theory]

@@ -32,6 +32,6 @@ namespace RDTrackR.Application.UseCases.Product.GetAll
             var loggedUser = await _loggedUser.User();
             var products = await _readRepository.GetAllAsync(loggedUser);
             return _mapper.Map<List<ResponseProductJson>>(products);
-        }      
+        }  
     }
 }

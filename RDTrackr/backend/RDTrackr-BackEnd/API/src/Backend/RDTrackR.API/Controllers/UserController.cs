@@ -6,6 +6,7 @@ using MyRecipeBook.Application.UseCases.User.Register;
 using MyRecipeBook.Application.UseCases.User.Update;
 using MyRecipeBook.Communication.Responses;
 using RDTrackR.API.Attributes;
+using RDTrackR.Application.UseCases.User.GetAll;
 using RDTrackR.Communication.Requests.Password;
 using RDTrackR.Communication.Requests.User;
 using RDTrackR.Communication.Responses.Error;
@@ -16,6 +17,7 @@ namespace RDTrackR.API.Controllers
     public class UserController : RDTrackRBaseController
     {
         [HttpPost]
+        [AuthenticatedUser("admin")]
         [ProducesResponseType(typeof(ResponseRegisterUserJson), StatusCodes.Status201Created)]
         public async Task<IActionResult> Register(
             [FromServices] IRegisterUserUseCase useCase,
@@ -27,9 +29,20 @@ namespace RDTrackR.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(ResponseUserProfileJson), StatusCodes.Status200OK)]
-        [AuthenticatedUser]
+        [AuthenticatedUser("admin")]
         public async Task<IActionResult> GetUserProfile(
             [FromServices] IGetUserProfileUseCase useCase)
+        {
+            var result = await useCase.Execute();
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("all-users")]
+        [ProducesResponseType(typeof(ResponseUserProfileJson), StatusCodes.Status200OK)]
+        [AuthenticatedUser("admin")]
+        public async Task<IActionResult> GetAllUserProfile(
+            [FromServices] IGetAllUserProfileUseCase useCase)
         {
             var result = await useCase.Execute();
             return Ok(result);
@@ -38,7 +51,7 @@ namespace RDTrackR.API.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ResponseErrorJson), StatusCodes.Status400BadRequest)]
-        [AuthenticatedUser]
+        [AuthenticatedUser("admin")]
         public async Task<IActionResult> UpdateUser(
            [FromServices] IUpdateUserUseCase useCase,
            [FromBody] RequestUpdateUserJson request)
@@ -61,7 +74,7 @@ namespace RDTrackR.API.Controllers
 
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [AuthenticatedUser]
+        [AuthenticatedUser("admin")]
         public async Task<IActionResult> Delete(
           [FromServices] IRequestDeleteUserUseCase useCase)
         {

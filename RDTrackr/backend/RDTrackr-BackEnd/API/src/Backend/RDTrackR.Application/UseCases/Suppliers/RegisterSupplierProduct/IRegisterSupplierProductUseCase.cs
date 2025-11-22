@@ -1,7 +1,7 @@
 ﻿using RDTrackR.Communication.Requests.Supplier;
 using RDTrackR.Communication.Responses.Supplier;
 
-namespace RDTrackR.Application.UseCases.Suppliers.Register
+namespace RDTrackR.Application.UseCases.Suppliers.RegisterSupplierProduct
 {
     public interface IRegisterSupplierProductUseCase
     {

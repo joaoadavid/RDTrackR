@@ -6,7 +6,7 @@
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public Guid UserIdentifier { get; set; } = Guid.NewGuid();
-        public string Role { get; set; } = "Admin";
+        public string Role { get; set; } = "User";
     }
 
 }

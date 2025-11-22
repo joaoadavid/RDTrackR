@@ -3,7 +3,7 @@
     public class ResponsePurchaseOrderItemJson
     {
         public string ProductName { get; set; } = null!;
-        public decimal Quantity { get; set; }
+        public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
     }
 }

@@ -16,7 +16,8 @@ namespace RDTrackR.API.Controllers
     {
         [HttpGet]
         [ProducesResponseType(typeof(List<ResponseWarehouseJson>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll([FromServices] IGetAllWarehousesUseCase useCase)
+        public async Task<IActionResult> GetAll(
+            [FromServices] IGetAllWarehousesUseCase useCase)
         {
             var result = await useCase.Execute();
             return Ok(result);
@@ -66,5 +67,15 @@ namespace RDTrackR.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id:long}/items")]
+        [ProducesResponseType(typeof(List<ResponseWarehouseStockItemJson>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetItems(
+        long id,
+        [FromServices] IGetWarehouseItemsUseCase useCase)
+        {
+            var result = await useCase.Execute(id);
+            return Ok(result);
+        }
     }
 }

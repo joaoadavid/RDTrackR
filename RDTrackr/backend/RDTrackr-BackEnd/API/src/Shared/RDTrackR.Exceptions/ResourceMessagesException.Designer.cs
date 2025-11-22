@@ -61,6 +61,15 @@ namespace RDTrackR.Exceptions {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Only administrators can create users..
+        /// </summary>
+        public static string ADMIN_CREATE_USER {
+            get {
+                return ResourceManager.GetString("ADMIN_CREATE_USER", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The recipe must contain at least one ingredient..
         /// </summary>
         public static string AT_LEAST_ONE_INGREDIENT {
@@ -336,6 +345,177 @@ namespace RDTrackR.Exceptions {
         public static string ONLY_IMAGES_ACCEPTED {
             get {
                 return ResourceManager.GetString("ONLY_IMAGES_ACCEPTED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The order has already been cancelled..
+        /// </summary>
+        public static string ORDER_ALREADY_CANCELLED {
+            get {
+                return ResourceManager.GetString("ORDER_ALREADY_CANCELLED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The order has already been marked as paid..
+        /// </summary>
+        public static string ORDER_ALREADY_PAID {
+            get {
+                return ResourceManager.GetString("ORDER_ALREADY_PAID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The order has already been shipped..
+        /// </summary>
+        public static string ORDER_ALREADY_SHIPPED {
+            get {
+                return ResourceManager.GetString("ORDER_ALREADY_SHIPPED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot cancel an order that has already been shipped..
+        /// </summary>
+        public static string ORDER_CANNOT_CANCEL_SHIPPED {
+            get {
+                return ResourceManager.GetString("ORDER_CANNOT_CANCEL_SHIPPED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot pay a cancelled order..
+        /// </summary>
+        public static string ORDER_CANNOT_PAY_CANCELLED {
+            get {
+                return ResourceManager.GetString("ORDER_CANNOT_PAY_CANCELLED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot pay an order that has already been shipped..
+        /// </summary>
+        public static string ORDER_CANNOT_PAY_SHIPPED {
+            get {
+                return ResourceManager.GetString("ORDER_CANNOT_PAY_SHIPPED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Order must be paid before it can be shipped..
+        /// </summary>
+        public static string ORDER_CANNOT_SHIP_NOT_PAID {
+            get {
+                return ResourceManager.GetString("ORDER_CANNOT_SHIP_NOT_PAID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Customer name must have at least 3 characters..
+        /// </summary>
+        public static string ORDER_CUSTOMER_NAME_MIN_LENGTH {
+            get {
+                return ResourceManager.GetString("ORDER_CUSTOMER_NAME_MIN_LENGTH", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The order must contain at least one item..
+        /// </summary>
+        public static string ORDER_EMPTY_ITEMS {
+            get {
+                return ResourceManager.GetString("ORDER_EMPTY_ITEMS", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Customer name is required.
+        /// </summary>
+        public static string ORDER_INVALID_CUSTOMER_NAME {
+            get {
+                return ResourceManager.GetString("ORDER_INVALID_CUSTOMER_NAME", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The order total must be greater than zero..
+        /// </summary>
+        public static string ORDER_INVALID_TOTAL {
+            get {
+                return ResourceManager.GetString("ORDER_INVALID_TOTAL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Item price must be greater than zero..
+        /// </summary>
+        public static string ORDER_ITEM_INVALID_PRICE {
+            get {
+                return ResourceManager.GetString("ORDER_ITEM_INVALID_PRICE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Item quantity must be greater than zero..
+        /// </summary>
+        public static string ORDER_ITEM_INVALID_QUANTITY {
+            get {
+                return ResourceManager.GetString("ORDER_ITEM_INVALID_QUANTITY", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The order must contain at least one item..
+        /// </summary>
+        public static string ORDER_ITEMS_REQUIRED {
+            get {
+                return ResourceManager.GetString("ORDER_ITEMS_REQUIRED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Order not found. .
+        /// </summary>
+        public static string ORDER_NOT_FOUND {
+            get {
+                return ResourceManager.GetString("ORDER_NOT_FOUND", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Insufficient stock for the product..
+        /// </summary>
+        public static string ORDER_OUT_OF_STOCK {
+            get {
+                return ResourceManager.GetString("ORDER_OUT_OF_STOCK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Product not found..
+        /// </summary>
+        public static string ORDER_PRODUCT_NOT_FOUND {
+            get {
+                return ResourceManager.GetString("ORDER_PRODUCT_NOT_FOUND", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid status transition for this order..
+        /// </summary>
+        public static string ORDER_STATUS_INVALID_TRANSITION {
+            get {
+                return ResourceManager.GetString("ORDER_STATUS_INVALID_TRANSITION", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error reverting stock for cancelled order..
+        /// </summary>
+        public static string ORDER_STOCK_REVERT_ERROR {
+            get {
+                return ResourceManager.GetString("ORDER_STOCK_REVERT_ERROR", resourceCulture);
             }
         }
         
@@ -660,6 +840,15 @@ namespace RDTrackR.Exceptions {
         public static string SUPPLIER_NOT_FOUND {
             get {
                 return ResourceManager.GetString("SUPPLIER_NOT_FOUND", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Supplier product not found..
+        /// </summary>
+        public static string SUPPLIER_PRODUCT_NOT_FOUND {
+            get {
+                return ResourceManager.GetString("SUPPLIER_PRODUCT_NOT_FOUND", resourceCulture);
             }
         }
         

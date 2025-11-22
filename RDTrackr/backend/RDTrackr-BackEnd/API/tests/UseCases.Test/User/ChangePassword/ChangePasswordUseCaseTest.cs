@@ -66,12 +66,27 @@ namespace UseCases.Test.User.ChangePassword
 
         private ChangePasswordUseCase CreateUseCase(RDTrackR.Domain.Entities.User user)
         {
-            var unityOfWork = UnitOfWorkBuilder.Build();
-            var userUpdateRepository = new UserUpdateOnlyRepositoryBuilder().GetById(user).Build();
-            var loggedUser = LoggedUserBuilder.Build(user);
-            var passwordEncripter = PasswordEncripterBuilder.Build();            
+            var unitOfWork = UnitOfWorkBuilder.Build();
 
-            return new ChangePasswordUseCase(loggedUser, userUpdateRepository, passwordEncripter, unityOfWork);
+            var userReadOnlyRepository = new UserReadOnlyRepositoryBuilder()
+                .GetById(user)
+                .Build();
+
+            var userUpdateOnlyRepository = new UserUpdateOnlyRepositoryBuilder()
+                .Build();
+
+            var loggedUser = LoggedUserBuilder.Build(user);
+
+            var passwordEncripter = PasswordEncripterBuilder.Build();
+
+            return new ChangePasswordUseCase(
+                loggedUser,
+                userReadOnlyRepository,
+                userUpdateOnlyRepository,
+                passwordEncripter,
+                unitOfWork
+            );
         }
+
     }
 }

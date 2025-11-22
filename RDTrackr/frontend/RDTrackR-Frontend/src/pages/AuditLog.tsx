@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import {
   Card,
   CardContent,
@@ -26,7 +26,11 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { ResponseAuditLogJson } from "@/generated/apiClient";
 
+// ========================================
+// 🔥 Mapa de tipos (não muda nada no layout)
+// ========================================
 const typeMap = {
   CREATE: { label: "Criação", variant: "default" as const },
   UPDATE: { label: "Atualização", variant: "secondary" as const },
@@ -34,24 +38,40 @@ const typeMap = {
   LOGIN: { label: "Login", variant: "outline" as const },
 };
 
+// ========================================
+// 🔄 Debounce avançado (melhor UX)
+// ========================================
+function useDebounce(value: string, delay = 350) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function AuditLog() {
   const { toast } = useToast();
 
-  const [logs, setLogs] = useState<any[]>([]);
-  const [filter, setFilter] = useState<string>("all");
+  const [logs, setLogs] = useState<ResponseAuditLogJson[]>([]);
+  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ===========================
-  // 🔥 Função que busca logs da API
-  // ===========================
-  async function loadLogs() {
+  const debouncedSearch = useDebounce(search, 350);
+
+  // ========================================
+  // 🔥 Função principal de carregamento
+  // ========================================
+  const loadLogs = useCallback(async () => {
     setLoading(true);
 
     try {
       const result = await api.logs(
         filter === "all" ? undefined : filter,
-        search || undefined
+        debouncedSearch || undefined
       );
 
       setLogs(Array.isArray(result) ? result : []);
@@ -70,18 +90,30 @@ export default function AuditLog() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter, debouncedSearch, toast]);
 
-  // ===========================
-  // 🔄 Atualiza ao trocar filtro ou pesquisa
-  // ===========================
+  // ========================================
+  // 🔄 Atualiza automaticamente
+  // ========================================
   useEffect(() => {
-    const delay = setTimeout(() => loadLogs(), 300); // debounce da busca
-    return () => clearTimeout(delay);
-  }, [filter, search]);
+    loadLogs();
+  }, [loadLogs]);
+
+  // ========================================
+  // 🦴 Skeleton Loader (UX PROFISSIONAL)
+  // ========================================
+  const renderSkeleton = () => (
+    <TableRow>
+      <TableCell className="animate-pulse bg-muted/40 h-6 rounded"></TableCell>
+      <TableCell className="animate-pulse bg-muted/40 h-6 rounded"></TableCell>
+      <TableCell className="animate-pulse bg-muted/40 h-6 rounded"></TableCell>
+      <TableCell className="animate-pulse bg-muted/40 h-6 rounded"></TableCell>
+    </TableRow>
+  );
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Auditoria</h2>
@@ -91,6 +123,7 @@ export default function AuditLog() {
         </div>
       </div>
 
+      {/* Card Principal */}
       <Card>
         <CardHeader>
           <CardTitle>Log de Auditoria</CardTitle>
@@ -100,7 +133,9 @@ export default function AuditLog() {
         </CardHeader>
 
         <CardContent>
+          {/* Filtros */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+            {/* Pesquisa */}
             <div className="flex items-center w-full sm:w-1/2 relative">
               <Search className="absolute left-2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -111,6 +146,7 @@ export default function AuditLog() {
               />
             </div>
 
+            {/* Select Tipo */}
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Tipo de ação" />
@@ -125,49 +161,58 @@ export default function AuditLog() {
             </Select>
           </div>
 
-          {loading ? (
-            <div className="text-center py-6 text-muted-foreground">
-              Carregando logs...
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Ação</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log, idx) => (
+          {/* Tabela */}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Ação</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Data</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {/* Skeleton */}
+              {loading &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <Fragment key={i}>{renderSkeleton()}</Fragment>
+                ))}
+
+              {/* Dados */}
+              {!loading &&
+                logs.map((log, idx) => (
                   <TableRow key={idx}>
-                    <TableCell className="font-medium">
-                      {log.userName}
-                    </TableCell>
+                    <TableCell className="font-medium">{log.user}</TableCell>
                     <TableCell>{log.action}</TableCell>
+
                     <TableCell>
                       <Badge variant={typeMap[log.type].variant}>
                         {typeMap[log.type].label}
                       </Badge>
                     </TableCell>
-                    <TableCell>{log.createdAt}</TableCell>
+
+                    <TableCell>
+                      {log.date
+                        ? new Date(log.date).toLocaleString("pt-BR")
+                        : ""}
+                    </TableCell>
                   </TableRow>
                 ))}
 
-                {logs.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-muted-foreground py-6"
-                    >
-                      Nenhum registro encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
+              {/* Vazio */}
+              {!loading && logs.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground py-6"
+                  >
+                    Nenhum registro encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

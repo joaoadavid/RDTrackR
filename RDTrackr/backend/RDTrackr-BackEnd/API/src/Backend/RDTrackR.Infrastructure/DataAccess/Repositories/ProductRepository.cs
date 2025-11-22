@@ -34,8 +34,9 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             return await _context.Products
                 .AsNoTracking()
-                .Where(p => p.CreatedByUserId == user.Id)
+                .Where(p => p.OrganizationId == user.OrganizationId && p.Active == true)
                 .Include(p => p.CreatedBy)
+                .Include(p => p.StockItems)
                 .ToListAsync();
         }
 
@@ -46,12 +47,17 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
 
         public async Task<Product?> GetByIdAsync(long id,User user)
         {
-            return await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.CreatedByUserId == user.Id && p.OrganizationId == user.OrganizationId);
+            return await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.OrganizationId == user.OrganizationId);
         }
 
         public async Task<bool> ExistsActiveProductWithSku(string sku)
         {
             return await _context.Products.AsNoTracking().AnyAsync(p => p.Sku == sku && p.Active);
+        }
+
+        public async Task<bool> Exists(long id)
+        {
+            return await _context.Products.AsNoTracking().AnyAsync(p => p.Id == id && p.Active);
         }
     }
 }

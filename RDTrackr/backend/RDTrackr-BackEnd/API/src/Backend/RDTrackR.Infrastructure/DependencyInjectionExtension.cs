@@ -14,12 +14,14 @@ using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Audit;
 using RDTrackR.Domain.Repositories.Movements;
 using RDTrackR.Domain.Repositories.Notifications;
+using RDTrackR.Domain.Repositories.Orders;
 using RDTrackR.Domain.Repositories.Organization;
 using RDTrackR.Domain.Repositories.Password;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.PurchaseOrders;
 using RDTrackR.Domain.Repositories.SalesOrders;
 using RDTrackR.Domain.Repositories.StockItems;
+using RDTrackR.Domain.Repositories.SupplierProducts;
 using RDTrackR.Domain.Repositories.Suppliers;
 using RDTrackR.Domain.Repositories.Users;
 using RDTrackR.Domain.Repositories.Warehouses;
@@ -65,7 +67,9 @@ namespace RDTrackR.Infrastructure
             services.AddAzureStorage(configuration);
             AddRefreshTokenGenerator(services);
             AddQueues(services, configuration);
+            AddSupplierProducts(services);
             AddAuditService(services);
+            AddOrders(services);
             //Teste de integração
             if (configuration.IsUnitTestEnviroment())
                 return;
@@ -101,9 +105,9 @@ namespace RDTrackR.Infrastructure
             services.AddScoped<ICodeToPerformActionRepository, CodeToPerformActionRepository>();
             services.AddScoped<ITokenRepository, TokenRepository>();
             services.AddScoped<IProductReadOnlyRepository, ProductRepository>();
-            services.AddScoped<IProductWriteOnlyRepository, ProductRepository>(); 
+            services.AddScoped<IProductWriteOnlyRepository, ProductRepository>();
             services.AddScoped<IWarehouseReadOnlyRepository, WarehouseRepository>();
-            services.AddScoped<IWarehouseWriteOnlyRepository, WarehouseRepository >();
+            services.AddScoped<IWarehouseWriteOnlyRepository, WarehouseRepository>();
             services.AddScoped<IMovementReadOnlyRepository, MovementRepository>();
             services.AddScoped<IMovementWriteOnlyRepository, MovementRepository>();
             services.AddScoped<IStockItemReadOnlyRepository, StockItemRepository>();
@@ -210,6 +214,19 @@ namespace RDTrackR.Infrastructure
         private static void AddRefreshTokenGenerator(IServiceCollection services)
         {
             services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+        }
+
+        private static void AddOrders(IServiceCollection services)
+        {
+            services.AddScoped<IOrderWriteOnlyRepository, OrdersRepository>();
+            services.AddScoped<IOrderReadOnlyRepository, OrdersRepository>();
+            services.AddScoped<IOrderDeleteOnlyRepository, OrdersRepository>();
+        }
+
+        private static void AddSupplierProducts(IServiceCollection services)
+        {
+            services.AddScoped<ISupplierProductWriteOnlyRepository, SupplierProductRepository>();
+            services.AddScoped<ISupplierProductReadOnlyRepository, SupplierProductRepository>();
         }
     }
 }

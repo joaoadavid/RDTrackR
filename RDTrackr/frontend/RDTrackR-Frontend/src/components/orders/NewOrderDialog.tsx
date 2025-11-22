@@ -1,95 +1,192 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { api } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface NewOrderDialogProps {
+import {
+  RequestCreateOrderJson,
+  RequestCreateOrderItemJson,
+  ResponseProductJson,
+} from "@/generated/apiClient";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (order: any) => void;
+  onSuccess: () => void;
 }
 
-export function NewOrderDialog({
-  open,
-  onOpenChange,
-  onCreate,
-}: NewOrderDialogProps) {
-  const [form, setForm] = useState({ customer: "", items: "", total: "" });
+export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
+  const [products, setProducts] = useState<ResponseProductJson[]>([]);
+  const [customerName, setCustomerName] = useState("");
+  const [items, setItems] = useState<RequestCreateOrderItemJson[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    api.productAll().then(setProducts);
+  }, []);
 
-    const newOrder = {
-      id: Date.now(),
-      number: `ORD-${Date.now()}`,
-      customer: form.customer,
-      status: "PENDING",
-      items: Number(form.items),
-      total: Number(form.total),
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+  function addItem() {
+    setItems((prev) => [
+      ...prev,
+      new RequestCreateOrderItemJson({
+        productId: 0,
+        price: 0,
+        quantity: 1,
+      }),
+    ]);
+  }
 
-    onCreate(newOrder);
+  function updateItem(index: number, field: string, value: any) {
+    const clone = [...items];
+    (clone[index] as any)[field] = value;
+    setItems(clone);
+  }
+
+  // 🔢 CALCULO SUBTOTAL POR ITEM
+  const itemTotals = useMemo(
+    () => items.map((i) => i.quantity * i.price),
+    [items]
+  );
+
+  // 💰 TOTAL GERAL
+  const grandTotal = useMemo(
+    () => itemTotals.reduce((acc, t) => acc + t, 0),
+    [itemTotals]
+  );
+
+  async function handleSubmit() {
+    const payload = new RequestCreateOrderJson({
+      customerName,
+      items,
+    });
+
+    await api.ordersPOST(payload);
+    onSuccess();
     onOpenChange(false);
-    setForm({ customer: "", items: "", total: "" });
-  };
+
+    // reset
+    setCustomerName("");
+    setItems([]);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Novo Pedido</DialogTitle>
+          <DialogDescription>
+            Preencha as informações do cliente e os itens do pedido.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-6">
+          {/* CLIENTE */}
           <div className="space-y-2">
-            <Label htmlFor="customer">Cliente</Label>
+            <Label>Nome do Cliente</Label>
             <Input
-              id="customer"
-              value={form.customer}
-              onChange={(e) => setForm({ ...form, customer: e.target.value })}
-              placeholder="Nome do cliente"
-              required
+              placeholder="Ex: João Silva"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="items">Itens</Label>
-            <Input
-              id="items"
-              type="number"
-              value={form.items}
-              onChange={(e) => setForm({ ...form, items: e.target.value })}
-              placeholder="Quantidade"
-              required
-            />
+          {/* ITENS */}
+          <div className="space-y-3">
+            <Label>Itens do Pedido</Label>
+
+            {items.map((item, i) => (
+              <div
+                key={i}
+                className="border rounded-md p-3 space-y-3 bg-muted/20"
+              >
+                {/* PRODUTO */}
+                <div>
+                  <Label>Produto</Label>
+                  <Select
+                    value={String(item.productId)}
+                    onValueChange={(v) => updateItem(i, "productId", Number(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um produto" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {products.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.name} — R$ {p.price?.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* GRID QTD + PREÇO */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Quantidade</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) =>
+                        updateItem(i, "quantity", Number(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Preço Unitário</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.price}
+                      onChange={(e) =>
+                        updateItem(i, "price", Number(e.target.value))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* SUBTOTAL */}
+                <div className="text-right text-sm text-muted-foreground">
+                  Subtotal: <strong>R$ {itemTotals[i].toFixed(2)}</strong>
+                </div>
+              </div>
+            ))}
+
+            <Button variant="outline" onClick={addItem} className="w-full">
+              + Adicionar Item
+            </Button>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="total">Valor total (R$)</Label>
-            <Input
-              id="total"
-              type="number"
-              value={form.total}
-              onChange={(e) => setForm({ ...form, total: e.target.value })}
-              placeholder="0,00"
-              required
-            />
+          {/* TOTAL GERAL */}
+          <div className="text-right text-lg font-bold">
+            Total do Pedido: R$ {grandTotal.toFixed(2)}
           </div>
 
           <DialogFooter>
-            <Button type="submit" className="w-full">
-              Salvar Pedido
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
             </Button>
+            <Button onClick={handleSubmit}>Criar Pedido</Button>
           </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

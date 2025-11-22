@@ -5,6 +5,6 @@ namespace RDTrackR.Domain.Repositories.Users
     public interface IUserWriteOnlyRepository
     {
         public Task Add(User user);
-        Task UpdateAsync(User user);
+        public Task Delete(long userId);
     }
 }

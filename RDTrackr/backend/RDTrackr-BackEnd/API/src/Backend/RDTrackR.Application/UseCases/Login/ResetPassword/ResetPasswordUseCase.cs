@@ -4,6 +4,7 @@ using RDTrackR.Domain.Entities;
 using RDTrackR.Domain.Extensions;
 using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Password;
+using RDTrackR.Domain.Repositories.Users;
 using RDTrackR.Domain.Security.Cryptography;
 using RDTrackR.Domain.ValueObjects;
 using RDTrackR.Exceptions;
@@ -13,16 +14,19 @@ namespace RDTrackR.Application.UseCases.Login.ResetPassword
 {
     public class ResetPasswordUseCase : IResetPasswordUseCase
     {
-        private readonly IUserUpdateOnlyRepository _repository;
+        private readonly IUserReadOnlyRepository _repository;
+        private readonly IUserUpdateOnlyRepository _userUpdateOnlyRepository;
         private readonly IPasswordEncripter _cryptography;
         private readonly ICodeToPerformActionRepository _codeRepository;
         private readonly IUnitOfWork _unitOfWork;
-        public ResetPasswordUseCase(IUserUpdateOnlyRepository repository,
+        public ResetPasswordUseCase(IUserReadOnlyRepository repository,
+            IUserUpdateOnlyRepository userUpdateOnlyRepository,
             IPasswordEncripter cryptography,
             ICodeToPerformActionRepository codeRepository,
             IUnitOfWork unitOfWork)
         {
             _repository = repository;
+            _userUpdateOnlyRepository = userUpdateOnlyRepository;
             _cryptography = cryptography;
             _codeRepository = codeRepository;
             _unitOfWork = unitOfWork;
@@ -34,13 +38,13 @@ namespace RDTrackR.Application.UseCases.Login.ResetPassword
             if (code is null)
                 throw new ErrorOnValidationException([ResourceMessagesException.CODE_INVALID]);
 
-            var user = await _repository.GetById(code.UserId);
+            var user = await _repository.GetUserById(code.UserId);
 
             Validate(user, code, request);
 
             user.Password = _cryptography.Encrypt(request.Password);
 
-            _repository.Update(user);
+            await _userUpdateOnlyRepository.Update(user);
 
             _codeRepository.DeleteAllUserCodes(user);
 

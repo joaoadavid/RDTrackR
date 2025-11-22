@@ -42,8 +42,8 @@ namespace RDTrackR.Application.UseCases.Products.Register
 
             var loggedUser = await _loggedUser.User();
 
-            var product = _mapper.Map<Domain.Entities.Product>(request);
-
+            var product = _mapper.Map<RDTrackR.Domain.Entities.Product>(request);
+            product.LastPurchasePrice = request.Price;
             product.CreatedByUserId = loggedUser.Id;
             product.OrganizationId = loggedUser.OrganizationId;
             product.CreatedOn = DateTime.UtcNow;

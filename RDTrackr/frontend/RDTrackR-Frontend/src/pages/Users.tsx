@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, UserPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,71 +27,94 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const users = [
-  { id: 1, name: "João Silva", email: "joao@example.com", role: "admin", status: "active", createdAt: "2025-01-15" },
-  { id: 2, name: "Maria Santos", email: "maria@example.com", role: "manager", status: "active", createdAt: "2025-02-20" },
-  { id: 3, name: "Pedro Costa", email: "pedro@example.com", role: "viewer", status: "active", createdAt: "2025-03-10" },
-  { id: 4, name: "Ana Oliveira", email: "ana@example.com", role: "manager", status: "inactive", createdAt: "2025-04-05" },
-  { id: 5, name: "Carlos Souza", email: "carlos@example.com", role: "viewer", status: "active", createdAt: "2025-05-12" },
-];
+import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { EditUserDialog } from "@/components/users/EditUserDialog";
+import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 
+import { ResponseUserListItemJson } from "@/generated/apiClient";
+import { api } from "@/lib/api";
+
+// MAPS
 const roleMap = {
   admin: { label: "Admin", variant: "default" as const },
-  manager: { label: "Gerente", variant: "secondary" as const },
-  viewer: { label: "Visualizador", variant: "outline" as const },
-};
-
-const statusMap = {
-  active: { label: "Ativo", variant: "default" as const },
-  inactive: { label: "Inativo", variant: "secondary" as const },
+  user: { label: "Usuário", variant: "secondary" as const },
 };
 
 export default function Users() {
+  const [users, setUsers] = useState<ResponseUserListItemJson[]>([]);
   const [search, setSearch] = useState("");
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(search.toLowerCase()) ||
-    user.email.toLowerCase().includes(search.toLowerCase())
+  const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const [selectedUser, setSelectedUser] =
+    useState<ResponseUserListItemJson | null>(null);
+
+  // CARREGAR LISTA
+  async function loadUsers() {
+    const result = await api.adminAll();
+    setUsers(result);
+  }
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  // RECARREGAR APÓS AÇÃO
+  function handleSuccess() {
+    loadUsers();
+  }
+
+  // FILTRO
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Usuários</h2>
           <p className="text-muted-foreground">
-            Gerencie os usuários do sistema
+            Gerencie os usuários da organização
           </p>
         </div>
-        <Button>
+
+        <Button onClick={() => setAddOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Adicionar Usuário
         </Button>
       </div>
 
+      {/* CARD */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Usuários</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todos os usuários cadastrados
-          </CardDescription>
+          <CardDescription>Gerencie acesso e permissões</CardDescription>
         </CardHeader>
+
         <CardContent>
+          {/* Busca */}
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar usuários..."
+                placeholder="Buscar usuário..."
+                className="pl-8"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8"
               />
             </div>
           </div>
 
+          {/* Tabela */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -94,22 +126,29 @@ export default function Users() {
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+              {filteredUsers.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell className="font-medium">{u.name}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+
                   <TableCell>
-                    <Badge variant={roleMap[user.role as keyof typeof roleMap].variant}>
-                      {roleMap[user.role as keyof typeof roleMap].label}
+                    <Badge variant={roleMap[u.role!]?.variant}>
+                      {roleMap[u.role!]?.label}
                     </Badge>
                   </TableCell>
+
                   <TableCell>
-                    <Badge variant={statusMap[user.status as keyof typeof statusMap].variant}>
-                      {statusMap[user.status as keyof typeof statusMap].label}
+                    <Badge variant={u.active ? "default" : "secondary"}>
+                      {u.active ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{user.createdAt}</TableCell>
+
+                  <TableCell>
+                    {u.createdOn?.toLocaleDateString("pt-BR")}
+                  </TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -117,14 +156,28 @@ export default function Users() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
+
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setEditOpen(true);
+                          }}
+                        >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setDeleteOpen(true);
+                          }}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Excluir
                         </DropdownMenuItem>
@@ -137,6 +190,27 @@ export default function Users() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* MODAIS */}
+      <AddUserDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSuccess={handleSuccess}
+      />
+
+      <EditUserDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        user={selectedUser}
+        onSuccess={handleSuccess}
+      />
+
+      <DeleteUserDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        user={selectedUser}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

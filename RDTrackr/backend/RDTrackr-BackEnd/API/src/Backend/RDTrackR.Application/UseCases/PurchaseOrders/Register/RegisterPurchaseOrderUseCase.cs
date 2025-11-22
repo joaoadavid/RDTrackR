@@ -33,16 +33,18 @@ namespace RDTrackR.Application.UseCases.PurchaseOrders.Register
             var loggedUser = await _loggedUser.User();
 
             var po = _mapper.Map<PurchaseOrder>(request);
+            po.Number = request.Number;
             po.OrganizationId = loggedUser.OrganizationId;
+            po.WarehouseId = request.WarehouseId;
             po.CreatedByUserId = loggedUser.Id;
             po.Status = PurchaseOrderStatus.DRAFT;
-
+            
             foreach (var item in po.Items)
             {
                 item.OrganizationId = loggedUser.OrganizationId;
                 item.CreatedOn = DateTime.UtcNow;
             }
-
+            
             await _writeRepository.AddAsync(po);
             await _unitOfWork.Commit();
 
@@ -70,7 +72,5 @@ namespace RDTrackR.Application.UseCases.PurchaseOrders.Register
                 );
             }
         }
-
-
     }
 }

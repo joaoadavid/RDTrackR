@@ -1,4 +1,5 @@
 ﻿using CommonTestUtilities.Requests;
+using CommonTestUtilities.Tokens;
 using RDTrackR.Exceptions;
 using Shouldly;
 using System.Net;
@@ -10,15 +11,21 @@ namespace WebApi.Test.User.Register
     public class RegisterUserTest: RDTrackRClassFixture
     {
         private readonly string method = "user";
-        public RegisterUserTest(CustomWebApplicationFactory factory) : base(factory) { }
-        
+        private readonly RDTrackR.Domain.Entities.User _userIdentifier;
+
+        public RegisterUserTest(CustomWebApplicationFactory factory) : base(factory) 
+        {
+            _userIdentifier = factory.GetUser();
+        }        
 
         [Fact]
         public async Task Success()
         {
+            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+
             var request = RequestRegisterUserJsonBuilder.Build();
 
-            var response = await DoPost(method: method, request: request);
+            var response = await DoPost(method: method, request: request, token:token);
 
             response.StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -38,10 +45,12 @@ namespace WebApi.Test.User.Register
         [ClassData(typeof(CultureInlineDataTest))]
         public async Task Error_Empty_Name(string culture)
         {
+            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+
             var request = RequestRegisterUserJsonBuilder.Build();
             request.Name = string.Empty;
 
-            var response = await DoPost(method: method, request: request, culture: culture);
+            var response = await DoPost(method: method, request: request, culture: culture, token:token);
 
             response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 

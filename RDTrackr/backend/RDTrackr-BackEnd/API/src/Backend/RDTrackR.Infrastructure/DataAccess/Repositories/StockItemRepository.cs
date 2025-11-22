@@ -59,5 +59,17 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return await _context.StockItems
                 .FirstOrDefaultAsync(s => s.ProductId == productId && s.WarehouseId == warehouseId);
         }
+
+        public async Task<List<StockItem>> GetByWarehouseAsync(long warehouseId, User user)
+        {
+            return await _context.StockItems
+                .AsNoTracking()
+                .Where(s => s.WarehouseId == warehouseId &&
+                            s.OrganizationId == user.OrganizationId)
+                .Include(s => s.Product)
+                .OrderBy(s => s.Product.Name)
+                .ToListAsync();
+        }
+
     }
 }

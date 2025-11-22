@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +21,7 @@ interface EditWarehouseDialogProps {
   onOpenChange: (open: boolean) => void;
   warehouse: ResponseWarehouseJson | null;
   onUpdate: (
-    updatedEntity: ResponseWarehouseJson,
+    updated: ResponseWarehouseJson,
     dto: RequestUpdateWarehouseJson
   ) => void;
 }
@@ -41,19 +40,17 @@ export function EditWarehouseDialog({
   });
 
   useEffect(() => {
-    if (warehouse) {
-      setForm({
-        name: warehouse.name ?? "",
-        location: warehouse.location ?? "",
-        capacity: String(warehouse.capacity ?? ""),
-        items: String(warehouse.items ?? ""),
-      });
-    }
+    if (!warehouse) return;
+
+    setForm({
+      name: warehouse.name ?? "",
+      location: warehouse.location ?? "",
+      capacity: String(warehouse.capacity ?? ""),
+      items: String(warehouse.items ?? ""),
+    });
   }, [warehouse]);
 
   if (!warehouse) return null;
-
-  const { user } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +69,6 @@ export function EditWarehouseDialog({
       capacity: Number(form.capacity),
       items: Number(form.items),
       updatedAt: new Date(),
-      updatedByName: user ?? "Usuário",
     });
 
     onUpdate(updatedEntity, dto);
@@ -85,7 +81,7 @@ export function EditWarehouseDialog({
         <DialogHeader>
           <DialogTitle>Editar Depósito</DialogTitle>
           <DialogDescription>
-            Atualize as informações do depósito selecionado.
+            Atualize as informações do depósito.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +106,7 @@ export function EditWarehouseDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Capacidade Total (itens)</Label>
+              <Label>Capacidade</Label>
               <Input
                 type="number"
                 value={form.capacity}

@@ -23,6 +23,14 @@ namespace CommonTestUtilities.Repositories
                 repository => repository.GetByEmail(user.Email)).ReturnsAsync(user);
         }
 
+        public UserReadOnlyRepositoryBuilder GetById(User user)
+        {
+            _userReadOnlyRepositoryMock.Setup(
+                repository => repository.GetUserById(user.Id))
+                .ReturnsAsync(user);
+            return this;
+        }
+
         public IUserReadOnlyRepository Build()
         {
             return _userReadOnlyRepositoryMock.Object;

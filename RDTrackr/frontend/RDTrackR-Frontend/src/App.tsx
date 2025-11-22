@@ -16,7 +16,6 @@ import Home from "./pages/Home";
 import Contact from "./pages/Contact";
 import Support from "./pages/Support";
 import Register from "./pages/Register";
-import ReplenishmentInfo from "./pages/Replenishment";
 import Replenishment from "./pages/inventory/Replenishment";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -68,10 +67,7 @@ const App = () => (
               <Route path="/" element={<Home />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/support" element={<Support />} />
-              <Route
-                path="/replenishment-info"
-                element={<ReplenishmentInfo />}
-              />
+
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 

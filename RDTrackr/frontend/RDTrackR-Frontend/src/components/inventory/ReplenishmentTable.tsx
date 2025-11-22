@@ -1,7 +1,32 @@
-import { useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+// ===============================
+// TIPOS — embutidos no próprio arquivo
+// ===============================
+export interface ReplenishmentItem {
+  id: string;
+  productId: number;
+  warehouseId: number;
+  warehouseName: string;
+
+  sku: string;
+  name: string;
+  category: string;
+  uom: string;
+
+  currentStock: number;
+  reorderPoint: number;
+  dailyConsumption: number;
+  leadTime: number;
+
+  suggestedQty: number;
+
+  isCritical: boolean;
+  unitPrice: number;
+}
+
+// ===============================
+// TABELA
+// ===============================
+
 import {
   Table,
   TableBody,
@@ -10,30 +35,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
-export interface ReplenishmentItem {
-  id: string;
-  sku: string;
-  name: string;
-  category: string;
-  uom: string;
-  currentStock: number;
-  reorderPoint: number;
-  dailyConsumption: number;
-  leadTime: number;
-  suggestedQty: number;
-  isCritical: boolean;
-  unitPrice: number;
-}
-
-interface ReplenishmentTableProps {
+export interface ReplenishmentTableProps {
   items: ReplenishmentItem[];
   selectedIds: Set<string>;
   onToggleItem: (id: string) => void;
   onToggleAll: () => void;
   onSelectCritical: () => void;
   onQtyChange: (id: string, qty: number) => void;
+  isLoading?: boolean;
 }
 
 export function ReplenishmentTable({
@@ -43,96 +55,111 @@ export function ReplenishmentTable({
   onToggleAll,
   onSelectCritical,
   onQtyChange,
+  isLoading,
 }: ReplenishmentTableProps) {
-  const allSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id));
-
-  if (items.length === 0) {
-    return (
-      <Card className="p-8 text-center">
-        <p className="text-muted-foreground">Nenhum produto encontrado com os filtros selecionados.</p>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={onSelectCritical}>
-          Selecionar itens críticos
-        </Button>
-        <p className="text-sm text-muted-foreground">
-          {selectedIds.size} item(ns) selecionado(s)
-        </p>
-      </div>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-10">
+              <Checkbox
+                checked={selectedIds.size === items.length && items.length > 0}
+                onCheckedChange={onToggleAll}
+              />
+            </TableHead>
+            <TableHead>SKU</TableHead>
+            <TableHead>Produto</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead>Warehouse</TableHead>
+            <TableHead>Estoque</TableHead>
+            <TableHead>Reorder Point</TableHead>
+            <TableHead>Sugestão</TableHead>
+            <TableHead>Preço</TableHead>
+          </TableRow>
+        </TableHeader>
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={allSelected}
-                    onCheckedChange={onToggleAll}
-                    aria-label="Selecionar todos"
-                  />
-                </TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>UoM</TableHead>
-                <TableHead className="text-right">Estoque</TableHead>
-                <TableHead className="text-right">ROP</TableHead>
-                <TableHead className="text-right">Consumo/dia</TableHead>
-                <TableHead className="text-right">Lead Time</TableHead>
-                <TableHead className="text-right">Sugestão</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-6">
+                Carregando...
+              </TableCell>
+            </TableRow>
+          ) : items.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-6">
+                Nenhum item encontrado.
+              </TableCell>
+            </TableRow>
+          ) : (
+            items.map((item) => {
+              const isSelected = selectedIds.has(item.id);
+
+              return (
                 <TableRow
                   key={item.id}
-                  className={item.isCritical ? "bg-destructive/5" : ""}
+                  className={cn(
+                    "transition",
+                    item.isCritical &&
+                      "bg-red-50 hover:bg-red-100 border-l-4 border-red-600"
+                  )}
                 >
                   <TableCell>
                     <Checkbox
-                      checked={selectedIds.has(item.id)}
+                      checked={isSelected}
                       onCheckedChange={() => onToggleItem(item.id)}
-                      aria-label={`Selecionar ${item.name}`}
                     />
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{item.sku}</TableCell>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+
+                  <TableCell>{item.sku}</TableCell>
+
+                  <TableCell className="font-medium flex items-center gap-2">
+                    {item.name}
+                    {item.isCritical && (
+                      <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded">
+                        CRÍTICO
+                      </span>
+                    )}
+                  </TableCell>
+
+                  <TableCell>{item.category}</TableCell>
+
+                  <TableCell>{item.warehouseName}</TableCell>
+
+                  <TableCell
+                    className={cn(item.isCritical && "text-red-700 font-bold")}
+                  >
+                    {item.currentStock}
+                  </TableCell>
+
+                  <TableCell
+                    className={cn(item.isCritical && "text-red-700 font-bold")}
+                  >
+                    {item.reorderPoint}
+                  </TableCell>
+
                   <TableCell>
-                    <span className="text-xs px-2 py-1 rounded-full bg-muted">
-                      {item.category}
-                    </span>
-                  </TableCell>
-                  <TableCell>{item.uom}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={item.isCritical ? "text-destructive font-semibold" : ""}>
-                      {item.currentStock.toFixed(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">{item.reorderPoint.toFixed(1)}</TableCell>
-                  <TableCell className="text-right">{item.dailyConsumption.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">{item.leadTime}d</TableCell>
-                  <TableCell className="text-right">
-                    <Input
+                    <input
                       type="number"
-                      min="0"
-                      step="0.1"
+                      className={cn(
+                        "w-20 input input-bordered text-center",
+                        item.isCritical && "border-red-500 bg-red-50"
+                      )}
                       value={item.suggestedQty}
-                      onChange={(e) => onQtyChange(item.id, Number(e.target.value))}
-                      className="w-24 text-right"
+                      onChange={(e) =>
+                        onQtyChange(item.id, Number(e.target.value))
+                      }
                     />
                   </TableCell>
+
+                  <TableCell>R$ {item.unitPrice.toFixed(2)}</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -1,9 +1,9 @@
-﻿namespace MyRecipeBook.Domain.Repositories.User
+﻿using RDTrackR.Domain.Entities;
+
+namespace RDTrackR.Domain.Repositories.Users
 {
     public interface IUserUpdateOnlyRepository
     {
-        public Task <RDTrackR.Domain.Entities.User> GetById(long id);
-
-        public void Update(RDTrackR.Domain.Entities.User user);
+        Task Update(User user);
     }
 }

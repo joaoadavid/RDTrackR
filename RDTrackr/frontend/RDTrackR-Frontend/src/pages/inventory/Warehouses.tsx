@@ -5,6 +5,7 @@ import {
   Pencil,
   Trash2,
   ArrowRightLeft,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,11 +36,14 @@ import { useToast } from "@/hooks/use-toast";
 
 import {
   RequestRegisterWarehouseJson,
+  RequestUpdateWarehouseJson,
   ResponseWarehouseJson,
 } from "@/generated/apiClient";
 
 import { api } from "@/lib/api";
 import { NewWarehouseDialog } from "@/components/inventory/NewWarehouseDialog";
+import { EditWarehouseDialog } from "@/components/warehouses/EditWarehouseDialog";
+import { WarehouseDetailsDialog } from "@/components/warehouses/WarehouseDetailsDialog";
 
 export default function Warehouses() {
   const { toast } = useToast();
@@ -47,27 +51,32 @@ export default function Warehouses() {
   const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const [detailsWarehouseId, setDetailsWarehouseId] = useState<number | null>(
+    null
+  );
+  const [detailsWarehouseName, setDetailsWarehouseName] = useState("");
+
+  const [editWarehouse, setEditWarehouse] =
+    useState<ResponseWarehouseJson | null>(null);
+
+  // LOAD
   useEffect(() => {
-    const load = async () => {
-      try {
-        const result = await api.warehouseAll();
-        setWarehouses(result);
-      } catch {
+    api
+      .warehouseAll()
+      .then(setWarehouses)
+      .catch(() =>
         toast({
           title: "Erro ao carregar depósitos",
           description: "Não foi possível conectar ao servidor.",
           variant: "destructive",
-        });
-      }
-    };
-
-    load();
+        })
+      );
   }, []);
 
+  // CREATE
   const handleAddWarehouse = async (dto: RequestRegisterWarehouseJson) => {
     try {
       const created = await api.warehousePOST(dto);
-
       setWarehouses((prev) => [...prev, created]);
 
       toast({
@@ -83,50 +92,68 @@ export default function Warehouses() {
     }
   };
 
-  const handleDelete = async (id: number | string) => {
+  // UPDATE
+  const handleUpdateWarehouse = async (
+    updated: ResponseWarehouseJson,
+    dto: RequestUpdateWarehouseJson
+  ) => {
     try {
-      const idValue = Number(id ?? 0);
+      await api.warehousePUT(updated.id!, dto);
 
-      const warehouseDeleted = warehouses.find((w) => Number(w.id) === idValue);
-
-      await api.warehouseDELETE(idValue);
-
-      setWarehouses((prev) => prev.filter((w) => Number(w.id) !== idValue));
+      setWarehouses((prev) =>
+        prev.map((w) => (w.id === updated.id ? updated : w))
+      );
 
       toast({
-        title: "Depósito excluído",
-        description: `O depósito "${
-          warehouseDeleted?.name ?? "Desconhecido"
-        }" foi removido com sucesso.`,
-        variant: "destructive",
+        title: "Depósito atualizado",
+        description: `O depósito "${updated.name}" foi editado.`,
       });
-    } catch (err) {
-      console.error(err);
-
+    } catch {
       toast({
-        title: "Erro ao excluir depósito",
-        description: "Não foi possível remover o depósito. Tente novamente.",
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o depósito.",
         variant: "destructive",
       });
     }
   };
 
-  const getUtilizationColor = (utilization: number) => {
-    if (utilization >= 80) return "destructive";
-    if (utilization >= 60) return "secondary";
+  // DELETE
+  const handleDelete = async (id: number) => {
+    try {
+      await api.warehouseDELETE(id);
+
+      setWarehouses((prev) => prev.filter((w) => w.id !== id));
+
+      toast({
+        title: "Depósito removido",
+        variant: "destructive",
+      });
+    } catch {
+      toast({
+        title: "Erro ao excluir depósito",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getUtilizationColor = (u: number) => {
+    if (u >= 80) return "destructive";
+    if (u >= 60) return "secondary";
     return "default";
   };
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Depósitos</h2>
           <p className="text-muted-foreground">
             Gerencie locais de armazenamento
           </p>
         </div>
+
         <Button onClick={() => setIsDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Depósito
@@ -139,13 +166,11 @@ export default function Warehouses() {
         onCreate={handleAddWarehouse}
       />
 
-      {/* Tabela */}
+      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Depósitos</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todos os locais de estoque
-          </CardDescription>
+          <CardDescription>Visualize e gerencie o estoque</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -163,30 +188,21 @@ export default function Warehouses() {
             </TableHeader>
 
             <TableBody>
-              {warehouses.map((warehouse) => (
-                <TableRow key={warehouse.id}>
-                  <TableCell className="font-medium">
-                    {warehouse.name}
-                  </TableCell>
-
-                  <TableCell>{warehouse.location}</TableCell>
-
-                  <TableCell>{warehouse.capacity}</TableCell>
-
-                  <TableCell className="text-right">
-                    {warehouse.items}
-                  </TableCell>
+              {warehouses.map((w) => (
+                <TableRow key={w.id}>
+                  <TableCell className="font-medium">{w.name}</TableCell>
+                  <TableCell>{w.location}</TableCell>
+                  <TableCell>{w.capacity}</TableCell>
+                  <TableCell className="text-right">{w.items}</TableCell>
 
                   <TableCell>
-                    <Badge
-                      variant={getUtilizationColor(warehouse.utilization!)}
-                    >
-                      {warehouse.utilization}%
+                    <Badge variant={getUtilizationColor(w.utilization!)}>
+                      {w.utilization}%
                     </Badge>
                   </TableCell>
 
                   <TableCell>
-                    {new Date(warehouse.createdAt!).toLocaleDateString("pt-BR")}
+                    {new Date(w.createdAt!).toLocaleDateString("pt-BR")}
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -197,23 +213,30 @@ export default function Warehouses() {
                         </Button>
                       </DropdownMenuTrigger>
 
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem>
-                          <ArrowRightLeft className="mr-2 h-4 w-4" />
-                          Transferir
+                        {/* DETAILS */}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDetailsWarehouseId(w.id!);
+                            setDetailsWarehouseName(w.name ?? "");
+                          }}
+                        >
+                          <Eye className="mr-2 h-4 w-4" /> Detalhes
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem>
+                        {/* EDIT */}
+                        <DropdownMenuItem onClick={() => setEditWarehouse(w)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
 
+                        {/* DELETE */}
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => handleDelete(warehouse.id!)}
+                          onClick={() => handleDelete(w.id!)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Excluir
@@ -227,6 +250,26 @@ export default function Warehouses() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* DIALOG DETALHES */}
+      <WarehouseDetailsDialog
+        open={!!detailsWarehouseId}
+        warehouseId={detailsWarehouseId}
+        warehouseName={detailsWarehouseName}
+        onOpenChange={(open) => {
+          if (!open) setDetailsWarehouseId(null);
+        }}
+      />
+
+      {/* DIALOG EDITAR */}
+      <EditWarehouseDialog
+        open={!!editWarehouse}
+        warehouse={editWarehouse}
+        onOpenChange={(open) => {
+          if (!open) setEditWarehouse(null);
+        }}
+        onUpdate={handleUpdateWarehouse}
+      />
     </div>
   );
 }

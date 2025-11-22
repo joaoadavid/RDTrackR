@@ -22,6 +22,7 @@ import {
   RequestCreatePurchaseOrderJson,
   ResponseSupplierJson,
   ResponseSupplierProductJson,
+  ResponseWarehouseJson,
 } from "@/generated/apiClient";
 
 import { api } from "@/lib/api";
@@ -41,10 +42,15 @@ export function NewPurchaseOrderDialog({
   const { toast } = useToast();
 
   const [suppliers, setSuppliers] = useState<ResponseSupplierJson[]>([]);
+  const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
+
   const [supplierId, setSupplierId] = useState<number | null>(null);
+  const [warehouseId, setWarehouseId] = useState<number | null>(null);
+
   const [supplierProducts, setSupplierProducts] = useState<
     ResponseSupplierProductJson[]
   >([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [orderNumber, setOrderNumber] = useState("");
@@ -53,16 +59,22 @@ export function NewPurchaseOrderDialog({
     { productId: 0, quantity: 1, unitPrice: 0 },
   ]);
 
-  // 👉 Carregar fornecedores
+  // ==============================================================
+  // 🔥 Carregar fornecedores e warehouses ao abrir o modal
+  // ==============================================================
   useEffect(() => {
-    api.supplierAll().then(setSuppliers);
-  }, []);
+    if (open) {
+      api.supplierAll().then(setSuppliers);
+      api.warehouseAll().then(setWarehouses);
+    }
+  }, [open]);
 
-  // 👉 Carregar produtos do fornecedor
+  // ==============================================================
+  // 🔥 Carregar produtos do fornecedor
+  // ==============================================================
   useEffect(() => {
     if (!supplierId) return;
 
-    // reset itens ao trocar fornecedor
     setItems([{ productId: 0, quantity: 1, unitPrice: 0 }]);
 
     api
@@ -71,11 +83,15 @@ export function NewPurchaseOrderDialog({
       .catch(() =>
         toast({
           title: "Erro ao carregar produtos",
-          description: "Não foi possível carregar os produtos do fornecedor.",
+          description: "Não foi possível carregar os produtos.",
           variant: "destructive",
         })
       );
   }, [supplierId]);
+
+  function addItem() {
+    setItems((prev) => [...prev, { productId: 0, quantity: 1, unitPrice: 0 }]);
+  }
 
   function updateItem(index: number, field: string, value: any) {
     setItems((prev) =>
@@ -83,39 +99,53 @@ export function NewPurchaseOrderDialog({
     );
   }
 
-  function addItem() {
-    setItems((prev) => [...prev, { productId: 0, quantity: 1, unitPrice: 0 }]);
-  }
-
   function handleProductSelect(index: number, productId: number) {
     const p = supplierProducts.find((x) => x.productId === productId);
-
     updateItem(index, "productId", productId);
     updateItem(index, "unitPrice", p?.unitPrice ?? 0);
   }
 
-  // 👉 TOTAL por ITEM
   const itemTotals = useMemo(
     () => items.map((i) => i.quantity * i.unitPrice),
     [items]
   );
 
-  // 👉 TOTAL GERAL
   const grandTotal = useMemo(
     () => itemTotals.reduce((sum, t) => sum + t, 0),
     [itemTotals]
   );
 
+  // ==============================================================
+  // 🟢 Handle Submit — VALIDAÇÃO APRIMORADA
+  // ==============================================================
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isSubmitting) return;
-    if (!supplierId) return;
+
+    if (!supplierId) {
+      toast({
+        title: "Fornecedor obrigatório",
+        description: "Selecione um fornecedor antes de criar o pedido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!warehouseId) {
+      toast({
+        title: "Armazém obrigatório",
+        description: "Selecione um Warehouse para este pedido.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
       const dto = RequestCreatePurchaseOrderJson.fromJS({
         supplierId,
+        warehouseId, // 🔥 AGORA GARANTIDO CORRETAMENTE
         number: orderNumber,
         items,
       });
@@ -130,8 +160,9 @@ export function NewPurchaseOrderDialog({
       onCreate(created);
       onOpenChange(false);
 
-      // resetar form
+      // reset
       setSupplierId(null);
+      setWarehouseId(null);
       setOrderNumber("");
       setSupplierProducts([]);
       setItems([{ productId: 0, quantity: 1, unitPrice: 0 }]);
@@ -158,12 +189,12 @@ export function NewPurchaseOrderDialog({
         <DialogHeader>
           <DialogTitle>Novo Pedido de Compra</DialogTitle>
           <DialogDescription>
-            Preencha os dados do fornecedor e dos itens.
+            Preencha as informações do pedido abaixo.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Número do Pedido */}
+          {/* Número */}
           <div>
             <Label>Número do Pedido</Label>
             <Input
@@ -174,15 +205,15 @@ export function NewPurchaseOrderDialog({
             />
           </div>
 
-          {/* FORNECEDOR */}
+          {/* Fornecedor */}
           <div>
             <Label>Fornecedor</Label>
             <Select
-              value={supplierId?.toString()}
+              value={supplierId !== null ? supplierId.toString() : undefined}
               onValueChange={(v) => setSupplierId(Number(v))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um fornecedor" />
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
 
               <SelectContent>
@@ -195,7 +226,29 @@ export function NewPurchaseOrderDialog({
             </Select>
           </div>
 
-          {/* ITENS */}
+          {/* Warehouse */}
+          <div>
+            <Label>Armazém</Label>
+
+            <Select
+              value={warehouseId !== null ? warehouseId.toString() : undefined}
+              onValueChange={(v) => setWarehouseId(Number(v))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o armazém" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {warehouses.map((w) => (
+                  <SelectItem key={w.id} value={w.id!.toString()}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Itens */}
           <div className="space-y-3">
             <Label>Itens do Pedido</Label>
 
@@ -204,9 +257,9 @@ export function NewPurchaseOrderDialog({
                 key={index}
                 className="border p-3 rounded-md space-y-2 bg-muted/20"
               >
-                {/* PRODUTO */}
+                {/* Produto */}
                 <Select
-                  value={item.productId ? item.productId.toString() : ""}
+                  value={item.productId ? item.productId.toString() : undefined}
                   onValueChange={(v) => handleProductSelect(index, Number(v))}
                 >
                   <SelectTrigger>
@@ -225,7 +278,6 @@ export function NewPurchaseOrderDialog({
                   </SelectContent>
                 </Select>
 
-                {/* QTD E PREÇO */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Quantidade</Label>
@@ -253,7 +305,6 @@ export function NewPurchaseOrderDialog({
                   </div>
                 </div>
 
-                {/* SUBTOTAL */}
                 <div className="text-sm text-muted-foreground">
                   Subtotal: <strong>R$ {itemTotals[index].toFixed(2)}</strong>
                 </div>
@@ -270,9 +321,9 @@ export function NewPurchaseOrderDialog({
             </Button>
           </div>
 
-          {/* TOTAL GERAL */}
+          {/* Total */}
           <div className="text-right text-lg font-bold mt-2">
-            Total do Pedido: R$ {grandTotal.toFixed(2)}
+            Total: R$ {grandTotal.toFixed(2)}
           </div>
 
           <DialogFooter>

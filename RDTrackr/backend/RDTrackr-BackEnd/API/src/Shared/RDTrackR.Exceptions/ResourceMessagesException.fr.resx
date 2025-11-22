@@ -350,4 +350,67 @@ Le nom de l'entrepôt est obligatoire.</value>
   <data name="ORGANIZATION_NAME_EMPTY" xml:space="preserve">
     <value>Le nom de l'organisation ne peut pas être vide.</value>
   </data>
+  <data name="ADMIN_CREATE_USER" xml:space="preserve">
+    <value>Seuls les administrateurs peuvent créer des utilisateurs.</value>
+  </data>
+  <data name="ORDER_NOT_FOUND" xml:space="preserve">
+    <value>Commande introuvable.</value>
+  </data>
+  <data name="ORDER_ITEMS_REQUIRED" xml:space="preserve">
+    <value>La commande doit contenir au moins un article.</value>
+  </data>
+  <data name="ORDER_INVALID_CUSTOMER_NAME" xml:space="preserve">
+    <value>Le nom du client est obligatoire</value>
+  </data>
+  <data name="ORDER_ITEM_INVALID_QUANTITY" xml:space="preserve">
+    <value>La quantité de l’article doit être supérieure à zéro.</value>
+  </data>
+  <data name="ORDER_ITEM_INVALID_PRICE" xml:space="preserve">
+    <value>Le prix de l’article doit être supérieur à zéro.</value>
+  </data>
+  <data name="ORDER_PRODUCT_NOT_FOUND" xml:space="preserve">
+    <value>Produit introuvable.</value>
+  </data>
+  <data name="ORDER_OUT_OF_STOCK" xml:space="preserve">
+    <value>Stock insuffisant pour le produit.</value>
+  </data>
+  <data name="ORDER_ALREADY_PAID" xml:space="preserve">
+    <value>La commande a déjà été marquée comme payée.</value>
+  </data>
+  <data name="ORDER_ALREADY_SHIPPED" xml:space="preserve">
+    <value>La commande a déjà été expédiée.</value>
+  </data>
+  <data name="ORDER_ALREADY_CANCELLED" xml:space="preserve">
+    <value>La commande a déjà été annulée.</value>
+  </data>
+  <data name="ORDER_CANNOT_PAY_CANCELLED" xml:space="preserve">
+    <value>Impossible de payer une commande annulée.</value>
+  </data>
+  <data name="ORDER_CANNOT_PAY_SHIPPED" xml:space="preserve">
+    <value>Impossible de payer une commande déjà expédiée.</value>
+  </data>
+  <data name="ORDER_CANNOT_SHIP_NOT_PAID" xml:space="preserve">
+    <value>La commande doit être payée avant l’expédition.</value>
+  </data>
+  <data name="ORDER_CANNOT_CANCEL_SHIPPED" xml:space="preserve">
+    <value>Impossible d’annuler une commande déjà expédiée.</value>
+  </data>
+  <data name="ORDER_STOCK_REVERT_ERROR" xml:space="preserve">
+    <value>Erreur lors du retour de stock pour une commande annulée.</value>
+  </data>
+  <data name="ORDER_STATUS_INVALID_TRANSITION" xml:space="preserve">
+    <value>Transition d'état invalide pour cette commande.</value>
+  </data>
+  <data name="ORDER_EMPTY_ITEMS" xml:space="preserve">
+    <value>La commande doit contenir au moins un article.</value>
+  </data>
+  <data name="ORDER_CUSTOMER_NAME_MIN_LENGTH" xml:space="preserve">
+    <value>Le nom du client doit contenir au moins 3 caractères.</value>
+  </data>
+  <data name="ORDER_INVALID_TOTAL" xml:space="preserve">
+    <value>Le total de la commande doit être supérieur à zéro.</value>
+  </data>
+  <data name="SUPPLIER_PRODUCT_NOT_FOUND" xml:space="preserve">
+    <value>Produit fournisseur introuvable.</value>
+  </data>
 </root>

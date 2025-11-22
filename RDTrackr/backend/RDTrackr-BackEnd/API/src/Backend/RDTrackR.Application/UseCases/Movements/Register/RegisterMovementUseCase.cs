@@ -57,7 +57,8 @@ namespace RDTrackR.Application.UseCases.Movements.Register
 
             var movement = _mapper.Map<Movement>(request);
             movement.CreatedByUserId = loggedUser.Id;
-            movement.CreatedAt = DateTime.UtcNow;
+            movement.CreatedOn = DateTime.UtcNow;
+            movement.OrganizationId = loggedUser.OrganizationId;
 
             await _movementWriteRepository.AddAsync(movement);
             await UpdateStock(request, loggedUser);
@@ -82,6 +83,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
                             ProductId = request.ProductId,
                             WarehouseId = request.WarehouseId,
                             Quantity = request.Quantity,
+                            OrganizationId = loggedUser.OrganizationId,
                             CreatedByUserId = loggedUser.Id,
                             UpdatedAt = DateTime.UtcNow
                         };
@@ -89,6 +91,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
                     }
                     else
                     {
+                        stockItem.OrganizationId = loggedUser.OrganizationId;
                         stockItem.Quantity += request.Quantity;
                         stockItem.UpdatedAt = DateTime.UtcNow;
                         await _stockItemWriteRepository.UpdateAsync(stockItem);
@@ -99,6 +102,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
                     if (stockItem is null || stockItem.Quantity < request.Quantity)
                         throw new ErrorOnValidationException([ResourceMessagesException.STOCK_INSUFFICIENT]);
 
+                    stockItem.OrganizationId = loggedUser.OrganizationId;
                     stockItem.Quantity -= request.Quantity;
                     stockItem.UpdatedAt = DateTime.UtcNow;
                     await _stockItemWriteRepository.UpdateAsync(stockItem);
@@ -112,6 +116,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
                             ProductId = request.ProductId,
                             WarehouseId = request.WarehouseId,
                             Quantity = request.Quantity,
+                            OrganizationId = loggedUser.OrganizationId,
                             CreatedByUserId = loggedUser.Id,
                             UpdatedAt = DateTime.UtcNow
                         };
@@ -119,13 +124,13 @@ namespace RDTrackR.Application.UseCases.Movements.Register
                     }
                     else
                     {
+                        stockItem.OrganizationId = loggedUser.OrganizationId;
                         stockItem.Quantity = request.Quantity;
                         stockItem.UpdatedAt = DateTime.UtcNow;
                         await _stockItemWriteRepository.UpdateAsync(stockItem);
                     }
                     break;
             }
-
         }
 
         private async Task Validate(RequestRegisterMovementJson request,Domain.Entities.User user)
@@ -143,6 +148,22 @@ namespace RDTrackR.Application.UseCases.Movements.Register
 
             if (result.IsValid.IsFalse())
                 throw new ErrorOnValidationException(result.Errors.Select(e => e.ErrorMessage).Distinct().ToList());
+        }
+
+        public async Task<Movement> RegisterMovementInternal(RequestRegisterMovementJson request, Domain.Entities.User loggedUser)
+        {
+            await Validate(request, loggedUser);
+
+            var movement = _mapper.Map<Movement>(request);
+            movement.CreatedByUserId = loggedUser.Id;
+            movement.CreatedOn = DateTime.UtcNow;
+            movement.OrganizationId = loggedUser.OrganizationId;
+
+            await _movementWriteRepository.AddAsync(movement);
+
+            await UpdateStock(request, loggedUser);
+
+            return movement;
         }
     }
 }

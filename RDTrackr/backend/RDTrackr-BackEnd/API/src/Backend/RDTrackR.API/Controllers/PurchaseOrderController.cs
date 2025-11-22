@@ -43,16 +43,16 @@ namespace RDTrackR.API.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id:long}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPut("{id:long}/status")]
         public async Task<IActionResult> UpdateStatus(
-            [FromServices] IUpdatePurchaseOrderStatusUseCase useCase,
-            long id,
-            [FromBody] RequestUpdatePurchaseOrderStatusJson request)
+         long id,
+         [FromBody] RequestUpdatePurchaseOrderStatusJson request,
+         [FromServices] IUpdatePurchaseOrderStatusUseCase useCase)
         {
             await useCase.Execute(id, request);
             return NoContent();
         }
+
 
         [HttpPut("{id:long}/items")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]

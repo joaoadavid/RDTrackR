@@ -11,16 +11,16 @@ namespace RDTrackR.Application.UseCases.User.Admin
     public class AdminUpdateUserUseCase : IAdminUpdateUserUseCase
     {
         private readonly IUserReadOnlyRepository _readRepository;
-        private readonly IUserWriteOnlyRepository _writeRepository;
+        private readonly IUserUpdateOnlyRepository _updateRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public AdminUpdateUserUseCase(
             IUserReadOnlyRepository readRepository,
-            IUserWriteOnlyRepository writeRepository,
+            IUserUpdateOnlyRepository updateRepository,
             IUnitOfWork unitOfWork)
         {
             _readRepository = readRepository;
-            _writeRepository = writeRepository;
+            _updateRepository = updateRepository;
             _unitOfWork = unitOfWork;
         }
 
@@ -28,14 +28,14 @@ namespace RDTrackR.Application.UseCases.User.Admin
         {
             await Validate(id, request);
 
-            var user = await _readRepository.GetByIdAsync(id)
+            var user = await _readRepository.GetUserById(id)
                 ?? throw new NotFoundException(ResourceMessagesException.USER_NOT_FOUND);
 
             user.Name = request.Name;
             user.Email = request.Email;
             user.Active = request.Active;
 
-            await _writeRepository.UpdateAsync(user);
+            await _updateRepository.Update(user);
             await _unitOfWork.Commit();
         }
 

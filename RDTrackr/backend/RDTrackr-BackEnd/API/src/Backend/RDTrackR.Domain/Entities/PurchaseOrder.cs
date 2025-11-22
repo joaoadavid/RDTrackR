@@ -5,10 +5,13 @@ namespace RDTrackR.Domain.Entities
 {
     public class PurchaseOrder : EntityTenantBase
     {
-        public int Number { get; set; }
+        public string Number { get; set; } = string.Empty;
 
         public long SupplierId { get; set; }
         public Supplier Supplier { get; set; } = null!;
+
+        public long WarehouseId { get; set; }
+        public Warehouse Warehouse { get; set; } = null!;
 
         public PurchaseOrderStatus Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

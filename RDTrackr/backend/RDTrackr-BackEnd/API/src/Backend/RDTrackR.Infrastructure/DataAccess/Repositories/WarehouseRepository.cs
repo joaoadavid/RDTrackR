@@ -32,16 +32,37 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return await _context.Warehouses.Where(w=>w.OrganizationId == user.OrganizationId).CountAsync();
         }
 
+        //public async Task<List<Warehouse>> GetAllAsync(User user)
+        //{
+        //    return await _context.Warehouses
+        //        .AsNoTracking()
+        //        .Where(w=>w.OrganizationId == user.OrganizationId)
+        //        .Include(w => w.StockItems)
+        //        .Include(w => w.CreatedBy)
+        //        .OrderBy(w => w.Name)
+        //        .ToListAsync();
+        //}
+
         public async Task<List<Warehouse>> GetAllAsync(User user)
         {
             return await _context.Warehouses
-                .AsNoTracking()
-                .Where(w=>w.OrganizationId == user.OrganizationId)
-                .Include(w => w.StockItems)
-                .Include(w => w.CreatedBy)
-                .OrderBy(w => w.Name)
+                .Where(w => w.OrganizationId == user.OrganizationId)
+                .Select(w => new Warehouse
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    Location = w.Location,
+                    Capacity = w.Capacity,
+                    CreatedByUserId = w.CreatedByUserId,
+                    Utilization = w.Capacity == 0
+                        ? 0
+                        : (int)((double)w.StockItems.Sum(i => i.Quantity) / w.Capacity * 100),
+                    Items = w.StockItems.Sum(i => i.Quantity),       // << AQUI
+                    StockItems = w.StockItems
+                })
                 .ToListAsync();
         }
+
 
 
         public async Task<Warehouse?> GetByIdAsync(long id, User user)

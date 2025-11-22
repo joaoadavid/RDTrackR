@@ -5,7 +5,7 @@ using RDTrackR.Communication.Responses.Audit;
 
 namespace RDTrackR.API.Controllers
 {
-    [AuthenticatedUser]
+    [AuthenticatedUser("admin")]
     public class AuditLogController : RDTrackRBaseController
     {
         [HttpGet("audit/logs")]

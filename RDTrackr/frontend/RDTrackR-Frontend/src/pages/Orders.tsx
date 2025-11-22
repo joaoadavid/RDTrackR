@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, MoreHorizontal, Eye, X, Check } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { NewOrderDialog } from "@/components/orders/NewOrderDialog";
+import { OrderConfirmPaymentDialog } from "@/components/orders/OrderConfirmPaymentDialog";
+import { OrderCancelDialog } from "@/components/orders/OrderCancelDialog";
+
 import {
   Table,
   TableBody,
@@ -10,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Select,
   SelectContent,
@@ -25,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Card,
   CardContent,
@@ -32,75 +39,98 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api";
+import { ResponseOrderJson } from "@/generated/apiClient";
+import { useToast } from "@/hooks/use-toast";
 
-const mockSalesOrders = [
+// ==========================================
+// MAPA DE STATUS PARA UI (fix: variants válidos)
+// ==========================================
+const statusMap: Record<
+  string,
   {
-    id: 1,
-    number: "ORD-2025-001",
-    customer: "João Silva",
-    status: "PAID",
-    items: 3,
-    total: 4800.0,
-    createdAt: "2025-10-25",
-  },
-  {
-    id: 2,
-    number: "ORD-2025-002",
-    customer: "Maria Souza",
-    status: "PENDING",
-    items: 1,
-    total: 1650.0,
-    createdAt: "2025-10-28",
-  },
-  {
-    id: 3,
-    number: "ORD-2025-003",
-    customer: "Carlos Pereira",
-    status: "SHIPPED",
-    items: 2,
-    total: 2790.0,
-    createdAt: "2025-10-22",
-  },
-  {
-    id: 4,
-    number: "ORD-2025-004",
-    customer: "Ana Lima",
-    status: "CANCELLED",
-    items: 1,
-    total: 999.0,
-    createdAt: "2025-10-15",
-  },
-];
-
-const statusMap = {
-  PENDING: { label: "Pendente", variant: "secondary" as const },
-  PAID: { label: "Pago", variant: "default" as const },
-  SHIPPED: { label: "Enviado", variant: "outline" as const },
-  CANCELLED: { label: "Cancelado", variant: "destructive" as const },
+    label: string;
+    variant: "default" | "secondary" | "outline" | "destructive";
+  }
+> = {
+  PENDING: { label: "Pendente", variant: "secondary" },
+  PAID: { label: "Pago", variant: "default" },
+  SHIPPED: { label: "Enviado", variant: "outline" },
+  CANCELLED: { label: "Cancelado", variant: "destructive" },
 };
 
 export default function Orders() {
-  const [orders, setOrders] = useState(mockSalesOrders);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { toast } = useToast();
+
+  const [orders, setOrders] = useState<ResponseOrderJson[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const filteredOrders = orders.filter(
-    (order) => statusFilter === "all" || order.status === statusFilter
+  // Estados dos modais
+  const [selectedOrder, setSelectedOrder] = useState<ResponseOrderJson | null>(
+    null
   );
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
 
-  const handleCreateOrder = (newOrder: any) => {
-    setOrders((prev) => [...prev, newOrder]);
+  // ===============================
+  // 🔥 Carregar pedidos da API
+  // ===============================
+  const loadOrders = async () => {
+    try {
+      const result = await api.ordersAll();
+      setOrders(result);
+    } catch {
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: "Não foi possível conectar ao servidor.",
+        variant: "destructive",
+      });
+    }
   };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  // ===============================
+  // 🔥 Criar pedido
+  // ===============================
+  const handleCreateOrder = async (req: any) => {
+    try {
+      const created = await api.ordersPOST(req);
+      setOrders((prev) => [...prev, created]);
+
+      toast({
+        title: "Pedido criado",
+        description: "O pedido foi registrado com sucesso.",
+      });
+    } catch {
+      toast({
+        title: "Erro ao criar pedido",
+        description: "Verifique os dados enviados.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ===============================
+  // 🔥 Filtrar lista
+  // ===============================
+  const filteredOrders = orders.filter(
+    (o) => statusFilter === "all" || o.status === statusFilter
+  );
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            Pedidos de Clientes
-          </h2>
-          <p className="text-muted-foreground">Gerencie pedidos de venda</p>
+          <h2 className="text-3xl font-bold tracking-tight">Pedidos</h2>
+          <p className="text-muted-foreground">Gerencie pedidos de clientes</p>
         </div>
 
         <Button onClick={() => setIsDialogOpen(true)}>
@@ -109,26 +139,29 @@ export default function Orders() {
         </Button>
       </div>
 
-      {/* Modal de novo pedido */}
+      {/* Modal de criação */}
       <NewOrderDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onCreate={handleCreateOrder}
+        onSuccess={loadOrders}
       />
 
       <Card>
         <CardHeader>
           <CardTitle>Lista de Pedidos</CardTitle>
           <CardDescription>
-            Visualize e gerencie todos os pedidos de clientes
+            Visualize e gerencie todos os pedidos registrados
           </CardDescription>
         </CardHeader>
+
         <CardContent>
+          {/* Filtro */}
           <div className="mb-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
+
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="PENDING">Pendente</SelectItem>
@@ -139,6 +172,7 @@ export default function Orders() {
             </Select>
           </div>
 
+          {/* Tabela */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -151,29 +185,36 @@ export default function Orders() {
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.number}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
+                  <TableCell>{order.orderNumber}</TableCell>
+                  <TableCell>{order.customerName}</TableCell>
+
                   <TableCell>
-                    <Badge
-                      variant={
-                        statusMap[order.status as keyof typeof statusMap]
-                          .variant
-                      }
-                    >
-                      {statusMap[order.status as keyof typeof statusMap].label}
+                    <Badge variant={statusMap[order.status!].variant}>
+                      {statusMap[order.status!].label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">{order.items}</TableCell>
+
                   <TableCell className="text-right">
-                    R${" "}
-                    {order.total.toLocaleString("pt-BR", {
+                    {order.items?.length ?? 0}
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    R$
+                    {order.total?.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
                     })}
                   </TableCell>
-                  <TableCell>{order.createdAt}</TableCell>
+
+                  <TableCell>
+                    {order.createdOn
+                      ? new Date(order.createdOn).toLocaleDateString("pt-BR")
+                      : "--"}
+                  </TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -181,21 +222,36 @@ export default function Orders() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
+
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+
                         <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Detalhes
                         </DropdownMenuItem>
+
                         {order.status === "PENDING" && (
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setIsConfirmOpen(true);
+                            }}
+                          >
                             <Check className="mr-2 h-4 w-4" />
                             Marcar como Pago
                           </DropdownMenuItem>
                         )}
+
                         {order.status !== "CANCELLED" && (
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setIsCancelOpen(true);
+                            }}
+                          >
                             <X className="mr-2 h-4 w-4" />
                             Cancelar Pedido
                           </DropdownMenuItem>
@@ -205,10 +261,35 @@ export default function Orders() {
                   </TableCell>
                 </TableRow>
               ))}
+
+              {filteredOrders.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    Nenhum pedido encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* =========================== */}
+      {/* 🔥 Modais de Controle       */}
+      {/* =========================== */}
+      <OrderConfirmPaymentDialog
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        order={selectedOrder}
+        onSuccess={loadOrders}
+      />
+
+      <OrderCancelDialog
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        order={selectedOrder}
+        onSuccess={loadOrders}
+      />
     </div>
   );
 }

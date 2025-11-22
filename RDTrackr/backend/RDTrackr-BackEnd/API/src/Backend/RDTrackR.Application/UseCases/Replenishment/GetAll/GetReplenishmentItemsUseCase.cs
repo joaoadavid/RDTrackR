@@ -1,5 +1,6 @@
 ﻿using RDTrackR.Communication.Responses.Replenishment;
 using RDTrackR.Domain.Entities;
+using RDTrackR.Domain.Enums;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.StockItems;
 using RDTrackR.Domain.Services.LoggedUser;
@@ -25,7 +26,7 @@ namespace RDTrackR.Application.UseCases.Replenishment.GetAll
         public async Task<List<ResponseReplenishmentItemJson>> Execute()
         {
             var loggedUser = await _loggedUser.User();
-            var items = await _stockRepo.GetReplenishmentCandidatesAsync(loggedUser);
+            var items = await _stockRepo.GetAllAsync(loggedUser);
             return items.Select(i => new ResponseReplenishmentItemJson
             {
                 ProductId = i.Product.Id,
@@ -39,16 +40,47 @@ namespace RDTrackR.Application.UseCases.Replenishment.GetAll
                 LeadTimeDays = i.Product.LeadTimeDays,
                 SuggestedQty = CalculateSuggested(i),
                 IsCritical = i.Quantity <= i.Product.ReorderPoint,
-                UnitPrice = i.Product.LastPurchasePrice
+                UnitPrice = i.Product.LastPurchasePrice,
+                WarehouseId = i.WarehouseId,
+                WarehouseName = i.Warehouse.Name
             }).ToList();
         }
 
-        private decimal CalculateSuggested(StockItem item)
+        private int CalculateSuggested(StockItem item)
         {
-            return (item.Product.LeadTimeDays * item.Product.DailyConsumption)
-                    + item.Product.SafetyStock
-                    - item.Quantity;
+            int safetyStock = CalculateSafetyStock(item);
+
+            decimal multiplier = item.Product.Criticality switch
+            {
+                ItemCriticality.Low => 1.5m,
+                ItemCriticality.Medium => 2m,
+                ItemCriticality.High => 3m,
+                _ => 2m
+            };
+
+            int idealStock = (int)Math.Ceiling(safetyStock * multiplier);
+
+            if (item.Quantity >= idealStock)
+                return 0;
+
+            return idealStock - item.Quantity;
         }
+
+
+
+        private int CalculateSafetyStock(StockItem item)
+        {
+            var factor = item.Product.Criticality switch
+            {
+                ItemCriticality.Low => 0.20m,
+                ItemCriticality.Medium => 0.30m,
+                ItemCriticality.High => 0.40m,
+                _ => 0.30m
+            };
+
+            return (int)Math.Ceiling(item.Product.InitialStockLevel * factor);
+        }
+
     }
 
 }

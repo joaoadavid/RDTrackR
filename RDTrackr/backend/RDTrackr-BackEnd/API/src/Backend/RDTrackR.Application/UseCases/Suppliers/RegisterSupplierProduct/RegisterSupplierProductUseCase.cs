@@ -9,7 +9,7 @@ using RDTrackR.Domain.Repositories.Suppliers;
 using RDTrackR.Domain.Services.LoggedUser;
 using RDTrackR.Exceptions.ExceptionBase;
 
-namespace RDTrackR.Application.UseCases.Suppliers.Register
+namespace RDTrackR.Application.UseCases.Suppliers.RegisterSupplierProduct
 {
     public class RegisterSupplierProductUseCase : IRegisterSupplierProductUseCase
     {
@@ -19,7 +19,7 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
-        public RegisterSupplierProductUseCase(ISupplierWriteOnlyRepository repository, IProductReadOnlyRepository productRepository, 
+        public RegisterSupplierProductUseCase(ISupplierWriteOnlyRepository repository, IProductReadOnlyRepository productRepository,
             IUnitOfWork unitOfWork, ILoggedUser loggedUser, IMapper mapper)
         {
             _repository = repository;
@@ -33,7 +33,7 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
         {
             await Validate(request);
 
-            var user = await _loggedUser.User();            
+            var user = await _loggedUser.User();
 
             var supplier = _mapper.Map<SupplierProduct>(request);
             supplier.OrganizationId = user.OrganizationId;
@@ -41,7 +41,7 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
             await _repository.AddSupplierProduct(supplier);
             await _unitOfWork.Commit();
 
-            supplier.Product = await _productRepository!.GetByIdAsync(request.ProductId,user);
+            supplier.Product = await _productRepository!.GetByIdAsync(request.ProductId, user);
 
             return _mapper.Map<ResponseSupplierProductJson>(supplier);
         }

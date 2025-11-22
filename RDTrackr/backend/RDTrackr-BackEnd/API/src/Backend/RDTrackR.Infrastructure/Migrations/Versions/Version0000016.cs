@@ -7,10 +7,6 @@ namespace RDTrackR.Infrastructure.Migrations.Versions
     {
         public override void Up()
         {
-            // 1) Remover a coluna antiga (string)
-            Alter.Table("PurchaseOrders")
-                .AlterColumn("Number").AsInt32().NotNullable();
-
             // 2) Criar sequência (para autonumeração)
             Execute.Sql(@"
                 IF NOT EXISTS (SELECT * FROM sys.sequences WHERE name = 'PurchaseOrderNumberSeq')

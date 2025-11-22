@@ -34,11 +34,9 @@ import {
 export default function Replenishment() {
   const { toast } = useToast();
 
-  // parâmetros
+  // filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
-  const [window, setWindow] = useState(60);
-  const [seasonality, setSeasonality] = useState(0);
   const [coverageDays, setCoverageDays] = useState(0);
 
   // seleção e edição
@@ -46,45 +44,54 @@ export default function Replenishment() {
   const [editedQty, setEditedQty] = useState<Record<string, number>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // dados da API
+  // loading states
   const [apiItems, setApiItems] = useState<ResponseReplenishmentItemJson[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // NEW
 
-  // ----------- LOAD API -------------------
+  // ------------ LOAD API -------------------
   useEffect(() => {
+    setIsLoading(true);
+
     api
       .replenishment()
-      .then((response) => setApiItems(response))
+      .then((resp) => setApiItems(resp))
       .catch(() =>
         toast({
           title: "Erro ao carregar dados",
           description: "Não foi possível obter os itens de reposição.",
           variant: "destructive",
         })
-      );
+      )
+      .finally(() => setIsLoading(false));
   }, []);
 
-  // ----------- MAP API → FRONT ITEMS -------------------
+  // ------------ MAP API → FRONT ITEMS -------------------
   const replenishmentItems: ReplenishmentItem[] = useMemo(() => {
-    return apiItems.map((i) => ({
-      id: i.productId!.toString(),
-      sku: i.sku ?? "",
-      name: i.name ?? "",
-      category: i.category ?? "",
-      uom: i.uom ?? "",
-      currentStock: i.currentStock ?? 0,
-      reorderPoint: i.reorderPoint ?? 0,
-      dailyConsumption: i.dailyConsumption ?? 0,
+    return apiItems.map((i) => {
+      const compoundId = `${i.productId}-${i.warehouseId}`;
 
-      // 👇 Ajuste importante
-      leadTime: i.leadTimeDays ?? 0,
-
-      suggestedQty: editedQty[i.productId!] ?? i.suggestedQty ?? 0,
-      isCritical: i.isCritical ?? false,
-      unitPrice: i.unitPrice ?? 0,
-    }));
+      return {
+        id: compoundId,
+        productId: i.productId!,
+        warehouseId: i.warehouseId!,
+        warehouseName: i.warehouseName ?? "",
+        sku: i.sku ?? "",
+        name: i.name ?? "",
+        category: i.category ?? "",
+        uom: i.uom ?? "",
+        currentStock: i.currentStock ?? 0,
+        reorderPoint: i.reorderPoint ?? 0,
+        dailyConsumption: i.dailyConsumption ?? 0,
+        leadTime: i.leadTimeDays ?? 0,
+        suggestedQty: editedQty[compoundId] ?? i.suggestedQty ?? 0,
+        isCritical: i.isCritical ?? false,
+        unitPrice: i.unitPrice ?? 0,
+      };
+    });
   }, [apiItems, editedQty]);
 
-  // ----------- FILTROS -------------------
+  // ------------ FILTROS -------------------
   const filteredItems = useMemo(() => {
     return replenishmentItems.filter((item) => {
       const matchesSearch =
@@ -97,7 +104,7 @@ export default function Replenishment() {
     });
   }, [replenishmentItems, searchTerm, category]);
 
-  // ----------- KPIs -------------------
+  // ------------ KPIs -------------------
   const kpis = useMemo(() => {
     const criticalCount = filteredItems.filter((i) => i.isCritical).length;
     const totalStock = filteredItems.reduce(
@@ -121,14 +128,7 @@ export default function Replenishment() {
     };
   }, [filteredItems]);
 
-  // ----------- HANDLERS -------------------
-  const handleRecalculate = () => {
-    toast({
-      title: "Recalculado",
-      description: "Os valores foram atualizados.",
-    });
-  };
-
+  // ------------ handlers -------------------
   const handleToggleItem = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -165,46 +165,55 @@ export default function Replenishment() {
       });
       return;
     }
+
     setIsDialogOpen(true);
   };
 
+  // ------------ CONFIRMAR GERAR PO (COM ERROS!!) -------------------
   const handleConfirmPo = async (
     supplierId: string,
+    warehouseId: number,
     notes: string,
     groupBySupplier: boolean
   ) => {
+    setIsSubmitting(true);
+
+    const selectedItems = filteredItems.filter((i) => selectedIds.has(i.id));
+
+    const dto = RequestGeneratePoFromReplenishmentJson.fromJS({
+      supplierId: Number(supplierId),
+      warehouseId,
+      notes,
+      groupBySupplier,
+      items: selectedItems.map((i) => ({
+        productId: i.productId,
+        quantity: i.suggestedQty,
+        unitPrice: i.unitPrice,
+      })),
+    });
+
     try {
-      const selectedItems = filteredItems.filter((i) => selectedIds.has(i.id));
-
-      const dto = RequestGeneratePoFromReplenishmentJson.fromJS({
-        supplierId: Number(supplierId),
-        notes,
-        groupBySupplier,
-        items: selectedItems.map((i) => ({
-          productId: Number(i.id),
-          quantity: i.suggestedQty,
-          unitPrice: i.unitPrice,
-        })),
-      });
-
       await api.generatePo(dto);
 
       toast({
-        title: "Pedido criado",
-        description: `${selectedItems.length} item(ns) foram enviados para gerar um novo pedido de compra.`,
+        title: "Pedido criado!",
+        description: `${selectedItems.length} item(ns) incluídos.`,
       });
 
       setIsDialogOpen(false);
       setSelectedIds(new Set());
-    } catch {
+    } catch (err: any) {
       toast({
         title: "Erro ao gerar pedido",
-        description: "Ocorreu um problema ao criar o pedido de compra.",
+        description: err?.response?.data ?? "Erro desconhecido ao gerar PO.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  // ------------ render -------------------
   return (
     <div className="space-y-6">
       {/* HEADER */}
@@ -217,7 +226,8 @@ export default function Replenishment() {
             Sugestões baseadas em consumo, estoque atual e lead time.
           </p>
         </div>
-        <Button variant="outline" onClick={handleRecalculate}>
+
+        <Button variant="outline" disabled={isLoading}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Recalcular
         </Button>
@@ -247,37 +257,13 @@ export default function Replenishment() {
         />
       </div>
 
-      {/* CONTROLS */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Parâmetros de Simulação</CardTitle>
-          <CardDescription>Ajuste filtros e parâmetros</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ControlsBar
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            category={category}
-            onCategoryChange={setCategory}
-            window={window}
-            onWindowChange={setWindow}
-            seasonality={seasonality}
-            onSeasonalityChange={setSeasonality}
-            coverageDays={coverageDays}
-            onCoverageDaysChange={setCoverageDays}
-            onRecalculate={handleRecalculate}
-          />
-        </CardContent>
-      </Card>
-
       {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Itens de Reposição</CardTitle>
-          <CardDescription>
-            Produtos com cálculo automático de ponto de pedido
-          </CardDescription>
+          <CardDescription>Produtos com cálculo automático</CardDescription>
         </CardHeader>
+
         <CardContent>
           <ReplenishmentTable
             items={filteredItems}
@@ -286,16 +272,16 @@ export default function Replenishment() {
             onToggleAll={handleToggleAll}
             onSelectCritical={handleSelectCritical}
             onQtyChange={handleQtyChange}
+            isLoading={isLoading}
           />
         </CardContent>
       </Card>
 
-      {/* ACTION BUTTON */}
+      {/* BOTÃO */}
       {selectedIds.size > 0 && (
         <div className="flex justify-end">
-          <Button onClick={handleGeneratePo} size="lg">
-            Gerar Pedido ({selectedIds.size} item
-            {selectedIds.size !== 1 ? "s" : ""})
+          <Button size="lg" disabled={isSubmitting} onClick={handleGeneratePo}>
+            {isSubmitting ? "Gerando..." : `Gerar Pedido (${selectedIds.size})`}
           </Button>
         </div>
       )}
@@ -306,6 +292,7 @@ export default function Replenishment() {
         onOpenChange={setIsDialogOpen}
         items={filteredItems.filter((i) => selectedIds.has(i.id))}
         onConfirm={handleConfirmPo}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

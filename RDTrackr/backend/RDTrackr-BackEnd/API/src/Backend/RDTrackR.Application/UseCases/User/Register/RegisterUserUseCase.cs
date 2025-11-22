@@ -55,7 +55,6 @@ namespace RDTrackR.Application.UseCases.User.Register
 
             var user = _mapper.Map<Domain.Entities.User>(request);
             user.Password = _passwordEncripter.Encrypt(request.Password);
-            user.OrganizationId = request.OrganizationId;
 
             await _writeOnlyRepository.Add(user);
             await _unitOfWork.Commit();

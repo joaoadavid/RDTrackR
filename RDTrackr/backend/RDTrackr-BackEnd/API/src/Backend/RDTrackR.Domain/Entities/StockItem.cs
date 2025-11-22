@@ -10,7 +10,7 @@ namespace RDTrackR.Domain.Entities
         public long WarehouseId { get; set; }
         public Warehouse Warehouse { get; set; } = null!;
 
-        public decimal Quantity { get; set; }
+        public int Quantity { get; set; }
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
