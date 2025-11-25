@@ -14,7 +14,7 @@ namespace RDTrackR.Application.UseCases.Login.ResetPassword
 
             RuleFor(r => r.Password)
                 .NotEmpty().WithMessage(ResourceMessagesException.PASSWORD_REQUIRED)
-                .MinimumLength(8).WithMessage(ResourceMessagesException.PASSWORD_MIN_LENGTH)
+                .MinimumLength(6).WithMessage(ResourceMessagesException.PASSWORD_MIN_LENGTH)
                 .MaximumLength(100).WithMessage(ResourceMessagesException.PASSWORD_MAX_LENGTH);
 
             RuleFor(r => r.Password)

@@ -64,6 +64,8 @@ function saveAuthTokens(response: any) {
   localStorage.setItem("refreshToken", response.tokens?.refreshToken ?? "");
   localStorage.setItem("tokenId", response.tokens?.tokenId ?? "");
   localStorage.setItem("name", response.name ?? "");
+  localStorage.setItem("email", response.email ?? "");
+  localStorage.setItem("role", response.role ?? "");
 }
 
 function clearAuthTokens() {

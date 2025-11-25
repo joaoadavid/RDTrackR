@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NewOrderDialog } from "@/components/orders/NewOrderDialog";
 import { OrderConfirmPaymentDialog } from "@/components/orders/OrderConfirmPaymentDialog";
 import { OrderCancelDialog } from "@/components/orders/OrderCancelDialog";
+import { OrderDetailsDialog } from "@/components/orders/OrderDetailsDialog";
 
 import {
   Table,
@@ -45,20 +46,11 @@ import { api } from "@/lib/api";
 import { ResponseOrderJson } from "@/generated/apiClient";
 import { useToast } from "@/hooks/use-toast";
 
-// ==========================================
-// MAPA DE STATUS PARA UI (fix: variants válidos)
-// ==========================================
-const statusMap: Record<
-  string,
-  {
-    label: string;
-    variant: "default" | "secondary" | "outline" | "destructive";
-  }
-> = {
-  PENDING: { label: "Pendente", variant: "secondary" },
-  PAID: { label: "Pago", variant: "default" },
-  SHIPPED: { label: "Enviado", variant: "outline" },
-  CANCELLED: { label: "Cancelado", variant: "destructive" },
+const statusMap = {
+  PENDING: { label: "Pendente", variant: "secondary" as const },
+  PAID: { label: "Pago", variant: "default" as const },
+  SHIPPED: { label: "Enviado", variant: "outline" as const },
+  CANCELLED: { label: "Cancelado", variant: "destructive" as const },
 };
 
 export default function Orders() {
@@ -69,16 +61,19 @@ export default function Orders() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Estados dos modais
+  // Modais
   const [selectedOrder, setSelectedOrder] = useState<ResponseOrderJson | null>(
     null
   );
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
 
-  // ===============================
-  // 🔥 Carregar pedidos da API
-  // ===============================
+  // 🔥 Modal de Detalhes
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [detailsOrder, setDetailsOrder] = useState<ResponseOrderJson | null>(
+    null
+  );
+
   const loadOrders = async () => {
     try {
       const result = await api.ordersAll();
@@ -96,9 +91,7 @@ export default function Orders() {
     loadOrders();
   }, []);
 
-  // ===============================
-  // 🔥 Criar pedido
-  // ===============================
+  // Criar pedido
   const handleCreateOrder = async (req: any) => {
     try {
       const created = await api.ordersPOST(req);
@@ -117,9 +110,6 @@ export default function Orders() {
     }
   };
 
-  // ===============================
-  // 🔥 Filtrar lista
-  // ===============================
   const filteredOrders = orders.filter(
     (o) => statusFilter === "all" || o.status === statusFilter
   );
@@ -227,7 +217,13 @@ export default function Orders() {
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem>
+                        {/* 🔥 Ver Detalhes */}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDetailsOrder(order);
+                            setIsDetailsOpen(true);
+                          }}
+                        >
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Detalhes
                         </DropdownMenuItem>
@@ -274,9 +270,7 @@ export default function Orders() {
         </CardContent>
       </Card>
 
-      {/* =========================== */}
-      {/* 🔥 Modais de Controle       */}
-      {/* =========================== */}
+      {/* Modais secundários */}
       <OrderConfirmPaymentDialog
         open={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}
@@ -289,6 +283,13 @@ export default function Orders() {
         onOpenChange={setIsCancelOpen}
         order={selectedOrder}
         onSuccess={loadOrders}
+      />
+
+      {/* 🔥 Modal de Detalhes */}
+      <OrderDetailsDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        order={detailsOrder}
       />
     </div>
   );

@@ -50,51 +50,55 @@ export default function InventoryOverview() {
   const [lowStockItems, setLowStockItems] = useState<ResponseProductJson[]>([]);
   const [movementStats, setMovementStats] = useState<any[]>([]);
 
-  // =============================================================================
-  // 🔄 LOAD OVERVIEW (KPIs)
-  // =============================================================================
   useEffect(() => {
     api.overview().then(setOverview);
   }, []);
 
-  // =============================================================================
-  // 🔄 LOW STOCK ITEMS — from /product (5 mais críticos)
-  // =============================================================================
+  api.productGET(1, 9999).then((result) => {
+    const criticalList = (result.items ?? [])
+      .filter((p) => p.totalStock < p.reorderPoint)
+      .sort((a, b) => a.totalStock - b.totalStock)
+      .slice(0, 5);
+
+    setLowStockItems(criticalList);
+  });
+
   useEffect(() => {
-    api.productAll().then((products) => {
-      const criticalList = products
-        .filter((p) => p.stock < p.reorderPoint)
-        .sort((a, b) => a.stock - b.stock)
-        .slice(0, 5);
-      setLowStockItems(criticalList);
-    });
-  }, []);
+    api.movementGET().then((movements) => {
+      const monthsPT = [
+        "jan.",
+        "fev.",
+        "mar.",
+        "abr.",
+        "mai.",
+        "jun.",
+        "jul.",
+        "ago.",
+        "set.",
+        "out.",
+        "nov.",
+        "dez.",
+      ];
 
-  // =============================================================================
-  // 🔄 MOVEMENTS GRAPH — from /movement
-  // =============================================================================
-  useEffect(() => {
-    api.movementAll().then((movements) => {
-      const grouped: Record<
-        string,
-        { month: string; inbound: number; outbound: number }
-      > = {};
+      // Inicializar todos os meses com 0
+      const grouped = monthsPT.map((m) => ({
+        month: m,
+        inbound: 0,
+        outbound: 0,
+      }));
 
-      movements.forEach((m: ResponseMovementJson) => {
-        const month = new Date(m.createdAt!).toLocaleString("pt-BR", {
-          month: "short",
-        });
+      movements.items?.forEach((m: ResponseMovementJson) => {
+        const date = new Date(m.createdAt!);
+        const monthIndex = date.getMonth();
 
-        if (!grouped[month]) {
-          grouped[month] = { month, inbound: 0, outbound: 0 };
-        }
+        if (m.type === "INBOUND")
+          grouped[monthIndex].inbound += m.quantity ?? 0;
 
-        if (m.type === "INBOUND") grouped[month].inbound += m.quantity ?? 0;
         if (m.type === "OUTBOUND")
-          grouped[month].outbound += Math.abs(m.quantity ?? 0);
+          grouped[monthIndex].outbound += Math.abs(m.quantity ?? 0);
       });
 
-      setMovementStats(Object.values(grouped));
+      setMovementStats(grouped);
     });
   }, []);
 
@@ -138,7 +142,6 @@ export default function InventoryOverview() {
         />
       </div>
 
-      {/* GRAPH – ENTRADAS vs SAÍDAS */}
       <Card>
         <CardHeader>
           <CardTitle>Entradas vs Saídas</CardTitle>
@@ -202,7 +205,6 @@ export default function InventoryOverview() {
         </CardContent>
       </Card>
 
-      {/* LOW STOCK TABLE */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -227,7 +229,7 @@ export default function InventoryOverview() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Estoque</TableHead>
-                <TableHead>Reorder Point</TableHead>
+                <TableHead>Ponto de Reposição</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -237,7 +239,7 @@ export default function InventoryOverview() {
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.sku}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.stock}</TableCell>
+                  <TableCell>{item.totalStock}</TableCell>
                   <TableCell>{item.reorderPoint}</TableCell>
                   <TableCell>
                     <Badge variant="destructive">Crítico</Badge>
@@ -248,7 +250,7 @@ export default function InventoryOverview() {
               {lowStockItems.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-6">
-                    Sem itens críticos 🎉
+                    Sem itens críticos
                   </TableCell>
                 </TableRow>
               )}

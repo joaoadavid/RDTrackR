@@ -4,6 +4,7 @@ using CommonTestUtilities.Mapper;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.PurchaseOrders;
 using CommonTestUtilities.Requests.PurchaseOrder;
+using CommonTestUtilities.Services.Audit;
 using RDTrackR.Application.UseCases.PurchaseOrders.Register;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
@@ -54,9 +55,11 @@ namespace UseCases.Test.PurchaseOrder.Register
             var mapper = MapperBuilder.Build();
             var loggedUser = LoggedUserBuilder.Build(user);
             var repositoryBuilder = new PurchaseOrderRepositoryBuilder().BuildWrite();
+            var notification = new NotificationServiceBuilder().Build();
+            var auditLog = new AuditServiceBuilder().Build();
             var unitOfWork = UnitOfWorkBuilder.Build();
 
-            return new RegisterPurchaseOrderUseCase(mapper, repositoryBuilder, loggedUser, unitOfWork);
+            return new RegisterPurchaseOrderUseCase(mapper,notification,auditLog, repositoryBuilder, loggedUser, unitOfWork);
         }
     }
 }

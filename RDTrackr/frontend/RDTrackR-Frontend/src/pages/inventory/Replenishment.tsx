@@ -1,3 +1,4 @@
+// src/pages/inventory/Replenishment.tsx
 import { useState, useMemo, useEffect } from "react";
 import {
   AlertTriangle,
@@ -5,7 +6,10 @@ import {
   TrendingDown,
   DollarSign,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +20,6 @@ import {
 } from "@/components/ui/card";
 
 import { KpiCard } from "@/components/inventory/KpiCard";
-import { ControlsBar } from "@/components/inventory/ControlsBar";
 import {
   ReplenishmentTable,
   ReplenishmentItem,
@@ -29,44 +32,72 @@ import { api } from "@/lib/api";
 import {
   ResponseReplenishmentItemJson,
   RequestGeneratePoFromReplenishmentJson,
+  ResponseReplenishmentItemJsonPagedResponse,
 } from "@/generated/apiClient";
+
+type CriticalFilter = "all" | "critical" | "non_critical";
 
 export default function Replenishment() {
   const { toast } = useToast();
 
-  // filtros
+  // ----------------- filtros -----------------
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
-  const [coverageDays, setCoverageDays] = useState(0);
+  const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all");
 
-  // seleção e edição
+  // ----------------- paginação -----------------
+  const [page, setPage] = useState(1);
+  const pageSize = 10; // ajuste se quiser
+  const [total, setTotal] = useState(0);
+
+  // ----------------- seleção e edição -----------------
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editedQty, setEditedQty] = useState<Record<string, number>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // loading states
+  // ----------------- loading states -----------------
   const [apiItems, setApiItems] = useState<ResponseReplenishmentItemJson[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // NEW
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ------------ LOAD API -------------------
+  // ----------------- debounce busca -----------------
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  // ----------------- LOAD API (server-side pagination + search) -----------------
+  async function load() {
     setIsLoading(true);
 
-    api
-      .replenishment()
-      .then((resp) => setApiItems(resp))
-      .catch(() =>
-        toast({
-          title: "Erro ao carregar dados",
-          description: "Não foi possível obter os itens de reposição.",
-          variant: "destructive",
-        })
-      )
-      .finally(() => setIsLoading(false));
-  }, []);
+    try {
+      const resp: ResponseReplenishmentItemJsonPagedResponse =
+        await api.replenishment(page, pageSize, debouncedSearch);
 
-  // ------------ MAP API → FRONT ITEMS -------------------
+      setApiItems(resp.items ?? []);
+      setTotal(resp.total ?? 0);
+
+      // limpa seleção/edição ao trocar de página/resultado
+      setSelectedIds(new Set());
+      setEditedQty({});
+    } catch {
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível obter os itens de reposição.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch]);
+
+  // ----------------- MAP API → FRONT ITEMS -----------------
   const replenishmentItems: ReplenishmentItem[] = useMemo(() => {
     return apiItems.map((i) => {
       const compoundId = `${i.productId}-${i.warehouseId}`;
@@ -91,30 +122,34 @@ export default function Replenishment() {
     });
   }, [apiItems, editedQty]);
 
-  // ------------ FILTROS -------------------
+  // ----------------- FILTROS (client-side dentro da página atual) -----------------
   const filteredItems = useMemo(() => {
     return replenishmentItems.filter((item) => {
-      const matchesSearch =
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.name.toLowerCase().includes(searchTerm.toLowerCase());
-
       const matchesCategory = category === "all" || item.category === category;
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [replenishmentItems, searchTerm, category]);
+      const matchesCrit =
+        criticalFilter === "all" ||
+        (criticalFilter === "critical" && item.isCritical) ||
+        (criticalFilter === "non_critical" && !item.isCritical);
 
-  // ------------ KPIs -------------------
+      return matchesCategory && matchesCrit;
+    });
+  }, [replenishmentItems, category, criticalFilter]);
+
+  // ----------------- KPIs (baseados nos itens filtrados da página atual) -----------------
   const kpis = useMemo(() => {
     const criticalCount = filteredItems.filter((i) => i.isCritical).length;
+
     const totalStock = filteredItems.reduce(
       (sum, i) => sum + i.currentStock,
       0
     );
+
     const totalDailyConsumption = filteredItems.reduce(
       (sum, i) => sum + i.dailyConsumption,
       0
     );
+
     const estimatedValue = filteredItems.reduce(
       (sum, i) => sum + i.suggestedQty * i.unitPrice,
       0
@@ -128,7 +163,7 @@ export default function Replenishment() {
     };
   }, [filteredItems]);
 
-  // ------------ handlers -------------------
+  // ----------------- handlers seleção -----------------
   const handleToggleItem = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -138,10 +173,11 @@ export default function Replenishment() {
   };
 
   const handleToggleAll = () => {
-    if (selectedIds.size === filteredItems.length) {
+    const idsOnScreen = filteredItems.map((i) => i.id);
+    if (selectedIds.size === idsOnScreen.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredItems.map((i) => i.id)));
+      setSelectedIds(new Set(idsOnScreen));
     }
   };
 
@@ -165,11 +201,10 @@ export default function Replenishment() {
       });
       return;
     }
-
     setIsDialogOpen(true);
   };
 
-  // ------------ CONFIRMAR GERAR PO (COM ERROS!!) -------------------
+  // ----------------- CONFIRMAR GERAR PO -----------------
   const handleConfirmPo = async (
     supplierId: string,
     warehouseId: number,
@@ -202,6 +237,7 @@ export default function Replenishment() {
 
       setIsDialogOpen(false);
       setSelectedIds(new Set());
+      load(); // recarrega a página atual
     } catch (err: any) {
       toast({
         title: "Erro ao gerar pedido",
@@ -213,7 +249,9 @@ export default function Replenishment() {
     }
   };
 
-  // ------------ render -------------------
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  // ----------------- render -----------------
   return (
     <div className="space-y-6">
       {/* HEADER */}
@@ -227,11 +265,67 @@ export default function Replenishment() {
           </p>
         </div>
 
-        <Button variant="outline" disabled={isLoading}>
+        <Button variant="outline" disabled={isLoading} onClick={() => load()}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Recalcular
         </Button>
       </div>
+
+      {/* FILTROS */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+          <CardDescription>
+            Busque por nome/SKU e filtre criticidade ou categoria.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+            {/* Busca */}
+            <input
+              type="text"
+              placeholder="Buscar por nome ou SKU..."
+              value={searchTerm}
+              onChange={(e) => {
+                setPage(1);
+                setSearchTerm(e.target.value);
+              }}
+              className="border rounded px-3 py-2 w-full md:w-72"
+            />
+
+            {/* Criticidade */}
+            <select
+              value={criticalFilter}
+              onChange={(e) =>
+                setCriticalFilter(e.target.value as CriticalFilter)
+              }
+              className="border rounded px-3 py-2 w-full md:w-56"
+            >
+              <option value="all">Todos</option>
+              <option value="critical">Somente críticos</option>
+              <option value="non_critical">Somente não críticos</option>
+            </select>
+
+            {/* Categoria */}
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="border rounded px-3 py-2 w-full md:w-56"
+            >
+              <option value="all">Todas categorias</option>
+              {/* Se quiser popular dinamicamente com base nos itens: */}
+              {Array.from(new Set(replenishmentItems.map((i) => i.category)))
+                .filter((c) => c && c !== "all")
+                .map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -261,7 +355,9 @@ export default function Replenishment() {
       <Card>
         <CardHeader>
           <CardTitle>Itens de Reposição</CardTitle>
-          <CardDescription>Produtos com cálculo automático</CardDescription>
+          <CardDescription>
+            Produtos com cálculo automático. Selecione para gerar PO.
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -274,10 +370,39 @@ export default function Replenishment() {
             onQtyChange={handleQtyChange}
             isLoading={isLoading}
           />
+
+          {/* PAGINAÇÃO */}
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages} — {total} itens
+            </span>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* BOTÃO */}
+      {/* BOTÃO GERAR PO */}
       {selectedIds.size > 0 && (
         <div className="flex justify-end">
           <Button size="lg" disabled={isSubmitting} onClick={handleGeneratePo}>

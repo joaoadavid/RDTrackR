@@ -40,10 +40,10 @@ namespace RDTrackR.Application.UseCases.User.Update
 
             var user = await _userReadOnlyRepository.GetUserById(loggedUser.Id);
 
-            user.Name = request.Name;
+            user!.Name = request.Name;
             user.Email = request.Email;
-            user.Role = request.Role;
-            user.Active = request.IsActive;
+            //user.Role = request.Role;
+            //user.Active = request.IsActive;
 
             await _userUpdateOnlyRepository.Update(user);
 

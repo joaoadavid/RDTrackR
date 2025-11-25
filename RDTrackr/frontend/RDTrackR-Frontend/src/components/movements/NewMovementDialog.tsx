@@ -63,7 +63,7 @@ export function NewMovementDialog({
     // Ajuste automático do sinal
     const qty =
       form.type === "OUTBOUND"
-        ? -Math.abs(form.quantity)
+        ? Math.abs(form.quantity)
         : Math.abs(form.quantity);
 
     const newMovement = {

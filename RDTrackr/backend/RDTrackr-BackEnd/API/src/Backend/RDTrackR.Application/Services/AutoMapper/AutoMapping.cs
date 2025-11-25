@@ -9,6 +9,7 @@ using RDTrackR.Communication.Requests.Supplier;
 using RDTrackR.Communication.Requests.User;
 using RDTrackR.Communication.Requests.Warehouse;
 using RDTrackR.Communication.Responses.Movements;
+using RDTrackR.Communication.Responses.Notifications;
 using RDTrackR.Communication.Responses.Orders;
 using RDTrackR.Communication.Responses.Organization;
 using RDTrackR.Communication.Responses.Product;
@@ -64,8 +65,11 @@ namespace RDTrackR.Application.Services.AutoMapper
                 .ForMember(dest => dest.OrganizationId, opt => opt.Ignore());
 
             CreateMap<RequestCreatePurchaseOrderJson, PurchaseOrder>()
-                .ForMember(dest => dest.CreatedByUserId, o => o.Ignore())
-                .ForMember(dest => dest.Number, o => o.Ignore());
+                .ForMember(dest => dest.CreatedByUserId, opt => opt.Ignore())
+                .ForMember(dest => dest.Number, opt => opt.MapFrom(src => src.Number))
+                .ForMember(dest => dest.SupplierId, opt => opt.MapFrom(src => src.SupplierId))
+                .ForMember(dest => dest.WarehouseId, opt => opt.MapFrom(src => src.WarehouseId))
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
 
             CreateMap<RequestCreatePurchaseOrderItemJson, PurchaseOrderItem>();
 
@@ -76,15 +80,7 @@ namespace RDTrackR.Application.Services.AutoMapper
 
         private void DomainToResponse()
         {
-            CreateMap<Domain.Entities.User, ResponseUserProfileJson>();
-
-            //CreateMap<Product, ResponseProductJson>()
-            //     .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-            //     .ForMember(dest => dest.Active, opt => opt.MapFrom(src => src.Active))
-            //     .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => src.CreatedByUserId))
-            //     .ForMember(dest => dest.TotalStock,
-            //    opt => opt.MapFrom(src => src.StockItems.Sum(x => x.Quantity)))
-            //     .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy.Name));
+            CreateMap<User, ResponseUserProfileJson>();
 
             CreateMap<Product, ResponseProductJson>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
@@ -127,12 +123,6 @@ namespace RDTrackR.Application.Services.AutoMapper
             CreateMap<Supplier, ResponseSupplierJson>()
                 .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy.Name));
 
-            CreateMap<RequestCreatePurchaseOrderJson, PurchaseOrder>()
-                .ForMember(dest => dest.SupplierId, opt => opt.MapFrom(src => src.SupplierId))
-                .ForMember(dest => dest.WarehouseId, opt => opt.MapFrom(src => src.WarehouseId))
-                .ForMember(dest => dest.Number, opt => opt.MapFrom(src => src.Number))
-                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
-
             CreateMap<PurchaseOrderItem, ResponsePurchaseOrderItemJson>()
                 .ForMember(dest => dest.ProductName, o => o.MapFrom(src => src.Product.Name));
 
@@ -154,6 +144,20 @@ namespace RDTrackR.Application.Services.AutoMapper
                 .ForMember(dest => dest.CreatedByName, o => o.MapFrom(src => src.CreatedBy.Name))
                 .ForMember(dest => dest.Items, o => o.MapFrom(src => src.Items));
 
+            CreateMap<PurchaseOrder, ResponseRecentPurchaseOrderJson>()
+                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier.Name))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.Total, opt => opt.MapFrom(src =>
+                    src.Items.Sum(i => i.Quantity * i.UnitPrice)
+                ))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn));
+
+            CreateMap<Notification, ResponseNotificationJson>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Message))
+                .ForMember(dest => dest.IsRead, opt => opt.MapFrom(src => src.Read))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedOn));
+
             CreateMap<SupplierProduct, ResponseSupplierProductJson>()
                 .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
@@ -164,7 +168,6 @@ namespace RDTrackR.Application.Services.AutoMapper
                 .ForMember(dest => dest.OrganizationId, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.OrganizationName, opt => opt.MapFrom(src => src.Name));
 
-            // Order → ResponseOrderJson
             CreateMap<Order, ResponseOrderJson>()
                 .ForMember(dest => dest.Id, o => o.MapFrom(src => src.Id))
                 .ForMember(dest => dest.OrderNumber, o => o.MapFrom(src => src.OrderNumber))
@@ -174,7 +177,6 @@ namespace RDTrackR.Application.Services.AutoMapper
                 .ForMember(dest => dest.CreatedOn, o => o.MapFrom(src => src.CreatedOn))
                 .ForMember(dest => dest.Items, o => o.MapFrom(src => src.Items));
 
-            // OrderItem → ResponseOrderItemJson
             CreateMap<OrderItem, ResponseOrderItemJson>()
                 .ForMember(dest => dest.ProductId, o => o.MapFrom(src => src.ProductId))
                 .ForMember(dest => dest.ProductName, o => o.MapFrom(src => src.ProductName))

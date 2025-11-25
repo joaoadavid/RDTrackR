@@ -5,6 +5,7 @@ using RDTrackR.Application.UseCases.Replenishment.Register;
 using RDTrackR.Communication.Requests.Replenishment;
 using RDTrackR.Communication.Responses.Replenishment;
 using RDTrackR.Communication.Responses.PurchaseOrders;
+using RDTrackR.Communication.Responses.Pages;
 
 namespace RDTrackR.API.Controllers
 {
@@ -12,14 +13,24 @@ namespace RDTrackR.API.Controllers
     [Route("replenishment")]
     public class ReplenishmentController : RDTrackRBaseController
     {
+        //[HttpGet]
+        //[ProducesResponseType(typeof(List<ResponseReplenishmentItemJson>), StatusCodes.Status200OK)]
+        //public async Task<IActionResult> Get(
+        //    [FromServices] IGetReplenishmentItemsUseCase useCase)
+        //{
+        //    var result = await useCase.Execute();
+        //    return Ok(result);
+        //}
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponseReplenishmentItemJson>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponse<ResponseReplenishmentItemJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Get(
-            [FromServices] IGetReplenishmentItemsUseCase useCase)
+        [FromServices] IGetReplenishmentItemsUseCase useCase,
+        [FromQuery] RequestGetReplenishmentPagedJson request)
         {
-            var result = await useCase.Execute();
+            var result = await useCase.Execute(request);
             return Ok(result);
         }
+
 
         [HttpPost("generate-po")]
         [ProducesResponseType(typeof(ResponsePurchaseOrderJson), StatusCodes.Status201Created)]

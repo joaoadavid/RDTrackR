@@ -11,71 +11,139 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/use-theme";
 import { Badge } from "@/components/ui/badge";
-import LogoRDTrackR from "@/assets/LogoRDTrackR.svg";
+import LogoRDTrackR from "@/assets/LogoR.svg";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { useNotifications } from "@/hooks/use-notifications";
+
+// ----------------------
+// Helper para gerar iniciais
+// ----------------------
+function getInitials(name: string | undefined): string {
+  if (!name) return "U";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+
+  return (
+    parts[0].charAt(0).toUpperCase() +
+    parts[parts.length - 1].charAt(0).toUpperCase()
+  );
+}
 
 export function Topbar() {
   const { theme, setTheme } = useTheme();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const { notifications, unreadCount, markAsRead } = useNotifications();
+
+  const initials = getInitials(user?.name);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
       <div className="flex h-14 items-center gap-4 px-4">
         <SidebarTrigger />
 
         <div className="flex flex-1 items-center justify-between">
-          <div className="flex items-center gap-2">
+          {/* CENTRO ABSOLUTO */}
+          {user?.organizationName && (
+            <span className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-primary">
+              {user.organizationName}
+            </span>
+          )}
+
+          {/* LOGO À ESQUERDA */}
+          <div className="flex items-center gap-3">
             <img
               src={LogoRDTrackR}
               alt="RDTrackR Logo"
-              className="h-10 w-auto object-contain sm:h-9 md:h-10"
+              className="h-6 object-contain"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {user && (
+              <span className="hidden md:block text-sm text-muted-foreground">
+                Bem-vindo,{" "}
+                <span className="font-semibold text-foreground">
+                  {user.name}
+                </span>
+              </span>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
+              {theme === "dark" ? <Sun /> : <Moon />}
             </Button>
 
-            {/* 🔔 Notificações */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
-                  <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
-                    3
-                  </Badge>
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full text-xs">
+                      {unreadCount}
+                    </Badge>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Notificações</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Novo pedido #1234</DropdownMenuItem>
-                <DropdownMenuItem>Estoque baixo: Produto A</DropdownMenuItem>
-                <DropdownMenuItem>Novo usuário cadastrado</DropdownMenuItem>
+
+                {notifications.length === 0 ? (
+                  <DropdownMenuItem className="text-muted-foreground">
+                    Sem notificações
+                  </DropdownMenuItem>
+                ) : (
+                  notifications.map((n) => (
+                    <DropdownMenuItem
+                      key={n.id}
+                      onClick={() => markAsRead(n.id)}
+                    >
+                      {n.message}
+                    </DropdownMenuItem>
+                  ))
+                )}
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem onClick={() => navigate("/notifications")}>
+                  Ver todas
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* 👤 Usuário */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                </Button>
+                <button className="h-9 w-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center">
+                  {initials}
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="flex flex-col">
+                  <span className="font-semibold">{user?.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {user?.email}
+                  </span>
+                </DropdownMenuLabel>
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Perfil</DropdownMenuItem>
-                <DropdownMenuItem>Configurações</DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  Configurações
+                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Sair</DropdownMenuItem>
+
+                <DropdownMenuItem className="text-red-600" onClick={logout}>
+                  Sair
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

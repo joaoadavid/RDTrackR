@@ -10,5 +10,13 @@ namespace RDTrackR.Domain.Repositories.Movements
         Task<int> CountAsync(User user);
         Task<List<Movement>> GetByTypeAsync(string type);
         Task<List<Movement>> GetFilteredAsync(long? warehouseId, MovementType? type, DateTime? startDate, DateTime? endDate, User user);
+        Task<PagedResult<Movement>> GetPagedAsync(
+             long? warehouseId,
+             MovementType? type,
+             DateTime? startDate,
+             DateTime? endDate,
+             User user,
+             int page,
+             int pageSize);
     }
 }

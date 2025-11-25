@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,11 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { useToast } from "@/hooks/use-toast";
 import { NewMovementDialog } from "@/components/movements/NewMovementDialog";
 import { api } from "@/lib/api";
 
-import { ResponseMovementJson, MovementType } from "@/generated/apiClient";
+import {
+  ResponseMovementJson,
+  MovementType,
+  ResponseMovementJsonPagedResponse,
+} from "@/generated/apiClient";
 
 const movementTypeMap = {
   INBOUND: { label: "Entrada", variant: "default" as const },
@@ -41,18 +47,27 @@ export default function Movements() {
 
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [movements, setMovements] = useState<ResponseMovementJson[]>([]);
+
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [total, setTotal] = useState<number>(0);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // 🔄 Carrega os movimentos ao montar a página
+  // 🔄 Requisição com paginação
   async function loadMovements() {
     try {
-      const data = await api.movementAll(
-        undefined,
-        undefined,
+      const result: ResponseMovementJsonPagedResponse = await api.movementGET(
+        page,
+        pageSize,
+        undefined, // warehouse
+        typeFilter === "all" ? undefined : (typeFilter as MovementType),
         undefined,
         undefined
       );
-      setMovements(data);
+
+      setMovements(result.items ?? []);
+      setTotal(result.total ?? 0);
     } catch (error) {
       toast({
         title: "Erro ao carregar movimentações",
@@ -64,23 +79,25 @@ export default function Movements() {
 
   useEffect(() => {
     loadMovements();
-  }, []);
+  }, [page, pageSize, typeFilter]);
 
-  // 🔄 Filtro por tipo
-  const filteredMovements = movements.filter(
-    (m) => typeFilter === "all" || m.type === typeFilter
-  );
+  useEffect(() => {
+    if (!isDialogOpen) {
+      loadMovements();
+    }
+  }, [isDialogOpen]);
 
-  // ➕ Registrar nova movimentação (POST real)
+  // ➕ Registrar nova movimentação
   const handleAddMovement = async (movementRequest: any) => {
     try {
-      const created = await api.movement(movementRequest);
-      setMovements((prev) => [...prev, created]);
+      await api.movementGET(movementRequest);
 
       toast({
         title: "Movimentação registrada",
-        description: `A movimentação ${created.reference} foi salva com sucesso.`,
+        description: `A movimentação foi salva com sucesso.`,
       });
+
+      loadMovements();
     } catch (error) {
       toast({
         title: "Erro ao registrar",
@@ -90,8 +107,11 @@ export default function Movements() {
     }
   };
 
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
     <div className="space-y-6">
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Movimentações</h2>
@@ -106,13 +126,13 @@ export default function Movements() {
         </Button>
       </div>
 
-      {/* Modal */}
       <NewMovementDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onCreate={handleAddMovement}
       />
 
+      {/* LISTA */}
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Movimentações</CardTitle>
@@ -122,9 +142,15 @@ export default function Movements() {
         </CardHeader>
 
         <CardContent>
-          {/* FILTRO */}
-          <div className="mb-4 flex gap-4">
-            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v)}>
+          <div className="mb-4 flex gap-4 items-center">
+            {/* FILTER: TYPE */}
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setPage(1);
+                setTypeFilter(v);
+              }}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
@@ -135,8 +161,27 @@ export default function Movements() {
                 <SelectItem value="ADJUST">Ajustes</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* PAGE SIZE */}
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Itens" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / página</SelectItem>
+                <SelectItem value="25">25 / página</SelectItem>
+                <SelectItem value="50">50 / página</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* TABELA */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -151,7 +196,7 @@ export default function Movements() {
             </TableHeader>
 
             <TableBody>
-              {filteredMovements.map((m) => (
+              {movements.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell>
                     <Badge variant={movementTypeMap[m.type!].variant}>
@@ -165,15 +210,17 @@ export default function Movements() {
 
                   <TableCell
                     className={`text-right font-medium ${
-                      m.quantity! > 0 ? "text-green-600" : "text-red-600"
+                      m.type === "OUTBOUND" ? "text-red-600" : "text-green-600"
                     }`}
                   >
-                    {m.quantity! > 0 ? "+" : ""}
+                    {m.type === "OUTBOUND" ? "-" : "+"}
                     {m.quantity}
                   </TableCell>
 
                   <TableCell>
-                    {m.createdAt?.toLocaleString("pt-BR") ?? "--"}
+                    {m.createdAt
+                      ? new Date(m.createdAt).toLocaleString("pt-BR")
+                      : "--"}
                   </TableCell>
 
                   <TableCell>{m.createdByName}</TableCell>
@@ -181,6 +228,33 @@ export default function Movements() {
               ))}
             </TableBody>
           </Table>
+
+          {/* PAGINAÇÃO */}
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages}
+            </span>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próximo
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

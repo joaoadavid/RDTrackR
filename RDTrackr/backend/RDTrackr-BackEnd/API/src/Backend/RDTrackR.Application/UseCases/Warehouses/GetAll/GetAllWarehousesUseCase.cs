@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using RDTrackR.Communication.Requests.Warehouse;
+using RDTrackR.Communication.Responses.Pages;
 using RDTrackR.Communication.Responses.Warehouse;
 using RDTrackR.Domain.Repositories.Warehouses;
 using RDTrackR.Domain.Services.LoggedUser;
@@ -21,12 +23,26 @@ namespace RDTrackR.Application.UseCases.Warehouses.GetAll
             _mapper = mapper;
         }
 
-        public async Task<List<ResponseWarehouseJson>> Execute()
+        public async Task<PagedResponse<ResponseWarehouseJson>> Execute(RequestGetWarehousesPagedJson request)
         {
-            var loggedUser = await _loggedUser.User();
-            var warehouses = await _repository.GetAllAsync(loggedUser);
+            var user = await _loggedUser.User();
 
-            return _mapper.Map<List<ResponseWarehouseJson>>(warehouses);
+            int page = request.Page <= 0 ? 1 : request.Page;
+            int pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            var warehouses = await _repository.GetPagedAsync(
+                user, page, pageSize, request.Search);
+
+            var total = await _repository.CountAsync(user, request.Search);
+
+            return new PagedResponse<ResponseWarehouseJson>
+            {
+                Items = _mapper.Map<List<ResponseWarehouseJson>>(warehouses),
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
         }
+
     }
 }

@@ -6,6 +6,8 @@ import {
   Pencil,
   Trash2,
   Package,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -44,24 +46,29 @@ import {
   ResponseSupplierJson,
   RequestRegisterSupplierJson,
   RequestUpdateSupplierJson,
+  ResponseSupplierJsonPagedResponse,
 } from "@/generated/apiClient";
 
-// ✔️ Correto: diálogos de Supplier
 import { NewSupplierDialog } from "@/components/suppliers/NewSupplierDialog";
 import { EditSupplierDialog } from "@/components/suppliers/EditSupplierDialog";
-
-// ✔️ Correto: diálogo para produtos do fornecedor
 import { SupplierProductsDialog } from "@/components/suppliersProduct/SupplierProductsDialog";
 
 export default function Suppliers() {
   const { toast } = useToast();
 
+  // dados
   const [suppliers, setSuppliers] = useState<ResponseSupplierJson[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // paginação
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [total, setTotal] = useState(0);
+
+  // busca
   const [search, setSearch] = useState("");
 
-  // Modais
+  // modais
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isProductsOpen, setIsProductsOpen] = useState(false);
@@ -69,21 +76,56 @@ export default function Suppliers() {
   const [selectedSupplier, setSelectedSupplier] =
     useState<ResponseSupplierJson | null>(null);
 
-  // Carregar lista inicial
-  useEffect(() => {
-    api
-      .supplierAll()
-      .then(setSuppliers)
-      .finally(() => setLoading(false));
-  }, []);
+  // ============================
+  // LOAD PAGINADO
+  // ============================
+  async function loadSuppliers() {
+    try {
+      setLoading(true);
+      const result: ResponseSupplierJsonPagedResponse = await api.supplierGET(
+        page,
+        pageSize,
+        search
+      );
 
+      setSuppliers(result.items ?? []);
+      setTotal(result.total ?? 0);
+    } catch {
+      toast({
+        title: "Erro ao carregar fornecedores",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // load inicial + mudança de página
+  useEffect(() => {
+    loadSuppliers();
+  }, [page]);
+
+  // busca com debounce
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setPage(1);
+      loadSuppliers();
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  // ============================
+  // CREATE
+  // ============================
   const handleAddSupplier = async (form: any) => {
     try {
       const dto = RequestRegisterSupplierJson.fromJS(form);
       await api.supplierPOST(dto);
 
-      const updated = await api.supplierAll();
-      setSuppliers(updated);
+      loadSuppliers();
 
       toast({
         title: "Fornecedor criado",
@@ -97,19 +139,19 @@ export default function Suppliers() {
     }
   };
 
-  // Editar fornecedor
+  // ============================
+  // UPDATE
+  // ============================
   const handleEditSupplier = async (form: any) => {
     try {
       const dto = RequestUpdateSupplierJson.fromJS(form);
-      const updatedSupplier = await api.supplierPUT(form.id, dto);
+      await api.supplierPUT(form.id, dto);
 
-      setSuppliers((prev) =>
-        prev.map((s) => (s.id === updatedSupplier.id ? updatedSupplier : s))
-      );
+      loadSuppliers();
 
       toast({
         title: "Fornecedor atualizado",
-        description: `As informações de "${updatedSupplier.name}" foram atualizadas.`,
+        description: `As informações foram atualizadas.`,
       });
     } catch {
       toast({
@@ -119,12 +161,14 @@ export default function Suppliers() {
     }
   };
 
-  // Excluir fornecedor
+  // ============================
+  // DELETE
+  // ============================
   const handleDelete = async (id: number) => {
     try {
       await api.supplierDELETE(id);
 
-      setSuppliers((prev) => prev.filter((s) => s.id !== id));
+      loadSuppliers();
 
       toast({
         title: "Fornecedor removido",
@@ -137,12 +181,6 @@ export default function Suppliers() {
       });
     }
   };
-
-  const filtered = suppliers.filter(
-    (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.contact.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (loading) return <p>Carregando fornecedores...</p>;
 
@@ -162,14 +200,13 @@ export default function Suppliers() {
         </Button>
       </div>
 
-      {/* MODAL — NOVO FORNECEDOR */}
+      {/* MODAIS */}
       <NewSupplierDialog
         open={isNewOpen}
         onOpenChange={setIsNewOpen}
         onCreate={handleAddSupplier}
       />
 
-      {/* MODAL — EDITAR FORNECEDOR */}
       <EditSupplierDialog
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
@@ -177,7 +214,6 @@ export default function Suppliers() {
         onSave={handleEditSupplier}
       />
 
-      {/* MODAL — PRODUTOS DO FORNECEDOR */}
       <SupplierProductsDialog
         open={isProductsOpen}
         onOpenChange={setIsProductsOpen}
@@ -220,7 +256,7 @@ export default function Suppliers() {
             </TableHeader>
 
             <TableBody>
-              {filtered.map((s) => (
+              {suppliers.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell>{s.contact}</TableCell>
@@ -240,7 +276,6 @@ export default function Suppliers() {
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
-                        {/* Editar */}
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedSupplier(s);
@@ -250,7 +285,6 @@ export default function Suppliers() {
                           <Pencil className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
 
-                        {/* Ver Produtos */}
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedSupplier(s);
@@ -260,7 +294,6 @@ export default function Suppliers() {
                           <Package className="mr-2 h-4 w-4" /> Ver Produtos
                         </DropdownMenuItem>
 
-                        {/* Excluir */}
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDelete(s.id)}
@@ -274,6 +307,35 @@ export default function Suppliers() {
               ))}
             </TableBody>
           </Table>
+
+          {/* PAGINAÇÃO */}
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages}
+            </span>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

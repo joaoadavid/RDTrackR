@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using RDTrackR.Communication.Requests.Movements;
 using RDTrackR.Communication.Responses.Movements;
+using RDTrackR.Communication.Responses.Pages;
+using RDTrackR.Domain.Enums;
 using RDTrackR.Domain.Repositories.Movements;
 using RDTrackR.Domain.Services.LoggedUser;
 
@@ -22,22 +24,52 @@ namespace RDTrackR.Application.UseCases.Movements.GetAll
             _mapper = mapper;
         }
 
-        public async Task<List<ResponseMovementJson>> Execute(RequestGetMovementsJson request)
+        //public async Task<List<ResponseMovementJson>> Execute(RequestGetMovementsJson request)
+        //{
+        //    var loggedUser = await _loggedUser.User();
+        //    var type = request.Type.HasValue
+        //        ? (RDTrackR.Domain.Enums.MovementType?)(request.Type.Value)
+        //        : null;
+
+        //    var movements = await _repository.GetFilteredAsync(
+        //        request.WarehouseId,
+        //        type,
+        //        request.StartDate,
+        //        request.EndDate,
+        //        loggedUser
+        //    );
+
+        //    return _mapper.Map<List<ResponseMovementJson>>(movements);
+        //}
+
+        public async Task<PagedResponse<ResponseMovementJson>> Execute(RequestGetMovementsPagedJson request)
         {
-            var loggedUser = await _loggedUser.User();
+            var user = await _loggedUser.User();
+
             var type = request.Type.HasValue
-                ? (RDTrackR.Domain.Enums.MovementType?)(request.Type.Value)
+                ? (MovementType?)request.Type.Value
                 : null;
 
-            var movements = await _repository.GetFilteredAsync(
+            int page = request.Page <= 0 ? 1 : request.Page;
+            int pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
+
+            var result = await _repository.GetPagedAsync(
                 request.WarehouseId,
                 type,
                 request.StartDate,
                 request.EndDate,
-                loggedUser
+                user,
+                page,
+                pageSize
             );
 
-            return _mapper.Map<List<ResponseMovementJson>>(movements);
+            return new PagedResponse<ResponseMovementJson>
+            {
+                Items = _mapper.Map<List<ResponseMovementJson>>(result.Items),
+                Total = result.Total,
+                Page = page,
+                PageSize = pageSize
+            };
         }
     }
 }

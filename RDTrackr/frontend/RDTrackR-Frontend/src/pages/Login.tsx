@@ -35,7 +35,7 @@ export default function Login() {
         description: `Bem-vindo!`,
       });
 
-      navigate("/dashboard");
+      navigate("/inventory");
     } catch (err: any) {
       const message =
         err?.result?.message ?? err?.body?.message ?? "Erro ao realizar login.";
@@ -68,6 +68,7 @@ export default function Login() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
@@ -79,6 +80,7 @@ export default function Login() {
               />
             </div>
 
+            {/* Senha */}
             <div className="space-y-2">
               <Label>Senha</Label>
               <Input
@@ -88,6 +90,25 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+
+            {/* 🔗 LINKS abaixo da senha */}
+            <div className="flex justify-between text-sm mt-1">
+              <button
+                type="button"
+                className="text-blue-600 hover:underline"
+                onClick={() => navigate("/forgot-password")}
+              >
+                Esqueci minha senha
+              </button>
+
+              <button
+                type="button"
+                className="text-muted-foreground hover:underline"
+                onClick={() => navigate("/")}
+              >
+                Voltar à Home
+              </button>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

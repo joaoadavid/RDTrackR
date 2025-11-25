@@ -9,19 +9,29 @@ using RDTrackR.Domain.Repositories.PurchaseOrders;
 using RDTrackR.Domain.Services.LoggedUser;
 using RDTrackR.Exceptions.ExceptionBase;
 using RDTrackR.Exceptions;
+using RDTrackR.Domain.Services.Notification;
+using RDTrackR.Domain.Services.Audit;
 
 namespace RDTrackR.Application.UseCases.PurchaseOrders.Register
 {
     public class RegisterPurchaseOrderUseCase : IRegisterPurchaseOrderUseCase
     {
+        private readonly INotificationService _notificationService;
+        private readonly IAuditService _auditService;
         private readonly IMapper _mapper;
         private readonly IPurchaseOrderWriteOnlyRepository _writeRepository;
         private readonly ILoggedUser _loggedUser;
         private readonly IUnitOfWork _unitOfWork;
 
-        public RegisterPurchaseOrderUseCase(IMapper mapper, IPurchaseOrderWriteOnlyRepository writeOnlyRepository, ILoggedUser loggedUser, IUnitOfWork unitOfWork)
+        public RegisterPurchaseOrderUseCase(IMapper mapper,
+            INotificationService notificationService,
+            IAuditService auditService,
+            IPurchaseOrderWriteOnlyRepository writeOnlyRepository,
+            ILoggedUser loggedUser, IUnitOfWork unitOfWork)
         {
             _mapper = mapper;
+            _notificationService = notificationService;
+            _auditService = auditService;
             _writeRepository = writeOnlyRepository;
             _loggedUser = loggedUser;
             _unitOfWork = unitOfWork;
@@ -48,6 +58,8 @@ namespace RDTrackR.Application.UseCases.PurchaseOrders.Register
             await _writeRepository.AddAsync(po);
             await _unitOfWork.Commit();
 
+            await _notificationService.Notify($" Criado um pedido de compra {po.Number}");
+            await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Criado um pedido de compra {po.Number}");
             return _mapper.Map<ResponsePurchaseOrderJson>(po);
         }
 

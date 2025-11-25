@@ -10,11 +10,13 @@ using MyRecipeBook.Application.UseCases.User.Update;
 using RDTrackR.Application.Services.AutoMapper;
 using RDTrackR.Application.Services.Context;
 using RDTrackR.Application.UseCases.AuditLogs;
+using RDTrackR.Application.UseCases.Contact;
 using RDTrackR.Application.UseCases.Login.DoLogin;
 using RDTrackR.Application.UseCases.Login.Logout;
 using RDTrackR.Application.UseCases.Login.ResetPassword;
 using RDTrackR.Application.UseCases.Movements.GetAll;
 using RDTrackR.Application.UseCases.Movements.Register;
+using RDTrackR.Application.UseCases.Notifications;
 using RDTrackR.Application.UseCases.Orders;
 using RDTrackR.Application.UseCases.Organizations;
 using RDTrackR.Application.UseCases.Overview.Get;
@@ -60,7 +62,7 @@ namespace RDTrackR.Application
     {
         public static void AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-            AddUseCases(services);
+            AddUserUseCases(services);
             AddIdEncoder(services, configuration);
             AddProductUseCases(services);
             AddMovementsUseCases(services);
@@ -76,9 +78,11 @@ namespace RDTrackR.Application
             AddReportsUseCase(services);
             AddOverviewUseCase(services);
             AddAuditLog(services);
+            AddNotification(services);
             AddOrganizationUseCase(services);
             AddOrdersUseCase(services);
             AddSupplierProductUseCases(services);
+            AddContactUseCase(services);
         }
 
         private static void AddAutoMapper(this IServiceCollection services)
@@ -101,7 +105,7 @@ namespace RDTrackR.Application
             });
             services.AddSingleton(sqids);
         }
-        private static void AddUseCases(IServiceCollection services)
+        private static void AddUserUseCases(IServiceCollection services)
         {
             services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
             services.AddScoped<IDoLoginUseCase, DoLoginUseCase>();
@@ -118,7 +122,7 @@ namespace RDTrackR.Application
             services.AddScoped<IAdminUpdateUserUseCase, AdminUpdateUserUseCase>();
             services.AddScoped<IAdminDeleteUserUseCase, AdminDeleteUserUseCase>();
             services.AddScoped<IGetAllUsersUseCase, GetAllUsersUseCase>();
-
+            services.AddScoped<IValidateResetCodeUseCase, ValidateResetCodeUseCase>();
         }
 
         private static void AddProductUseCases(IServiceCollection services)
@@ -208,6 +212,12 @@ namespace RDTrackR.Application
             services.AddScoped<IGetAuditLogsUseCase, GetAuditLogsUseCase>();
         }
 
+        private static void AddNotification(IServiceCollection services)
+        {
+            services.AddScoped< IGetNotificationUseCase, GetNotificationUseCase>();
+            services.AddScoped< IMarkNotificationAsReadUseCase, MarkNotificationAsReadUseCase>();
+        }
+
         private static void AddOrganizationUseCase(IServiceCollection services)
         {
             services.AddScoped<IRegisterOrganizationUseCase, RegisterOrganizationUseCase>();
@@ -221,6 +231,10 @@ namespace RDTrackR.Application
             services.AddScoped<IDeleteOrderUseCase, DeleteOrderUseCase>();
         }
 
+        private static void AddContactUseCase(IServiceCollection services)
+        {
+            services.AddScoped<ISendContactMessageUseCase, SendContactMessageUseCase>();
+        }
         private static void AddSupplierProductUseCases(IServiceCollection services)
         {
             services.AddScoped<IRegisterSupplierProductUseCase, RegisterSupplierProductUseCase>();

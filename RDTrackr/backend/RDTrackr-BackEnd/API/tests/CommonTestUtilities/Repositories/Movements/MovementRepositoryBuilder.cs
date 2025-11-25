@@ -13,18 +13,15 @@ namespace CommonTestUtilities.Repositories.Movements
 
         public MovementRepositoryBuilder()
         {
-            // Simula AddAsync salvando o movimento
             _writeMock
                 .Setup(r => r.AddAsync(It.IsAny<Movement>()))
                 .Callback((Movement m) =>
                 {
-                    // Simula ID gerado pelo banco
                     m.Id = _store.Count + 1;
                     _store.Add(m);
                 })
                 .Returns(Task.CompletedTask);
 
-            // Simula GetByIdAsync lendo do store
             _readMock
                 .Setup(r => r.GetByIdAsync(It.IsAny<long>()))
                 .ReturnsAsync((long id) => _store.FirstOrDefault(x => x.Id == id));

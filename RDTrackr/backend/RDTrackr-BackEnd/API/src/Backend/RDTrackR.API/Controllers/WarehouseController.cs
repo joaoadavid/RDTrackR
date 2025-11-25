@@ -7,6 +7,7 @@ using RDTrackR.Application.UseCases.Warehouses.Register;
 using RDTrackR.Application.UseCases.Warehouses.Update;
 using RDTrackR.Communication.Requests.Warehouse;
 using RDTrackR.Communication.Responses.Error;
+using RDTrackR.Communication.Responses.Pages;
 using RDTrackR.Communication.Responses.Warehouse;
 
 namespace RDTrackR.API.Controllers
@@ -14,14 +15,17 @@ namespace RDTrackR.API.Controllers
     [AuthenticatedUser]
     public class WarehouseController : RDTrackRBaseController
     {
+
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponseWarehouseJson>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll(
-            [FromServices] IGetAllWarehousesUseCase useCase)
+        [ProducesResponseType(typeof(PagedResponse<ResponseWarehouseJson>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Get(
+        [FromServices] IGetAllWarehousesUseCase useCase,
+        [FromQuery] RequestGetWarehousesPagedJson request)
         {
-            var result = await useCase.Execute();
+            var result = await useCase.Execute(request);
             return Ok(result);
         }
+
 
         [HttpPost]
         [ProducesResponseType(typeof(ResponseWarehouseJson), StatusCodes.Status201Created)]

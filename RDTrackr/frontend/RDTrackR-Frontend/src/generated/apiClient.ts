@@ -47,6 +47,12 @@ export interface IApiClient {
      * @param body (optional) 
      * @return OK
      */
+    contact(body?: RequestContactJson | undefined, signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
     login(body?: RequestLoginJson | undefined, signal?: AbortSignal): Promise<ResponseRegisterUserJson>;
 
     /**
@@ -67,19 +73,27 @@ export interface IApiClient {
     resetPassword(body?: RequestResetYourPasswordJson | undefined, signal?: AbortSignal): Promise<void>;
 
     /**
+     * @param body (optional) 
+     * @return No Content
+     */
+    validateResetCode(body?: RequestValidateResetCodeJson | undefined, signal?: AbortSignal): Promise<void>;
+
+    /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
      * @param warehouseId (optional) 
      * @param type (optional) 
      * @param startDate (optional) 
      * @param endDate (optional) 
      * @return OK
      */
-    movementAll(warehouseId?: number | undefined, type?: MovementType | undefined, startDate?: Date | undefined, endDate?: Date | undefined, signal?: AbortSignal): Promise<ResponseMovementJson[]>;
+    movementGET(page?: number | undefined, pageSize?: number | undefined, warehouseId?: number | undefined, type?: MovementType | undefined, startDate?: Date | undefined, endDate?: Date | undefined, signal?: AbortSignal): Promise<ResponseMovementJsonPagedResponse>;
 
     /**
      * @param body (optional) 
      * @return Created
      */
-    movement(body?: RequestRegisterMovementJson | undefined, signal?: AbortSignal): Promise<ResponseMovementJson>;
+    movementPOST(body?: RequestRegisterMovementJson | undefined, signal?: AbortSignal): Promise<ResponseMovementJson>;
 
     /**
      * @return OK
@@ -131,14 +145,17 @@ export interface IApiClient {
     productPOST(body?: RequestRegisterProductJson | undefined, signal?: AbortSignal): Promise<ResponseProductJson>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    productAll(signal?: AbortSignal): Promise<ResponseProductJson[]>;
+    productGET(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseProductJsonPagedResponse>;
 
     /**
      * @return OK
      */
-    productGET(id: number, signal?: AbortSignal): Promise<ResponseProductJson>;
+    productGET2(id: number, signal?: AbortSignal): Promise<ResponseProductJson>;
 
     /**
      * @param body (optional) 
@@ -158,14 +175,18 @@ export interface IApiClient {
     purchaseorderPOST(body?: RequestCreatePurchaseOrderJson | undefined, signal?: AbortSignal): Promise<ResponsePurchaseOrderJson>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param status (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    purchaseorderAll(signal?: AbortSignal): Promise<ResponsePurchaseOrderJson[]>;
+    purchaseorderGET(page?: number | undefined, pageSize?: number | undefined, status?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponsePurchaseOrderJsonPagedResponse>;
 
     /**
      * @return OK
      */
-    purchaseorderGET(id: number, signal?: AbortSignal): Promise<ResponsePurchaseOrderJson>;
+    purchaseorderGET2(id: number, signal?: AbortSignal): Promise<ResponsePurchaseOrderJson>;
 
     /**
      * @return No Content
@@ -185,9 +206,12 @@ export interface IApiClient {
     items(id: number, body?: RequestUpdatePurchaseOrderItemsJson | undefined, signal?: AbortSignal): Promise<void>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    replenishment(signal?: AbortSignal): Promise<ResponseReplenishmentItemJson[]>;
+    replenishment(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseReplenishmentItemJsonPagedResponse>;
 
     /**
      * @param body (optional) 
@@ -218,9 +242,12 @@ export interface IApiClient {
     supplierPOST(body?: RequestRegisterSupplierJson | undefined, signal?: AbortSignal): Promise<ResponseSupplierJson>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    supplierAll(signal?: AbortSignal): Promise<ResponseSupplierJson[]>;
+    supplierGET(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseSupplierJsonPagedResponse>;
 
     /**
      * @param body (optional) 
@@ -295,9 +322,12 @@ export interface IApiClient {
     changePassword(body?: RequestChangePasswordJson | undefined, signal?: AbortSignal): Promise<void>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    warehouseAll(signal?: AbortSignal): Promise<ResponseWarehouseJson[]>;
+    warehouseGET(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseWarehouseJsonPagedResponse>;
 
     /**
      * @param body (optional) 
@@ -319,7 +349,7 @@ export interface IApiClient {
     /**
      * @return OK
      */
-    warehouseGET(id: number, signal?: AbortSignal): Promise<ResponseWarehouseJson>;
+    warehouseGET2(id: number, signal?: AbortSignal): Promise<ResponseWarehouseJson>;
 
     /**
      * @return OK
@@ -600,6 +630,45 @@ export class ApiClient implements IApiClient {
      * @param body (optional) 
      * @return OK
      */
+    contact(body?: RequestContactJson | undefined, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/contact";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processContact(_response);
+        });
+    }
+
+    protected processContact(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
     login(body?: RequestLoginJson | undefined, signal?: AbortSignal): Promise<ResponseRegisterUserJson> {
         let url_ = this.baseUrl + "/login";
         url_ = url_.replace(/[?&]$/, "");
@@ -769,14 +838,70 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param body (optional) 
+     * @return No Content
+     */
+    validateResetCode(body?: RequestValidateResetCodeJson | undefined, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/login/validate-reset-code";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            signal,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processValidateResetCode(_response);
+        });
+    }
+
+    protected processValidateResetCode(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ResponseErrorJson.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
      * @param warehouseId (optional) 
      * @param type (optional) 
      * @param startDate (optional) 
      * @param endDate (optional) 
      * @return OK
      */
-    movementAll(warehouseId?: number | undefined, type?: MovementType | undefined, startDate?: Date | undefined, endDate?: Date | undefined, signal?: AbortSignal): Promise<ResponseMovementJson[]> {
+    movementGET(page?: number | undefined, pageSize?: number | undefined, warehouseId?: number | undefined, type?: MovementType | undefined, startDate?: Date | undefined, endDate?: Date | undefined, signal?: AbortSignal): Promise<ResponseMovementJsonPagedResponse> {
         let url_ = this.baseUrl + "/movement?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
         if (warehouseId === null)
             throw new globalThis.Error("The parameter 'warehouseId' cannot be null.");
         else if (warehouseId !== undefined)
@@ -804,25 +929,18 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processMovementAll(_response);
+            return this.processMovementGET(_response);
         });
     }
 
-    protected processMovementAll(response: Response): Promise<ResponseMovementJson[]> {
+    protected processMovementGET(response: Response): Promise<ResponseMovementJsonPagedResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseMovementJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = ResponseMovementJsonPagedResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -830,14 +948,14 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseMovementJson[]>(null as any);
+        return Promise.resolve<ResponseMovementJsonPagedResponse>(null as any);
     }
 
     /**
      * @param body (optional) 
      * @return Created
      */
-    movement(body?: RequestRegisterMovementJson | undefined, signal?: AbortSignal): Promise<ResponseMovementJson> {
+    movementPOST(body?: RequestRegisterMovementJson | undefined, signal?: AbortSignal): Promise<ResponseMovementJson> {
         let url_ = this.baseUrl + "/movement";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -854,11 +972,11 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processMovement(_response);
+            return this.processMovementPOST(_response);
         });
     }
 
-    protected processMovement(response: Response): Promise<ResponseMovementJson> {
+    protected processMovementPOST(response: Response): Promise<ResponseMovementJson> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 201) {
@@ -1264,58 +1382,25 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    productAll(signal?: AbortSignal): Promise<ResponseProductJson[]> {
-        let url_ = this.baseUrl + "/product";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processProductAll(_response);
-        });
-    }
-
-    protected processProductAll(response: Response): Promise<ResponseProductJson[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseProductJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ResponseProductJson[]>(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    productGET(id: number, signal?: AbortSignal): Promise<ResponseProductJson> {
-        let url_ = this.baseUrl + "/product/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    productGET(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseProductJsonPagedResponse> {
+        let url_ = this.baseUrl + "/product?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (search === null)
+            throw new globalThis.Error("The parameter 'search' cannot be null.");
+        else if (search !== undefined)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -1331,7 +1416,48 @@ export class ApiClient implements IApiClient {
         });
     }
 
-    protected processProductGET(response: Response): Promise<ResponseProductJson> {
+    protected processProductGET(response: Response): Promise<ResponseProductJsonPagedResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ResponseProductJsonPagedResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponseProductJsonPagedResponse>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    productGET2(id: number, signal?: AbortSignal): Promise<ResponseProductJson> {
+        let url_ = this.baseUrl + "/product/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processProductGET2(_response);
+        });
+    }
+
+    protected processProductGET2(response: Response): Promise<ResponseProductJson> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -1486,58 +1612,30 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param status (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    purchaseorderAll(signal?: AbortSignal): Promise<ResponsePurchaseOrderJson[]> {
-        let url_ = this.baseUrl + "/purchaseorder";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            signal,
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processPurchaseorderAll(_response);
-        });
-    }
-
-    protected processPurchaseorderAll(response: Response): Promise<ResponsePurchaseOrderJson[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponsePurchaseOrderJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ResponsePurchaseOrderJson[]>(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    purchaseorderGET(id: number, signal?: AbortSignal): Promise<ResponsePurchaseOrderJson> {
-        let url_ = this.baseUrl + "/purchaseorder/{id}";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    purchaseorderGET(page?: number | undefined, pageSize?: number | undefined, status?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponsePurchaseOrderJsonPagedResponse> {
+        let url_ = this.baseUrl + "/purchaseorder?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (status === null)
+            throw new globalThis.Error("The parameter 'status' cannot be null.");
+        else if (status !== undefined)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (search === null)
+            throw new globalThis.Error("The parameter 'search' cannot be null.");
+        else if (search !== undefined)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -1553,7 +1651,48 @@ export class ApiClient implements IApiClient {
         });
     }
 
-    protected processPurchaseorderGET(response: Response): Promise<ResponsePurchaseOrderJson> {
+    protected processPurchaseorderGET(response: Response): Promise<ResponsePurchaseOrderJsonPagedResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ResponsePurchaseOrderJsonPagedResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ResponsePurchaseOrderJsonPagedResponse>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    purchaseorderGET2(id: number, signal?: AbortSignal): Promise<ResponsePurchaseOrderJson> {
+        let url_ = this.baseUrl + "/purchaseorder/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            signal,
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processPurchaseorderGET2(_response);
+        });
+    }
+
+    protected processPurchaseorderGET2(response: Response): Promise<ResponsePurchaseOrderJson> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -1700,10 +1839,25 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    replenishment(signal?: AbortSignal): Promise<ResponseReplenishmentItemJson[]> {
-        let url_ = this.baseUrl + "/replenishment";
+    replenishment(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseReplenishmentItemJsonPagedResponse> {
+        let url_ = this.baseUrl + "/replenishment?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (search === null)
+            throw new globalThis.Error("The parameter 'search' cannot be null.");
+        else if (search !== undefined)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -1719,21 +1873,14 @@ export class ApiClient implements IApiClient {
         });
     }
 
-    protected processReplenishment(response: Response): Promise<ResponseReplenishmentItemJson[]> {
+    protected processReplenishment(response: Response): Promise<ResponseReplenishmentItemJsonPagedResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseReplenishmentItemJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = ResponseReplenishmentItemJsonPagedResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -1741,7 +1888,7 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseReplenishmentItemJson[]>(null as any);
+        return Promise.resolve<ResponseReplenishmentItemJsonPagedResponse>(null as any);
     }
 
     /**
@@ -1971,10 +2118,25 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    supplierAll(signal?: AbortSignal): Promise<ResponseSupplierJson[]> {
-        let url_ = this.baseUrl + "/supplier";
+    supplierGET(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseSupplierJsonPagedResponse> {
+        let url_ = this.baseUrl + "/supplier?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (search === null)
+            throw new globalThis.Error("The parameter 'search' cannot be null.");
+        else if (search !== undefined)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -1986,25 +2148,18 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processSupplierAll(_response);
+            return this.processSupplierGET(_response);
         });
     }
 
-    protected processSupplierAll(response: Response): Promise<ResponseSupplierJson[]> {
+    protected processSupplierGET(response: Response): Promise<ResponseSupplierJsonPagedResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseSupplierJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = ResponseSupplierJsonPagedResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -2012,7 +2167,7 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseSupplierJson[]>(null as any);
+        return Promise.resolve<ResponseSupplierJsonPagedResponse>(null as any);
     }
 
     /**
@@ -2605,10 +2760,25 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    warehouseAll(signal?: AbortSignal): Promise<ResponseWarehouseJson[]> {
-        let url_ = this.baseUrl + "/warehouse";
+    warehouseGET(page?: number | undefined, pageSize?: number | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseWarehouseJsonPagedResponse> {
+        let url_ = this.baseUrl + "/warehouse?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (search === null)
+            throw new globalThis.Error("The parameter 'search' cannot be null.");
+        else if (search !== undefined)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -2620,25 +2790,18 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processWarehouseAll(_response);
+            return this.processWarehouseGET(_response);
         });
     }
 
-    protected processWarehouseAll(response: Response): Promise<ResponseWarehouseJson[]> {
+    protected processWarehouseGET(response: Response): Promise<ResponseWarehouseJsonPagedResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseWarehouseJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = ResponseWarehouseJsonPagedResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -2646,7 +2809,7 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseWarehouseJson[]>(null as any);
+        return Promise.resolve<ResponseWarehouseJsonPagedResponse>(null as any);
     }
 
     /**
@@ -2799,7 +2962,7 @@ export class ApiClient implements IApiClient {
     /**
      * @return OK
      */
-    warehouseGET(id: number, signal?: AbortSignal): Promise<ResponseWarehouseJson> {
+    warehouseGET2(id: number, signal?: AbortSignal): Promise<ResponseWarehouseJson> {
         let url_ = this.baseUrl + "/warehouse/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -2815,11 +2978,11 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processWarehouseGET(_response);
+            return this.processWarehouseGET2(_response);
         });
     }
 
-    protected processWarehouseGET(response: Response): Promise<ResponseWarehouseJson> {
+    protected processWarehouseGET2(response: Response): Promise<ResponseWarehouseJson> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -3063,6 +3226,7 @@ export interface IRequestAdminCreateUserJson {
 export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
+    newPassword?: string | undefined;
     role?: string | undefined;
     active?: boolean;
 
@@ -3079,6 +3243,7 @@ export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
         if (_data) {
             this.name = _data["name"];
             this.email = _data["email"];
+            this.newPassword = _data["newPassword"];
             this.role = _data["role"];
             this.active = _data["active"];
         }
@@ -3095,6 +3260,7 @@ export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["email"] = this.email;
+        data["newPassword"] = this.newPassword;
         data["role"] = this.role;
         data["active"] = this.active;
         return data;
@@ -3104,6 +3270,7 @@ export class RequestAdminUpdateUserJson implements IRequestAdminUpdateUserJson {
 export interface IRequestAdminUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
+    newPassword?: string | undefined;
     role?: string | undefined;
     active?: boolean;
 }
@@ -3146,6 +3313,54 @@ export class RequestChangePasswordJson implements IRequestChangePasswordJson {
 export interface IRequestChangePasswordJson {
     password?: string | undefined;
     newPassword?: string | undefined;
+}
+
+export class RequestContactJson implements IRequestContactJson {
+    name?: string | undefined;
+    email?: string | undefined;
+    subject?: string | undefined;
+    message?: string | undefined;
+
+    constructor(data?: IRequestContactJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.subject = _data["subject"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): RequestContactJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestContactJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["subject"] = this.subject;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IRequestContactJson {
+    name?: string | undefined;
+    email?: string | undefined;
+    subject?: string | undefined;
+    message?: string | undefined;
 }
 
 export class RequestCreateOrderItemJson implements IRequestCreateOrderItemJson {
@@ -4187,8 +4402,6 @@ export interface IRequestUpdateSupplierProductJson {
 export class RequestUpdateUserJson implements IRequestUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
-    role?: string | undefined;
-    isActive?: boolean;
 
     constructor(data?: IRequestUpdateUserJson) {
         if (data) {
@@ -4203,8 +4416,6 @@ export class RequestUpdateUserJson implements IRequestUpdateUserJson {
         if (_data) {
             this.name = _data["name"];
             this.email = _data["email"];
-            this.role = _data["role"];
-            this.isActive = _data["isActive"];
         }
     }
 
@@ -4219,8 +4430,6 @@ export class RequestUpdateUserJson implements IRequestUpdateUserJson {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
         data["email"] = this.email;
-        data["role"] = this.role;
-        data["isActive"] = this.isActive;
         return data;
     }
 }
@@ -4228,8 +4437,6 @@ export class RequestUpdateUserJson implements IRequestUpdateUserJson {
 export interface IRequestUpdateUserJson {
     name?: string | undefined;
     email?: string | undefined;
-    role?: string | undefined;
-    isActive?: boolean;
 }
 
 export class RequestUpdateWarehouseJson implements IRequestUpdateWarehouseJson {
@@ -4278,6 +4485,46 @@ export interface IRequestUpdateWarehouseJson {
     location?: string | undefined;
     capacity?: number;
     items?: number;
+}
+
+export class RequestValidateResetCodeJson implements IRequestValidateResetCodeJson {
+    email?: string | undefined;
+    code?: string | undefined;
+
+    constructor(data?: IRequestValidateResetCodeJson) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.email = _data["email"];
+            this.code = _data["code"];
+        }
+    }
+
+    static fromJS(data: any): RequestValidateResetCodeJson {
+        data = typeof data === 'object' ? data : {};
+        let result = new RequestValidateResetCodeJson();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["email"] = this.email;
+        data["code"] = this.code;
+        return data;
+    }
+}
+
+export interface IRequestValidateResetCodeJson {
+    email?: string | undefined;
+    code?: string | undefined;
 }
 
 export class ResponseAdminCreateUserJson implements IResponseAdminCreateUserJson {
@@ -4490,6 +4737,62 @@ export interface IResponseMovementJson {
     quantity?: number;
     createdAt?: Date;
     createdByName?: string | undefined;
+}
+
+export class ResponseMovementJsonPagedResponse implements IResponseMovementJsonPagedResponse {
+    items?: ResponseMovementJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseMovementJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseMovementJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseMovementJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseMovementJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseMovementJsonPagedResponse {
+    items?: ResponseMovementJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
 }
 
 export class ResponseNotificationJson implements IResponseNotificationJson {
@@ -4800,6 +5103,62 @@ export interface IResponseProductJson {
     stockItems?: ResponseStockItemJson[] | undefined;
 }
 
+export class ResponseProductJsonPagedResponse implements IResponseProductJsonPagedResponse {
+    items?: ResponseProductJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseProductJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseProductJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseProductJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseProductJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseProductJsonPagedResponse {
+    items?: ResponseProductJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+}
+
 export class ResponsePurchaseOrderItemJson implements IResponsePurchaseOrderItemJson {
     productName?: string | undefined;
     quantity?: number;
@@ -4920,6 +5279,62 @@ export interface IResponsePurchaseOrderJson {
     items?: ResponsePurchaseOrderItemJson[] | undefined;
 }
 
+export class ResponsePurchaseOrderJsonPagedResponse implements IResponsePurchaseOrderJsonPagedResponse {
+    items?: ResponsePurchaseOrderJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponsePurchaseOrderJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponsePurchaseOrderJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponsePurchaseOrderJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponsePurchaseOrderJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponsePurchaseOrderJsonPagedResponse {
+    items?: ResponsePurchaseOrderJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+}
+
 export class ResponseRecentPurchaseOrderJson implements IResponseRecentPurchaseOrderJson {
     id?: number;
     supplierName?: string | undefined;
@@ -5020,6 +5435,7 @@ export class ResponseRegisterUserJson implements IResponseRegisterUserJson {
     name?: string | undefined;
     email?: string | undefined;
     role?: string | undefined;
+    organizationName?: string | undefined;
     organizationId?: number;
     tokens?: ResponseTokensJson;
 
@@ -5037,6 +5453,7 @@ export class ResponseRegisterUserJson implements IResponseRegisterUserJson {
             this.name = _data["name"];
             this.email = _data["email"];
             this.role = _data["role"];
+            this.organizationName = _data["organizationName"];
             this.organizationId = _data["organizationId"];
             this.tokens = _data["tokens"] ? ResponseTokensJson.fromJS(_data["tokens"]) : undefined as any;
         }
@@ -5054,6 +5471,7 @@ export class ResponseRegisterUserJson implements IResponseRegisterUserJson {
         data["name"] = this.name;
         data["email"] = this.email;
         data["role"] = this.role;
+        data["organizationName"] = this.organizationName;
         data["organizationId"] = this.organizationId;
         data["tokens"] = this.tokens ? this.tokens.toJSON() : undefined as any;
         return data;
@@ -5064,6 +5482,7 @@ export interface IResponseRegisterUserJson {
     name?: string | undefined;
     email?: string | undefined;
     role?: string | undefined;
+    organizationName?: string | undefined;
     organizationId?: number;
     tokens?: ResponseTokensJson;
 }
@@ -5156,10 +5575,67 @@ export interface IResponseReplenishmentItemJson {
     warehouseName?: string | undefined;
 }
 
+export class ResponseReplenishmentItemJsonPagedResponse implements IResponseReplenishmentItemJsonPagedResponse {
+    items?: ResponseReplenishmentItemJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseReplenishmentItemJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseReplenishmentItemJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseReplenishmentItemJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseReplenishmentItemJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseReplenishmentItemJsonPagedResponse {
+    items?: ResponseReplenishmentItemJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+}
+
 export class ResponseReportsJson implements IResponseReportsJson {
     totalPurchaseOrders?: number;
     totalValuePurchased?: number;
     pendingPurchaseOrders?: number;
+    cancelPurchaseOrders?: number;
     recentOrders?: ResponseRecentPurchaseOrderJson[] | undefined;
     topSuppliers?: ResponseTopSupplierJson[] | undefined;
 
@@ -5177,6 +5653,7 @@ export class ResponseReportsJson implements IResponseReportsJson {
             this.totalPurchaseOrders = _data["totalPurchaseOrders"];
             this.totalValuePurchased = _data["totalValuePurchased"];
             this.pendingPurchaseOrders = _data["pendingPurchaseOrders"];
+            this.cancelPurchaseOrders = _data["cancelPurchaseOrders"];
             if (Array.isArray(_data["recentOrders"])) {
                 this.recentOrders = [] as any;
                 for (let item of _data["recentOrders"])
@@ -5202,6 +5679,7 @@ export class ResponseReportsJson implements IResponseReportsJson {
         data["totalPurchaseOrders"] = this.totalPurchaseOrders;
         data["totalValuePurchased"] = this.totalValuePurchased;
         data["pendingPurchaseOrders"] = this.pendingPurchaseOrders;
+        data["cancelPurchaseOrders"] = this.cancelPurchaseOrders;
         if (Array.isArray(this.recentOrders)) {
             data["recentOrders"] = [];
             for (let item of this.recentOrders)
@@ -5220,6 +5698,7 @@ export interface IResponseReportsJson {
     totalPurchaseOrders?: number;
     totalValuePurchased?: number;
     pendingPurchaseOrders?: number;
+    cancelPurchaseOrders?: number;
     recentOrders?: ResponseRecentPurchaseOrderJson[] | undefined;
     topSuppliers?: ResponseTopSupplierJson[] | undefined;
 }
@@ -5342,6 +5821,62 @@ export interface IResponseSupplierJson {
     phone?: string | undefined;
     address?: string | undefined;
     createdByName?: string | undefined;
+}
+
+export class ResponseSupplierJsonPagedResponse implements IResponseSupplierJsonPagedResponse {
+    items?: ResponseSupplierJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseSupplierJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseSupplierJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseSupplierJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseSupplierJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseSupplierJsonPagedResponse {
+    items?: ResponseSupplierJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
 }
 
 export class ResponseSupplierProductJson implements IResponseSupplierProductJson {
@@ -5536,6 +6071,7 @@ export class ResponseUserProfileJson implements IResponseUserProfileJson {
     name?: string | undefined;
     email?: string | undefined;
     role?: string | undefined;
+    active?: boolean;
     createdAt?: Date;
 
     constructor(data?: IResponseUserProfileJson) {
@@ -5552,6 +6088,7 @@ export class ResponseUserProfileJson implements IResponseUserProfileJson {
             this.name = _data["name"];
             this.email = _data["email"];
             this.role = _data["role"];
+            this.active = _data["active"];
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : undefined as any;
         }
     }
@@ -5568,6 +6105,7 @@ export class ResponseUserProfileJson implements IResponseUserProfileJson {
         data["name"] = this.name;
         data["email"] = this.email;
         data["role"] = this.role;
+        data["active"] = this.active;
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : undefined as any;
         return data;
     }
@@ -5577,6 +6115,7 @@ export interface IResponseUserProfileJson {
     name?: string | undefined;
     email?: string | undefined;
     role?: string | undefined;
+    active?: boolean;
     createdAt?: Date;
 }
 
@@ -5658,6 +6197,62 @@ export interface IResponseWarehouseJson {
     updatedByUserId?: number | undefined;
     updatedByName?: string | undefined;
     updatedAt?: Date | undefined;
+}
+
+export class ResponseWarehouseJsonPagedResponse implements IResponseWarehouseJsonPagedResponse {
+    items?: ResponseWarehouseJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseWarehouseJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseWarehouseJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseWarehouseJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseWarehouseJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseWarehouseJsonPagedResponse {
+    items?: ResponseWarehouseJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
 }
 
 export class ResponseWarehouseStockItemJson implements IResponseWarehouseStockItemJson {

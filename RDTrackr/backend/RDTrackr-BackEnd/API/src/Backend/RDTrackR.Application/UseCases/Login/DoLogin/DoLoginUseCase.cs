@@ -5,6 +5,7 @@ using RDTrackR.Communication.Responses.Token;
 using RDTrackR.Communication.Responses.User;
 using RDTrackR.Domain.Extensions;
 using RDTrackR.Domain.Repositories;
+using RDTrackR.Domain.Repositories.Organization;
 using RDTrackR.Domain.Repositories.Users;
 using RDTrackR.Domain.Security.Cryptography;
 using RDTrackR.Domain.Security.Tokens;
@@ -17,6 +18,7 @@ namespace RDTrackR.Application.UseCases.Login.DoLogin
     {
         private readonly IUserReadOnlyRepository _repository;
         private readonly IPasswordEncripter _passwordEncripter;
+        private readonly IOrganizationReadOnlyRepository _organizationRepository;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly IRefreshTokenGenerator _refreshTokenGenerator;
         private readonly ITokenRepository _tokenRepository;
@@ -26,12 +28,14 @@ namespace RDTrackR.Application.UseCases.Login.DoLogin
             IUserReadOnlyRepository repository,
             IAccessTokenGenerator accessTokenGenerator,
             IPasswordEncripter passwordEncripter,
+            IOrganizationReadOnlyRepository organizationRepository,
             IRefreshTokenGenerator refreshTokenGenerator,
             ITokenRepository tokenRepository,
             IUnitOfWork unitOfWork)
         {
             _repository = repository;
             _passwordEncripter = passwordEncripter;
+            _organizationRepository = organizationRepository;
             _accessTokenGenerator = accessTokenGenerator;
             _refreshTokenGenerator = refreshTokenGenerator;
             _tokenRepository = tokenRepository;
@@ -41,6 +45,7 @@ namespace RDTrackR.Application.UseCases.Login.DoLogin
         public async Task<ResponseRegisterUserJson> Execute(RequestLoginJson request)
         {
             var user = await _repository.GetByEmail(request.Email);
+            var organization = await _organizationRepository.GetByIdAsync(user.OrganizationId);
 
             if (user is null || _passwordEncripter.IsValid(request.Password, user.Password).IsFalse())
                 throw new InvalidLoginException();
@@ -56,6 +61,10 @@ namespace RDTrackR.Application.UseCases.Login.DoLogin
             return new ResponseRegisterUserJson
             {
                 Name = user.Name,
+                Email = user.Email,
+                Role = user.Role,
+                OrganizationId = user.OrganizationId,
+                OrganizationName = organization!.Name,
                 Tokens = new ResponseTokensJson
                 {
                     AccessToken = accessToken,

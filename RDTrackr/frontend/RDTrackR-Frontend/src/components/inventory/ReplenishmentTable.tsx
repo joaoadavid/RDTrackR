@@ -1,5 +1,5 @@
 // ===============================
-// TIPOS — embutidos no próprio arquivo
+// TIPOS
 // ===============================
 export interface ReplenishmentItem {
   id: string;
@@ -24,7 +24,7 @@ export interface ReplenishmentItem {
 }
 
 // ===============================
-// TABELA
+// COMPONENTES
 // ===============================
 
 import {
@@ -35,7 +35,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export interface ReplenishmentTableProps {
@@ -60,6 +62,7 @@ export function ReplenishmentTable({
   return (
     <div className="rounded-md border">
       <Table>
+        {/* HEADER */}
         <TableHeader>
           <TableRow>
             <TableHead className="w-10">
@@ -68,27 +71,29 @@ export function ReplenishmentTable({
                 onCheckedChange={onToggleAll}
               />
             </TableHead>
+
             <TableHead>SKU</TableHead>
-            <TableHead>Produto</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead>Warehouse</TableHead>
+            <TableHead>Produtos</TableHead>
+            <TableHead>Categorias</TableHead>
+            <TableHead>Depósitos</TableHead>
             <TableHead>Estoque</TableHead>
-            <TableHead>Reorder Point</TableHead>
-            <TableHead>Sugestão</TableHead>
-            <TableHead>Preço</TableHead>
+            <TableHead>Reposição</TableHead>
+            <TableHead>Criticidade</TableHead>
+            <TableHead>Sugestões</TableHead>
+            <TableHead>Preços</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-6">
+              <TableCell colSpan={10} className="text-center py-6">
                 Carregando...
               </TableCell>
             </TableRow>
           ) : items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-6">
+              <TableCell colSpan={10} className="text-center py-6">
                 Nenhum item encontrado.
               </TableCell>
             </TableRow>
@@ -117,9 +122,7 @@ export function ReplenishmentTable({
                   <TableCell className="font-medium flex items-center gap-2">
                     {item.name}
                     {item.isCritical && (
-                      <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded">
-                        CRÍTICO
-                      </span>
+                      <Badge className="bg-red-600 text-white">Crítico</Badge>
                     )}
                   </TableCell>
 
@@ -140,12 +143,22 @@ export function ReplenishmentTable({
                   </TableCell>
 
                   <TableCell>
+                    {item.isCritical ? (
+                      <Badge variant="destructive">Crítico</Badge>
+                    ) : (
+                      <Badge variant="outline">OK</Badge>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
                     <input
                       type="number"
                       className={cn(
-                        "w-20 input input-bordered text-center",
-                        item.isCritical && "border-red-500 bg-red-50"
+                        "w-20 border rounded text-center py-1",
+                        item.isCritical &&
+                          "border-red-500 bg-red-50 text-red-700"
                       )}
+                      min={0}
                       value={item.suggestedQty}
                       onChange={(e) =>
                         onQtyChange(item.id, Number(e.target.value))

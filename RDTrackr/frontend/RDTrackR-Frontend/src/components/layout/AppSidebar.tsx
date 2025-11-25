@@ -1,9 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard,
   Users,
   Package,
-  ShoppingCart,
   BarChart3,
   Settings,
   FileText,
@@ -13,7 +11,9 @@ import {
   Building2,
   ShoppingBag,
   Replace,
+  UserCog,
 } from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -26,21 +26,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const menuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+import { useAuth } from "@/context/AuthContext";
+
+const adminItems = [
   { title: "Usuários", icon: Users, href: "/users" },
-  { title: "Produtos", icon: Package, href: "/products" },
-  { title: "Pedidos", icon: ShoppingCart, href: "/orders" },
   { title: "Relatórios", icon: BarChart3, href: "/reports" },
   { title: "Auditoria", icon: FileText, href: "/audit-log" },
-  { title: "Configurações", icon: Settings, href: "/settings" },
 ];
 
 const inventoryItems = [
   { title: "Visão Geral", icon: TrendingUp, href: "/inventory" },
   { title: "Itens", icon: Package, href: "/inventory/items" },
   { title: "Depósitos", icon: Warehouse, href: "/inventory/warehouses" },
-  { title: "Reposição", icon: Replace, href: "/inventory/Replenishment" },
+  { title: "Reposição", icon: Replace, href: "/inventory/replenishment" },
   {
     title: "Movimentações",
     icon: ArrowLeftRight,
@@ -54,24 +52,63 @@ const inventoryItems = [
   },
 ];
 
+const profileItems = [
+  { title: "Configurações", icon: Settings, href: "/settings" },
+];
+
 export function AppSidebar() {
   const { open } = useSidebar();
+  const { user } = useAuth();
+
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        {/* ADMIN */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-primary">
+              Administrador
+            </SidebarGroupLabel>
+
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.href}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : ""
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {open && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* INVENTORY */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-primary">
-            Admin Dashboard
+            Estoque
           </SidebarGroupLabel>
+
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {inventoryItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.href}
-                      end={item.href === "/"}
                       className={({ isActive }) =>
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground"
@@ -88,18 +125,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* PROFILE - NOVA SEÇÃO */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-primary">
-            Estoque
+            Perfil
           </SidebarGroupLabel>
+
           <SidebarGroupContent>
             <SidebarMenu>
-              {inventoryItems.map((item) => (
+              {profileItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.href}
-                      end
                       className={({ isActive }) =>
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground"

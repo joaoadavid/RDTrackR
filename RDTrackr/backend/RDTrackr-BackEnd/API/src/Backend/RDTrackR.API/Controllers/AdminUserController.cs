@@ -28,7 +28,7 @@ namespace RDTrackR.API.Controllers
             => Ok(await useCase.Execute());
 
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]        
+        [ProducesResponseType(StatusCodes.Status204NoContent)]   
         public async Task<IActionResult> Update(
             long id,
             [FromBody] RequestAdminUpdateUserJson request,

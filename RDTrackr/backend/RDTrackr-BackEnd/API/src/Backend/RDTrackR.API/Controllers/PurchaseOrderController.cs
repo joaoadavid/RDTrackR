@@ -6,6 +6,7 @@ using RDTrackR.Application.UseCases.PurchaseOrders.Register;
 using RDTrackR.Application.UseCases.PurchaseOrders.Update;
 using RDTrackR.Communication.Requests.PurchaseOrders;
 using RDTrackR.Communication.Responses.Error;
+using RDTrackR.Communication.Responses.Pages;
 using RDTrackR.Communication.Responses.PurchaseOrders;
 
 namespace RDTrackR.API.Controllers
@@ -24,13 +25,15 @@ namespace RDTrackR.API.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponsePurchaseOrderJson>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll(
-            [FromServices] IGetPurchaseOrdersUseCase useCase)
+        [ProducesResponseType(typeof(PagedResponse<ResponsePurchaseOrderJson>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Get(
+        [FromServices] IGetPurchaseOrdersUseCase useCase,
+        [FromQuery] RequestGetPurchaseOrdersPagedJson request)
         {
-            var result = await useCase.Execute();
+            var result = await useCase.Execute(request);
             return Ok(result);
         }
+
 
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(ResponsePurchaseOrderJson), StatusCodes.Status200OK)]

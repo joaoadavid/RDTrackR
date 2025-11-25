@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MyRecipeBook.Domain.Repositories.Token;
 using MyRecipeBook.Domain.Repositories.User;
 using MyRecipeBook.Domain.Security.Tokens.Refresh;
-using PostmarkDotNet;
 using RDTrackR.Domain.Enums;
 using RDTrackR.Domain.Extensions;
 using RDTrackR.Domain.Repositories;
@@ -44,7 +43,6 @@ using RDTrackR.Infrastructure.Security.Tokens.Refresh;
 using RDTrackR.Infrastructure.Services.Audit;
 using RDTrackR.Infrastructure.Services.Email;
 using RDTrackR.Infrastructure.Services.LoggedUser;
-using RDTrackR.Infrastructure.Services.Notifications;
 using RDTrackR.Infrastructure.Services.ServiceBus;
 using RDTrackR.Infrastructure.Services.Storage;
 using System.Reflection;
@@ -67,6 +65,7 @@ namespace RDTrackR.Infrastructure
             services.AddAzureStorage(configuration);
             AddRefreshTokenGenerator(services);
             AddQueues(services, configuration);
+            AddHub(services);
             AddSupplierProducts(services);
             AddAuditService(services);
             AddOrders(services);
@@ -201,6 +200,7 @@ namespace RDTrackR.Infrastructure
         private static void AddBrevo(IServiceCollection services)
         {
             services.AddScoped<ISendCodeResetPassword, BrevoSendCodeResetPassword>();
+            services.AddScoped<IContactEmailService, BrevoSendCodeResetPassword>();
         }
 
         private static void AddOrganization(IServiceCollection services)

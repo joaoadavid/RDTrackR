@@ -217,7 +217,7 @@
     <value>A senha deve ter no máximo 100 caracteres.</value>
   </data>
   <data name="PASSWORD_MIN_LENGTH" xml:space="preserve">
-    <value>A senha deve ter no mínimo 8 caracteres.</value>
+    <value>A senha deve ter no mínimo 6 caracteres.</value>
   </data>
   <data name="PASSWORD_REQUIRED" xml:space="preserve">
     <value>A senha é obrigatória.</value>

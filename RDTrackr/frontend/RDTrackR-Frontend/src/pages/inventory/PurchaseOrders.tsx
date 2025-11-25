@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, MoreHorizontal, Eye, Check, X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Card,
   CardContent,
@@ -32,12 +34,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
+import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+
 import {
   ResponsePurchaseOrderJson,
-  RequestCreatePurchaseOrderJson,
+  ResponsePurchaseOrderJsonPagedResponse,
   RequestUpdatePurchaseOrderStatusJson,
 } from "@/generated/apiClient";
 
@@ -55,35 +59,45 @@ const statusMap = {
 export default function PurchaseOrders() {
   const { toast } = useToast();
 
+  // PAGINAÇÃO
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // FILTROS
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [orders, setOrders] = useState<ResponsePurchaseOrderJson[]>([]);
+  const [search, setSearch] = useState<string>("");
+
+  // DATA
+  const [data, setData] =
+    useState<ResponsePurchaseOrderJsonPagedResponse | null>(null);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] =
     useState<ResponsePurchaseOrderJson | null>(null);
 
-  // -------- LOAD FROM API --------
-  useEffect(() => {
-    api
-      .purchaseorderAll()
-      .then((response) => setOrders(response))
-      .catch(() =>
-        toast({
-          title: "Erro ao carregar pedidos",
-          variant: "destructive",
-        })
+  // -------- LOAD FROM API (PAGINADO) --------
+  const loadOrders = async () => {
+    try {
+      const result = await api.purchaseorderGET(
+        page,
+        pageSize,
+        statusFilter,
+        search
       );
-  }, []);
 
-  // -------- CREATE --------
-  const handleAddOrder = (createdOrder: ResponsePurchaseOrderJson) => {
-    setOrders((prev) => [...prev, createdOrder]);
-
-    toast({
-      title: "Pedido criado",
-      description: `Pedido ${createdOrder.number} adicionado.`,
-    });
+      setData(result);
+    } catch {
+      toast({
+        title: "Erro ao carregar pedidos",
+        variant: "destructive",
+      });
+    }
   };
+
+  useEffect(() => {
+    loadOrders();
+  }, [page, pageSize, statusFilter, search]);
 
   // -------- UPDATE STATUS --------
   const handleUpdateStatus = async (id: number, newStatus: string) => {
@@ -93,17 +107,7 @@ export default function PurchaseOrders() {
       });
 
       await api.status2(id, dto);
-
-      setOrders((prev) =>
-        prev.map((order) =>
-          order.id === id
-            ? ResponsePurchaseOrderJson.fromJS({
-                ...order,
-                status: newStatus,
-              })
-            : order
-        )
-      );
+      loadOrders();
     } catch {
       toast({
         title: "Erro ao atualizar status",
@@ -116,7 +120,7 @@ export default function PurchaseOrders() {
   const handleDelete = async (id: number) => {
     try {
       await api.purchaseorderDELETE(id);
-      setOrders((prev) => prev.filter((o) => o.id !== id));
+      loadOrders();
     } catch {
       toast({
         title: "Erro ao deletar pedido",
@@ -124,11 +128,6 @@ export default function PurchaseOrders() {
       });
     }
   };
-
-  // -------- FILTER --------
-  const filteredOrders = orders.filter(
-    (order) => statusFilter === "all" || order.status === statusFilter
-  );
 
   return (
     <div className="space-y-6">
@@ -152,7 +151,7 @@ export default function PurchaseOrders() {
       <NewPurchaseOrderDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onCreate={handleAddOrder}
+        onCreate={() => loadOrders()}
       />
 
       <PurchaseOrderDetailsDialog
@@ -162,7 +161,6 @@ export default function PurchaseOrders() {
         onUpdateStatus={handleUpdateStatus}
       />
 
-      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Pedidos</CardTitle>
@@ -172,9 +170,26 @@ export default function PurchaseOrders() {
         </CardHeader>
 
         <CardContent>
-          {/* FILTER */}
-          <div className="mb-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+          {/* SEARCH */}
+          <div className="flex items-center gap-4 mb-4">
+            <Input
+              placeholder="Buscar por número ou fornecedor..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-[300px]"
+            />
+
+            {/* STATUS FILTER */}
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -205,7 +220,7 @@ export default function PurchaseOrders() {
             </TableHeader>
 
             <TableBody>
-              {filteredOrders.map((order) => {
+              {data?.items?.map((order) => {
                 const total =
                   order.items?.reduce(
                     (acc, item) =>
@@ -240,7 +255,7 @@ export default function PurchaseOrders() {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      R${" "}
+                      R$
                       {total.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                       })}
@@ -248,7 +263,7 @@ export default function PurchaseOrders() {
 
                     <TableCell>
                       {order.createdAt
-                        ? order.createdAt.toLocaleDateString("pt-BR")
+                        ? new Date(order.createdAt).toLocaleDateString("pt-BR")
                         : "-"}
                     </TableCell>
 
@@ -310,8 +325,40 @@ export default function PurchaseOrders() {
                   </TableRow>
                 );
               })}
+
+              {/* EMPTY STATE */}
+              {data?.items?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    Nenhum pedido encontrado
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
+
+          {/* PAGINATION */}
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Anterior
+            </Button>
+
+            <span className="text-sm">
+              Página {page} de {Math.ceil((data?.total ?? 0) / pageSize)}
+            </span>
+
+            <Button
+              variant="outline"
+              disabled={page * pageSize >= (data?.total ?? 0)}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próxima
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

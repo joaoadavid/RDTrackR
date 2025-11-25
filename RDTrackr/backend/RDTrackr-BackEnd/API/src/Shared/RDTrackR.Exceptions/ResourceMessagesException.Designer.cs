@@ -556,7 +556,7 @@ namespace RDTrackR.Exceptions {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The password must be at least 8 characters long..
+        ///   Looks up a localized string similar to The password must be at least 6 characters long..
         /// </summary>
         public static string PASSWORD_MIN_LENGTH {
             get {

@@ -4,10 +4,14 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  ArrowRightLeft,
   Eye,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -16,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,20 +29,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 
+import { useToast } from "@/hooks/use-toast";
 import {
   RequestRegisterWarehouseJson,
   RequestUpdateWarehouseJson,
   ResponseWarehouseJson,
+  ResponseWarehouseJsonPagedResponse,
 } from "@/generated/apiClient";
 
 import { api } from "@/lib/api";
@@ -49,91 +56,87 @@ export default function Warehouses() {
   const { toast } = useToast();
 
   const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const [total, setTotal] = useState(0);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editWarehouse, setEditWarehouse] =
+    useState<ResponseWarehouseJson | null>(null);
   const [detailsWarehouseId, setDetailsWarehouseId] = useState<number | null>(
     null
   );
   const [detailsWarehouseName, setDetailsWarehouseName] = useState("");
 
-  const [editWarehouse, setEditWarehouse] =
-    useState<ResponseWarehouseJson | null>(null);
-
-  // LOAD
-  useEffect(() => {
-    api
-      .warehouseAll()
-      .then(setWarehouses)
-      .catch(() =>
-        toast({
-          title: "Erro ao carregar depósitos",
-          description: "Não foi possível conectar ao servidor.",
-          variant: "destructive",
-        })
-      );
-  }, []);
-
-  // CREATE
-  const handleAddWarehouse = async (dto: RequestRegisterWarehouseJson) => {
+  async function loadData() {
     try {
-      const created = await api.warehousePOST(dto);
-      setWarehouses((prev) => [...prev, created]);
+      const result: ResponseWarehouseJsonPagedResponse = await api.warehouseGET(
+        page,
+        pageSize,
+        search
+      );
 
-      toast({
-        title: "Depósito criado",
-        description: `O depósito "${created.name}" foi adicionado.`,
-      });
+      setWarehouses(result.items ?? []);
+      setTotal(result.total ?? 0);
     } catch {
       toast({
-        title: "Erro ao criar depósito",
-        description: "Verifique os dados e tente novamente.",
+        title: "Erro ao carregar depósitos",
+        description: "Não foi possível obter os dados.",
         variant: "destructive",
       });
     }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, [page]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1);
+      loadData();
+    }, 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const handleAddWarehouse = async (dto: RequestRegisterWarehouseJson) => {
+    try {
+      await api.warehousePOST(dto);
+      loadData();
+
+      toast({ title: "Depósito criado", description: "Criado com sucesso." });
+      setIsDialogOpen(false);
+    } catch {
+      toast({ title: "Erro ao criar depósito", variant: "destructive" });
+    }
   };
 
-  // UPDATE
   const handleUpdateWarehouse = async (
-    updated: ResponseWarehouseJson,
+    w: ResponseWarehouseJson,
     dto: RequestUpdateWarehouseJson
   ) => {
     try {
-      await api.warehousePUT(updated.id!, dto);
+      await api.warehousePUT(w.id!, dto);
+      loadData();
 
-      setWarehouses((prev) =>
-        prev.map((w) => (w.id === updated.id ? updated : w))
-      );
-
-      toast({
-        title: "Depósito atualizado",
-        description: `O depósito "${updated.name}" foi editado.`,
-      });
+      toast({ title: "Depósito atualizado" });
+      setEditWarehouse(null);
     } catch {
-      toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível atualizar o depósito.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao atualizar", variant: "destructive" });
     }
   };
 
-  // DELETE
   const handleDelete = async (id: number) => {
     try {
       await api.warehouseDELETE(id);
+      loadData();
 
-      setWarehouses((prev) => prev.filter((w) => w.id !== id));
-
-      toast({
-        title: "Depósito removido",
-        variant: "destructive",
-      });
+      toast({ title: "Depósito removido", variant: "destructive" });
     } catch {
-      toast({
-        title: "Erro ao excluir depósito",
-        description: "Tente novamente.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao excluir", variant: "destructive" });
     }
   };
 
@@ -143,6 +146,8 @@ export default function Warehouses() {
     return "default";
   };
 
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
     <div className="space-y-6">
       {/* HEADER */}
@@ -150,7 +155,7 @@ export default function Warehouses() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Depósitos</h2>
           <p className="text-muted-foreground">
-            Gerencie locais de armazenamento
+            Gerencie os locais de armazenamento
           </p>
         </div>
 
@@ -160,17 +165,24 @@ export default function Warehouses() {
         </Button>
       </div>
 
+      {/* SEARCH */}
+      <Input
+        placeholder="Buscar por nome ou localização..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-sm"
+      />
+
       <NewWarehouseDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onCreate={handleAddWarehouse}
       />
 
-      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Depósitos</CardTitle>
-          <CardDescription>Visualize e gerencie o estoque</CardDescription>
+          <CardDescription>Informações gerais da sua estrutura</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -194,13 +206,11 @@ export default function Warehouses() {
                   <TableCell>{w.location}</TableCell>
                   <TableCell>{w.capacity}</TableCell>
                   <TableCell className="text-right">{w.items}</TableCell>
-
                   <TableCell>
                     <Badge variant={getUtilizationColor(w.utilization!)}>
                       {w.utilization}%
                     </Badge>
                   </TableCell>
-
                   <TableCell>
                     {new Date(w.createdAt!).toLocaleDateString("pt-BR")}
                   </TableCell>
@@ -246,28 +256,57 @@ export default function Warehouses() {
                   </TableCell>
                 </TableRow>
               ))}
+
+              {warehouses.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    Nenhum depósito encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* DIALOG DETALHES */}
+      {/* PAGINATION */}
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-muted-foreground">
+          Página {page} de {totalPages}
+        </span>
+
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" /> Anterior
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Próxima <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       <WarehouseDetailsDialog
         open={!!detailsWarehouseId}
         warehouseId={detailsWarehouseId}
         warehouseName={detailsWarehouseName}
-        onOpenChange={(open) => {
-          if (!open) setDetailsWarehouseId(null);
-        }}
+        onOpenChange={(open) => !open && setDetailsWarehouseId(null)}
       />
 
-      {/* DIALOG EDITAR */}
       <EditWarehouseDialog
         open={!!editWarehouse}
         warehouse={editWarehouse}
-        onOpenChange={(open) => {
-          if (!open) setEditWarehouse(null);
-        }}
+        onOpenChange={(open) => !open && setEditWarehouse(null)}
         onUpdate={handleUpdateWarehouse}
       />
     </div>

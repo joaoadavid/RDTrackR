@@ -6,12 +6,13 @@ using RDTrackR.Communication.Responses.Reports;
 namespace RDTrackR.API.Controllers
 {
     
-    [AuthenticatedUser] // só acessa estando logado
+    [AuthenticatedUser]
     public class ReportsController : RDTrackRBaseController
     {
         [HttpGet]
         [ProducesResponseType(typeof(ResponseReportsJson), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Get([FromServices] IGetReportsUseCase useCase)
+        public async Task<IActionResult> Get(
+            [FromServices] IGetReportsUseCase useCase)
         {
             var result = await useCase.Execute();
             return Ok(result);

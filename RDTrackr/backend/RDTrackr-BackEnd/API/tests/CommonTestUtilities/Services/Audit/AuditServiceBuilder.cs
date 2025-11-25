@@ -4,7 +4,7 @@ using RDTrackR.Domain.Context;
 using RDTrackR.Domain.Repositories.Audit;
 using RDTrackR.Infrastructure.Services.Audit;
 
-namespace CommonTestUtilities.Services
+namespace CommonTestUtilities.Services.Audit
 {
     public class AuditServiceBuilder
     {

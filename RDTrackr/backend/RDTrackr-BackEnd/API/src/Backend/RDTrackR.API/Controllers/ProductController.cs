@@ -7,6 +7,7 @@ using RDTrackR.Application.UseCases.Products.GetById;
 using RDTrackR.Application.UseCases.Products.Register;
 using RDTrackR.Communication.Requests.Product;
 using RDTrackR.Communication.Responses.Error;
+using RDTrackR.Communication.Responses.Pages;
 using RDTrackR.Communication.Responses.Product;
 
 namespace RDTrackR.API.Controllers
@@ -27,13 +28,15 @@ namespace RDTrackR.API.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponseProductJson>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponse<ResponseProductJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
-            [FromServices] IGetAllProductsUseCase useCase)
+            [FromServices] IGetAllProductsUseCase useCase,
+            [FromQuery] RequestGetProductsPagedJson request)
         {
-            var result = await useCase.Execute();
+            var result = await useCase.Execute(request);
             return Ok(result);
         }
+
 
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(ResponseProductJson), StatusCodes.Status200OK)]

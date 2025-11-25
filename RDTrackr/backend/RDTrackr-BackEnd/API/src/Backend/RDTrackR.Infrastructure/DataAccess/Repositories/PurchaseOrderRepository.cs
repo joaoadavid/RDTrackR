@@ -60,6 +60,61 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<PurchaseOrder>> GetPagedAsync(
+        User user,
+        int page,
+        int pageSize,
+        string? status,
+        string? search)
+        {
+            var query = _context.PurchaseOrders
+                .Include(p => p.Supplier)
+                .Include(p => p.CreatedBy)
+                .Include(p => p.Items).ThenInclude(i => i.Product)
+                .Where(p => p.CreatedByUserId == user.Id)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status) && status != "all")
+                query = query.Where(p => p.Status.ToString() == status);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Number.Contains(search) ||
+                    p.Supplier.Name.Contains(search)
+                );
+            }
+
+            return await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<int> CountAsync(
+    User user,
+    string? status,
+    string? search)
+        {
+            var query = _context.PurchaseOrders
+                .Where(p => p.CreatedByUserId == user.Id);
+
+            if (!string.IsNullOrWhiteSpace(status) && status != "all")
+                query = query.Where(p => p.Status.ToString() == status);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p =>
+                    p.Number.Contains(search) ||
+                    p.Supplier.Name.Contains(search)
+                );
+
+            return await query.CountAsync();
+        }
+
+
+
         public async Task<decimal> GetTotalPurchasedLast30Days()
         {
             var since = DateTime.UtcNow.AddDays(-30);
@@ -73,6 +128,13 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             return await _context.PurchaseOrders
                 .Where(p => p.Status == PurchaseOrderStatus.DRAFT)
+                .CountAsync();
+        }
+
+        public async Task<int> GetCancelCount()
+        {
+            return await _context.PurchaseOrders
+                .Where(p => p.Status == PurchaseOrderStatus.CANCELLED)
                 .CountAsync();
         }
 

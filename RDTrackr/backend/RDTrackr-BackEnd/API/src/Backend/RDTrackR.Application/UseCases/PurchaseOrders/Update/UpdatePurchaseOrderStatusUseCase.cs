@@ -2,11 +2,14 @@
 using RDTrackR.Application.UseCases.PurchaseOrders.Update;
 using RDTrackR.Communication.Requests.Movements;
 using RDTrackR.Communication.Requests.PurchaseOrders;
+using RDTrackR.Domain.Entities;
 using RDTrackR.Domain.Enums;
 using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.PurchaseOrders;
+using RDTrackR.Domain.Services.Audit;
 using RDTrackR.Domain.Services.LoggedUser;
+using RDTrackR.Domain.Services.Notification;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
 
@@ -15,6 +18,8 @@ public class UpdatePurchaseOrderStatusUseCase : IUpdatePurchaseOrderStatusUseCas
     private readonly IPurchaseOrderReadOnlyRepository _readRepository;
     private readonly IPurchaseOrderWriteOnlyRepository _writeRepository;
     private readonly IProductWriteOnlyRepository _productRepository;
+    private readonly INotificationService _notificationService;
+    private readonly IAuditService _auditService;
     private readonly IRegisterMovementUseCase _movement;
     private readonly ILoggedUser _loggedUser;
     private readonly IUnitOfWork _unitOfWork;
@@ -23,6 +28,8 @@ public class UpdatePurchaseOrderStatusUseCase : IUpdatePurchaseOrderStatusUseCas
         IPurchaseOrderReadOnlyRepository readRepository,
         IPurchaseOrderWriteOnlyRepository writeRepository,
         IProductWriteOnlyRepository productRepository,
+        INotificationService notificationService,
+        IAuditService auditService,
         IRegisterMovementUseCase movement,
         ILoggedUser loggedUser,
         IUnitOfWork unitOfWork)
@@ -30,6 +37,8 @@ public class UpdatePurchaseOrderStatusUseCase : IUpdatePurchaseOrderStatusUseCas
         _readRepository = readRepository;
         _writeRepository = writeRepository;
         _productRepository = productRepository;
+        _notificationService = notificationService;
+        _auditService = auditService;
         _movement = movement;
         _loggedUser = loggedUser;
         _unitOfWork = unitOfWork;
@@ -49,6 +58,8 @@ public class UpdatePurchaseOrderStatusUseCase : IUpdatePurchaseOrderStatusUseCas
             throw new ErrorOnValidationException([ResourceMessagesException.ORDER_STATUS_INVALID_TRANSITION]);
 
         order.Status = newStatus;
+        await _notificationService.Notify($"Novo status de pedido de compra #{order.Status}");
+        await _auditService.Log(AuditActionType.CREATE, $"Pedido de compra Status {order.Status} foi alterado {loggedUser.Name}");
 
         await _writeRepository.UpdateAsync(order);
 

@@ -20,6 +20,7 @@ namespace RDTrackR.Application.UseCases.Reports
             var recent = await _repo.GetRecentAsync(30);
             var totalValue = await _repo.GetTotalPurchasedLast30Days();
             var pending = await _repo.GetPendingCount();
+            var cancel = await _repo.GetCancelCount();
             var topSuppliers = await _repo.GetTopSuppliers(5);
 
             return new ResponseReportsJson
@@ -27,6 +28,7 @@ namespace RDTrackR.Application.UseCases.Reports
                 TotalPurchaseOrders = recent.Count,
                 TotalValuePurchased = totalValue,
                 PendingPurchaseOrders = pending,
+                CancelPurchaseOrders = cancel,
                 RecentOrders = _mapper.Map<List<ResponseRecentPurchaseOrderJson>>(recent),
                 TopSuppliers = topSuppliers.Select(s => new ResponseTopSupplierJson
                 {

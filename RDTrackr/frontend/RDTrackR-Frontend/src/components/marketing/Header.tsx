@@ -70,10 +70,10 @@ export function Header() {
             ) : (
               <div className="flex items-center space-x-4">
                 <span className="text-sm">
-                  Olá, <strong>{user}</strong>
+                  Olá, <strong>{user?.name}</strong>
                 </span>
 
-                {/* 👇 NOVO BOTÃO — entrar na aplicação */}
+                {/* Botão entrar na aplicação */}
                 <Button asChild variant="default">
                   <Link to="/dashboard">Entrar na aplicação</Link>
                 </Button>
@@ -127,9 +127,8 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <span className="px-2">Olá, {user}</span>
+                  <span className="px-2">Olá, {user?.name}</span>
 
-                  {/* 👇 NOVO BOTÃO NO MOBILE */}
                   <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
                     <Link to="/dashboard">Entrar na aplicação</Link>
                   </Button>

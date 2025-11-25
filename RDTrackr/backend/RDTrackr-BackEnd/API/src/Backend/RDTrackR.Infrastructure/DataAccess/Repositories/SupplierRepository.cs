@@ -37,6 +37,41 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Supplier>> GetPagedAsync(int page, int pageSize, string? search)
+        {
+            var query = _context.Suppliers
+                .AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(s =>
+                    s.Name.Contains(search) ||
+                    s.Contact.Contains(search) ||
+                    s.Email.Contains(search));
+            }
+
+            return await query
+                .OrderBy(s => s.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(s => s.CreatedBy)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountAsync(string? search)
+        {
+            var query = _context.Suppliers.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(s =>
+                    s.Name.Contains(search) ||
+                    s.Contact.Contains(search) ||
+                    s.Email.Contains(search));
+
+            return await query.CountAsync();
+        }
+
+
 
         public Task UpdateAsync(Supplier supplier)
         {

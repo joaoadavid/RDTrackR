@@ -2,13 +2,21 @@ import { useState } from "react";
 import { Header } from "@/components/marketing/Header";
 import { Footer } from "@/components/marketing/Footer";
 import { Container } from "@/components/ui/container";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { RequestContactJson } from "@/generated/apiClient";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -17,24 +25,37 @@ export default function Contact() {
     subject: "",
     message: "",
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Mock submission - replace with actual API call
-    console.log("Form data:", formData);
+    try {
+      await api.contact(
+        new RequestContactJson({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        })
+      );
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      toast({
+        title: "Mensagem enviada!",
+        description: "Entraremos em contato em breve.",
+      });
 
-    toast({
-      title: "Mensagem enviada!",
-      description: "Entraremos em contato em breve. Obrigado!",
-    });
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch {
+      toast({
+        title: "Erro ao enviar mensagem",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
 
-    setFormData({ name: "", email: "", subject: "", message: "" });
     setIsSubmitting(false);
   };
 
@@ -59,13 +80,13 @@ export default function Contact() {
                 Entre em contato
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Tem alguma dúvida? Preencha o formulário abaixo ou entre em contato através
-                de nossas outras opções.
+                Tem alguma dúvida? Preencha o formulário abaixo ou entre em
+                contato através das outras opções.
               </p>
             </div>
 
+            {/* Contact Info Cards */}
             <div className="grid md:grid-cols-3 gap-6 animate-fade-in">
-              {/* Contact Info Cards */}
               <Card>
                 <CardHeader>
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
@@ -77,7 +98,7 @@ export default function Contact() {
                       href="mailto:joao.antoniodavid@hotmail.com"
                       className="hover:text-primary transition-colors"
                     >
-                      joao.antoniodavid@hotmail.com
+                      rdtrackr@outlook.com
                     </a>
                   </CardDescription>
                 </CardHeader>
@@ -91,10 +112,10 @@ export default function Contact() {
                   <CardTitle className="text-lg">Telefone</CardTitle>
                   <CardDescription>
                     <a
-                      href="tel:+5511999999999"
+                      href="tel:+5547996394983"
                       className="hover:text-primary transition-colors"
                     >
-                      +55 (11) 99999-9999
+                      +55 (47) 996394983
                     </a>
                   </CardDescription>
                 </CardHeader>
@@ -107,7 +128,7 @@ export default function Contact() {
                   </div>
                   <CardTitle className="text-lg">Endereço</CardTitle>
                   <CardDescription>
-                    São Paulo, SP
+                    Joinville, SC
                     <br />
                     Brasil
                   </CardDescription>
@@ -123,6 +144,7 @@ export default function Contact() {
                   Responderemos em até 24 horas úteis
                 </CardDescription>
               </CardHeader>
+
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-4">
@@ -137,6 +159,7 @@ export default function Contact() {
                         placeholder="Seu nome"
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -190,6 +213,7 @@ export default function Contact() {
           </div>
         </Container>
       </main>
+
       <Footer />
     </div>
   );

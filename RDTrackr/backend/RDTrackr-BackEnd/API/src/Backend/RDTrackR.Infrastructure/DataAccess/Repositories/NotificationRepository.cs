@@ -25,7 +25,7 @@
                 return await _context.Notifications
                     .Where(n => n.UserId == user.Id && !n.Read && n.OrganizationId == user.OrganizationId)
                     .AsNoTracking()
-                    .OrderByDescending(n => n.CreatedAt)
+                    .OrderByDescending(n => n.CreatedOn)
                     .ToListAsync();
             }
 

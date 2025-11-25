@@ -40,10 +40,41 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<int> CountAsync(User user)
+        public async Task<List<Product>> GetPagedAsync(User user, int page, int pageSize, string? search)
         {
-            return await _context.Products.Where(p=>p.OrganizationId == user.OrganizationId).CountAsync();
+            var query = _context.Products
+                .Where(p => p.OrganizationId == user.OrganizationId && p.Active == true)
+                .Include(p => p.CreatedBy)
+                .Include(p => p.StockItems)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.Name.Contains(search));
+
+            return await query
+                .OrderBy(p => p.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
         }
+
+        public async Task<int> CountAsync(User user, string? search = null)
+        {
+            var query = _context.Products
+                .Where(p => p.OrganizationId == user.OrganizationId && p.Active == true);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.Name.Contains(search));
+
+            return await query.CountAsync();
+        }
+
+
+        //public async Task<int> CountAsync(User user)
+        //{
+        //    return await _context.Products.Where(p=>p.OrganizationId == user.OrganizationId).CountAsync();
+        //}
 
         public async Task<Product?> GetByIdAsync(long id,User user)
         {

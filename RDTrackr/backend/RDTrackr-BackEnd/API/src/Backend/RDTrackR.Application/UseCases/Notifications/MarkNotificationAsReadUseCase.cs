@@ -1,4 +1,5 @@
 ﻿using RDTrackR.Domain.Context;
+using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Notifications;
 
 namespace RDTrackR.Application.UseCases.Notifications
@@ -6,17 +7,18 @@ namespace RDTrackR.Application.UseCases.Notifications
     public class MarkNotificationAsReadUseCase : IMarkNotificationAsReadUseCase
     {
         private readonly INotificationRepository _repo;
-        private readonly IUserContext _user;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public MarkNotificationAsReadUseCase(INotificationRepository repo, IUserContext user)
+        public MarkNotificationAsReadUseCase(INotificationRepository repo, IUnitOfWork unitOfWork)
         {
             _repo = repo;
-            _user = user;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task Execute(long id)
         {
             await _repo.MarkAsReadAsync(id);
+            await _unitOfWork.Commit();
         }
     }
 

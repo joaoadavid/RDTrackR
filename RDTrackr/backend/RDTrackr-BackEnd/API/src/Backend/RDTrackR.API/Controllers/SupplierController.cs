@@ -12,6 +12,7 @@ using RDTrackR.Application.UseCases.Suppliers.GetSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.RegisterSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.DeleteSupplierProduct;
 using RDTrackR.Application.UseCases.Suppliers.UpdateSupplierProduct;
+using RDTrackR.Communication.Responses.Pages;
 
 namespace RDTrackR.API.Controllers
 {
@@ -29,14 +30,25 @@ namespace RDTrackR.API.Controllers
             return Created(string.Empty, result);
         }
 
+        //[HttpGet]
+        //[ProducesResponseType(typeof(List<ResponseSupplierJson>), StatusCodes.Status200OK)]
+        //public async Task<IActionResult> GetAll(
+        //    [FromServices] IGetAllSuppliersUseCase useCase)
+        //{
+        //    var result = await useCase.Execute();
+        //    return Ok(result);
+        //}
+
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponseSupplierJson>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponse<ResponseSupplierJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
-            [FromServices] IGetAllSuppliersUseCase useCase)
+        [FromQuery] RequestGetSuppliersPagedJson request,
+        [FromServices] IGetAllSuppliersUseCase useCase)
         {
-            var result = await useCase.Execute();
+            var result = await useCase.Execute(request);
             return Ok(result);
         }
+
 
         [HttpPut("{id:long}")]
         [ProducesResponseType(typeof(ResponseSupplierJson), StatusCodes.Status200OK)]

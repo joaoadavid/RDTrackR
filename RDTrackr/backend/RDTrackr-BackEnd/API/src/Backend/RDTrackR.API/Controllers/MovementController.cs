@@ -4,6 +4,7 @@ using RDTrackR.Application.UseCases.Movements.GetAll;
 using RDTrackR.Application.UseCases.Movements.Register;
 using RDTrackR.Communication.Requests.Movements;
 using RDTrackR.Communication.Responses.Movements;
+using RDTrackR.Communication.Responses.Pages;
 
 namespace RDTrackR.API.Controllers
 {
@@ -11,10 +12,10 @@ namespace RDTrackR.API.Controllers
     public class MovementController : RDTrackRBaseController
     {
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponseMovementJson>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponse<ResponseMovementJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
-        [FromServices] IGetAllMovementsUseCase useCase,
-        [FromQuery] RequestGetMovementsJson request)
+           [FromServices] IGetAllMovementsUseCase useCase,
+           [FromQuery] RequestGetMovementsPagedJson request)
         {
             var result = await useCase.Execute(request);
             return Ok(result);

@@ -51,7 +51,6 @@ namespace RDTrackR.API.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ResponseErrorJson), StatusCodes.Status400BadRequest)]
-        [AuthenticatedUser("admin")]
         public async Task<IActionResult> UpdateUser(
            [FromServices] IUpdateUserUseCase useCase,
            [FromBody] RequestUpdateUserJson request)

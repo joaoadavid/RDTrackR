@@ -9,7 +9,9 @@ using RDTrackR.Domain.Repositories.Movements;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.StockItems;
 using RDTrackR.Domain.Repositories.Warehouses;
+using RDTrackR.Domain.Services.Audit;
 using RDTrackR.Domain.Services.LoggedUser;
+using RDTrackR.Domain.Services.Notification;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
 
@@ -19,6 +21,8 @@ namespace RDTrackR.Application.UseCases.Movements.Register
     {
         private readonly IMovementWriteOnlyRepository _movementWriteRepository;
         private readonly IMovementReadOnlyRepository _movementReadRepository;
+        private readonly INotificationService _notificationService;
+        private readonly IAuditService _auditService;
         private readonly IStockItemReadOnlyRepository _stockItemReadRepository;
         private readonly IStockItemWriteOnlyRepository _stockItemWriteRepository;
         private readonly IProductReadOnlyRepository _productRepository;
@@ -30,6 +34,8 @@ namespace RDTrackR.Application.UseCases.Movements.Register
         public RegisterMovementUseCase(
             IMovementWriteOnlyRepository movementWriteRepository,
             IMovementReadOnlyRepository movementReadRepository,
+            INotificationService notificationService,
+            IAuditService auditService,
             IStockItemReadOnlyRepository stockItemReadRepository,
             IStockItemWriteOnlyRepository stockItemWriteRepository,
             IProductReadOnlyRepository productRepository,
@@ -40,6 +46,8 @@ namespace RDTrackR.Application.UseCases.Movements.Register
         {
             _movementWriteRepository = movementWriteRepository;
             _movementReadRepository = movementReadRepository;
+            _notificationService = notificationService;
+            _auditService = auditService;
             _stockItemReadRepository = stockItemReadRepository;
             _stockItemWriteRepository = stockItemWriteRepository;
             _productRepository = productRepository;
@@ -62,9 +70,11 @@ namespace RDTrackR.Application.UseCases.Movements.Register
 
             await _movementWriteRepository.AddAsync(movement);
             await UpdateStock(request, loggedUser);
+            await _notificationService.Notify($"Novo item movido no estoque");
             await _unitOfWork.Commit();
 
             movement = await _movementReadRepository.GetByIdAsync(movement.Id);
+            await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Novo item movido no estoque {movement.Warehouse.Name} item: {movement.Product.Name}");
 
             return _mapper.Map<ResponseMovementJson>(movement);
         }

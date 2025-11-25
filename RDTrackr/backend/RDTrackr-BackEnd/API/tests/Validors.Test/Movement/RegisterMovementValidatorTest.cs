@@ -1,7 +1,6 @@
-﻿using CommonTestUtilities.Requests;
-using CommonTestUtilities.Requests.Movements;
+﻿using CommonTestUtilities.Requests.Movements;
 using FluentAssertions;
-using RDTrackR.Application.UseCases.Movements.Register;
+using RDTrackR.Application.UseCases.Movements;
 
 namespace Validors.Test.Movement
 {

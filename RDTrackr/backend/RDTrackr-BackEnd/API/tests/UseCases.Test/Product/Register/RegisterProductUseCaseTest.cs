@@ -4,7 +4,7 @@ using CommonTestUtilities.Mapper;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.Products;
 using CommonTestUtilities.Requests;
-using CommonTestUtilities.Services;
+using CommonTestUtilities.Services.Audit;
 using RDTrackR.Application.UseCases.Products.Register;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;

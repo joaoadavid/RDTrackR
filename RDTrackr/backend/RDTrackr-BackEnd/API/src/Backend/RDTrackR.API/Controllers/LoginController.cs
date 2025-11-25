@@ -55,5 +55,18 @@ namespace RDTrackR.API.Controllers
             await useCase.Execute(request);
             return NoContent();
         }
+
+        [HttpPost]
+        [Route("validate-reset-code")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ResponseErrorJson), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ValidateResetCode(
+        [FromServices] IValidateResetCodeUseCase useCase,
+        [FromBody] RequestValidateResetCodeJson request)
+        {
+            await useCase.Execute(request);
+            return NoContent();
+        }
+
     }
 }

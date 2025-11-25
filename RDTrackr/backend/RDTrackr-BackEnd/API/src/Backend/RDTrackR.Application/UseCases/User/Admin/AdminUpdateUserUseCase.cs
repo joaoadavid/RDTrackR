@@ -3,6 +3,7 @@ using RDTrackR.Application.UseCases.Users.Validators;
 using RDTrackR.Communication.Requests.User;
 using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Users;
+using RDTrackR.Domain.Security.Cryptography;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
 
@@ -12,15 +13,18 @@ namespace RDTrackR.Application.UseCases.User.Admin
     {
         private readonly IUserReadOnlyRepository _readRepository;
         private readonly IUserUpdateOnlyRepository _updateRepository;
+        private readonly IPasswordEncripter _passwordEncripter;
         private readonly IUnitOfWork _unitOfWork;
 
         public AdminUpdateUserUseCase(
             IUserReadOnlyRepository readRepository,
             IUserUpdateOnlyRepository updateRepository,
+            IPasswordEncripter passwordEncripter,
             IUnitOfWork unitOfWork)
         {
             _readRepository = readRepository;
             _updateRepository = updateRepository;
+            _passwordEncripter = passwordEncripter;
             _unitOfWork = unitOfWork;
         }
 
@@ -35,6 +39,11 @@ namespace RDTrackR.Application.UseCases.User.Admin
             user.Email = request.Email;
             user.Active = request.Active;
 
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                user.Password = _passwordEncripter.Encrypt(request.NewPassword);
+            }
+
             await _updateRepository.Update(user);
             await _unitOfWork.Commit();
         }
@@ -42,15 +51,30 @@ namespace RDTrackR.Application.UseCases.User.Admin
         private async Task Validate(long id, RequestAdminUpdateUserJson request)
         {
             var validator = new AdminUpdateUserValidator();
-
             var result = await validator.ValidateAsync(request);
 
             var emailExists = await _readRepository.ExistsAnotherUserWithEmail(id, request.Email);
             if (emailExists)
-                result.Errors.Add(new FluentValidation.Results.ValidationFailure(nameof(request.Email), ResourceMessagesException.EMAIL_ALREADY_REGISTERED));
+            {
+                result.Errors.Add(new FluentValidation.Results.ValidationFailure(
+                    nameof(request.Email),
+                    ResourceMessagesException.EMAIL_ALREADY_REGISTERED));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                if (request.NewPassword.Length < 6)
+                    result.Errors.Add(new FluentValidation.Results.ValidationFailure(
+                        nameof(request.NewPassword),
+                        ResourceMessagesException.PASSWORD_REQUIRED));
+            }
 
             if (!result.IsValid)
-                throw new ErrorOnValidationException(result.Errors.Select(e => e.ErrorMessage).Distinct().ToList());
+            {
+                throw new ErrorOnValidationException(
+                    result.Errors.Select(e => e.ErrorMessage).Distinct().ToList()
+                );
+            }
         }
     }
 }

@@ -1,7 +1,8 @@
-﻿using RDTrackR.Communication.Responses.Replenishment;
+﻿using RDTrackR.Communication.Requests.Replenishment;
+using RDTrackR.Communication.Responses.Pages;
+using RDTrackR.Communication.Responses.Replenishment;
 using RDTrackR.Domain.Entities;
 using RDTrackR.Domain.Enums;
-using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Repositories.StockItems;
 using RDTrackR.Domain.Services.LoggedUser;
 
@@ -11,23 +12,49 @@ namespace RDTrackR.Application.UseCases.Replenishment.GetAll
     {
         private readonly ILoggedUser _loggedUser;
         private readonly IStockItemReadOnlyRepository _stockRepo;
-        private readonly IProductReadOnlyRepository _productRepo;
 
         public GetReplenishmentItemsUseCase(
             ILoggedUser loggedUser,
-            IStockItemReadOnlyRepository stockRepo,
-            IProductReadOnlyRepository productRepo)
+            IStockItemReadOnlyRepository stockRepo)
         {
             _loggedUser = loggedUser;
             _stockRepo = stockRepo;
-            _productRepo = productRepo;
         }
 
-        public async Task<List<ResponseReplenishmentItemJson>> Execute()
+        //public async Task<List<ResponseReplenishmentItemJson>> Execute()
+        //{
+        //    var loggedUser = await _loggedUser.User();
+        //    var items = await _stockRepo.GetAllAsync(loggedUser);
+        //    return items.Select(i => new ResponseReplenishmentItemJson
+        //    {
+        //        ProductId = i.Product.Id,
+        //        Sku = i.Product.Sku,
+        //        Name = i.Product.Name,
+        //        Category = i.Product.Category,
+        //        Uom = i.Product.UoM,
+        //        CurrentStock = i.Quantity,
+        //        ReorderPoint = i.Product.ReorderPoint,
+        //        DailyConsumption = i.Product.DailyConsumption,
+        //        LeadTimeDays = i.Product.LeadTimeDays,
+        //        SuggestedQty = CalculateSuggested(i),
+        //        IsCritical = i.Quantity <= i.Product.ReorderPoint,
+        //        UnitPrice = i.Product.LastPurchasePrice,
+        //        WarehouseId = i.WarehouseId,
+        //        WarehouseName = i.Warehouse.Name
+        //    }).ToList();
+        //}
+
+        public async Task<PagedResponse<ResponseReplenishmentItemJson>> Execute(RequestGetReplenishmentPagedJson request)
         {
-            var loggedUser = await _loggedUser.User();
-            var items = await _stockRepo.GetAllAsync(loggedUser);
-            return items.Select(i => new ResponseReplenishmentItemJson
+            var user = await _loggedUser.User();
+
+            int page = request.Page <= 0 ? 1 : request.Page;
+            int pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            var items = await _stockRepo.GetPagedAsync(user, page, pageSize, request.Search);
+            var total = await _stockRepo.CountAsync(user, request.Search);
+
+            var mapped = items.Select(i => new ResponseReplenishmentItemJson
             {
                 ProductId = i.Product.Id,
                 Sku = i.Product.Sku,
@@ -44,7 +71,16 @@ namespace RDTrackR.Application.UseCases.Replenishment.GetAll
                 WarehouseId = i.WarehouseId,
                 WarehouseName = i.Warehouse.Name
             }).ToList();
+
+            return new PagedResponse<ResponseReplenishmentItemJson>
+            {
+                Items = mapped,
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
         }
+
 
         private int CalculateSuggested(StockItem item)
         {

@@ -34,9 +34,6 @@ export default function Reports() {
   const [data, setData] = useState<ResponseReportsJson | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // =========================
-  // 🔥 Buscar dados reais da API
-  // =========================
   async function loadReports() {
     setLoading(true);
     try {
@@ -57,9 +54,6 @@ export default function Reports() {
     loadReports();
   }, []);
 
-  // =========================
-  // 🔢 KPIs calculados pelo backend
-  // =========================
   const kpis = useMemo(() => {
     if (!data) {
       return {
@@ -74,7 +68,7 @@ export default function Reports() {
       totalOrders: data.totalPurchaseOrders ?? 0,
       totalRevenue: data.totalValuePurchased ?? 0,
       pendingOrders: data.pendingPurchaseOrders ?? 0,
-      cancelledOrders: 0, // Caso sua API passe a retornar, troque aqui
+      cancelledOrders: data.cancelPurchaseOrders ?? 0,
     };
   }, [data]);
 

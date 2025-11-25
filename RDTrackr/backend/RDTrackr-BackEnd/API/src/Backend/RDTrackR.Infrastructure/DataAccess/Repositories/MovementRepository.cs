@@ -78,6 +78,52 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<PagedResult<Movement>> GetPagedAsync(
+             long? warehouseId,
+             MovementType? type,
+             DateTime? startDate,
+             DateTime? endDate,
+             User user,
+             int page,
+             int pageSize)
+        {
+            var query = _context.Movements
+                .Where(m => m.OrganizationId == user.OrganizationId)
+                .Include(m => m.Product)
+                .Include(m => m.Warehouse)
+                .Include(m => m.CreatedBy)
+                .AsQueryable();
+
+            if (warehouseId.HasValue)
+                query = query.Where(m => m.WarehouseId == warehouseId.Value);
+
+            if (type.HasValue)
+                query = query.Where(m => m.Type == type.Value);
+
+            if (startDate.HasValue)
+                query = query.Where(m => m.CreatedOn >= startDate.Value);
+
+            if (endDate.HasValue)
+                query = query.Where(m => m.CreatedOn <= endDate.Value);
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(m => m.CreatedOn)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return new PagedResult<Movement>
+            {
+                Items = items,
+                Total = total
+            };
+        }
+
+
+
         public async Task<int> CountAsync(User user)
         {
             return await _context.Movements.Where(m=>m.OrganizationId == user.OrganizationId).CountAsync();
@@ -87,5 +133,32 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             await _context.Movements.AddAsync(movement);
         }
+
+        public async Task<int> CountFilteredAsync(
+            long? warehouseId,
+            MovementType? type,
+            DateTime? startDate,
+            DateTime? endDate,
+            User user)
+        {
+            var query = _context.Movements
+                .Where(m => m.OrganizationId == user.OrganizationId)
+                .AsQueryable();
+
+            if (warehouseId.HasValue)
+                query = query.Where(m => m.WarehouseId == warehouseId.Value);
+
+            if (type.HasValue)
+                query = query.Where(m => m.Type == type.Value);
+
+            if (startDate.HasValue)
+                query = query.Where(m => m.CreatedOn >= startDate.Value);
+
+            if (endDate.HasValue)
+                query = query.Where(m => m.CreatedOn <= endDate.Value);
+
+            return await query.CountAsync();
+        }
+
     }
 }

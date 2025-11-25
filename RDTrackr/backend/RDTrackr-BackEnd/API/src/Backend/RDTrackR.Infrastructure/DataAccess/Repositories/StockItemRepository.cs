@@ -64,12 +64,65 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             return await _context.StockItems
                 .AsNoTracking()
-                .Where(s => s.WarehouseId == warehouseId &&
-                            s.OrganizationId == user.OrganizationId)
+                .Where(s =>
+                    s.WarehouseId == warehouseId &&
+                    s.OrganizationId == user.OrganizationId &&
+                    s.Product.Active == true
+                )
                 .Include(s => s.Product)
                 .OrderBy(s => s.Product.Name)
                 .ToListAsync();
         }
+
+        public async Task<List<StockItem>> GetPagedAsync(
+                   User user,
+                   int page,
+                   int pageSize,
+                   string? search)
+        {
+            var query = _context.StockItems
+                .AsNoTracking()
+                .Include(s => s.Product)
+                .Include(s => s.Warehouse)
+                .Where(s => s.Product.OrganizationId == user.OrganizationId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(s =>
+                    s.Product.Name.Contains(search) ||
+                    s.Product.Sku.Contains(search));
+            }
+
+            query = query.Where(s =>
+                s.Quantity <= s.Product.ReorderPoint + 10);
+
+            return await query
+                .OrderBy(s => s.Product.Name)
+                .ThenBy(s => s.Warehouse.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+        public async Task<int> CountAsync(User user, string? search)
+        {
+            var query = _context.StockItems
+                .Where(s => s.Product.OrganizationId == user.OrganizationId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(s =>
+                    s.Product.Name.Contains(search) ||
+                    s.Product.Sku.Contains(search));
+            }
+
+            query = query.Where(s =>
+                s.Quantity <= s.Product.ReorderPoint + 10);
+
+            return await query.CountAsync();
+        }
+
+
+
 
     }
 }

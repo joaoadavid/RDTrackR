@@ -32,17 +32,6 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return await _context.Warehouses.Where(w=>w.OrganizationId == user.OrganizationId).CountAsync();
         }
 
-        //public async Task<List<Warehouse>> GetAllAsync(User user)
-        //{
-        //    return await _context.Warehouses
-        //        .AsNoTracking()
-        //        .Where(w=>w.OrganizationId == user.OrganizationId)
-        //        .Include(w => w.StockItems)
-        //        .Include(w => w.CreatedBy)
-        //        .OrderBy(w => w.Name)
-        //        .ToListAsync();
-        //}
-
         public async Task<List<Warehouse>> GetAllAsync(User user)
         {
             return await _context.Warehouses
@@ -54,13 +43,84 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                     Location = w.Location,
                     Capacity = w.Capacity,
                     CreatedByUserId = w.CreatedByUserId,
+
+                    Items = w.StockItems
+                        .Where(i => i.Product.Active)
+                        .Sum(i => (int?)i.Quantity) ?? 0,
+
                     Utilization = w.Capacity == 0
                         ? 0
-                        : (int)((double)w.StockItems.Sum(i => i.Quantity) / w.Capacity * 100),
-                    Items = w.StockItems.Sum(i => i.Quantity),       // << AQUI
+                        : (int)(
+                            ((double)(
+                                w.StockItems
+                                    .Where(i => i.Product.Active)
+                                    .Sum(i => (int?)i.Quantity) ?? 0
+                            ) / w.Capacity) * 100
+                          ),
+
                     StockItems = w.StockItems
+                        .Where(i => i.Product.Active)
+                        .ToList()
                 })
                 .ToListAsync();
+        }
+
+        public async Task<List<Warehouse>> GetPagedAsync(
+        User user,
+        int page,
+        int pageSize,
+        string? search)
+        {
+            var query = _context.Warehouses
+                .AsNoTracking()
+                .Where(w => w.OrganizationId == user.OrganizationId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(w =>
+                    w.Name.Contains(search) ||
+                    w.Location.Contains(search));
+
+            return await query
+                .OrderBy(w => w.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(w => new Warehouse
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    Location = w.Location,
+                    Capacity = w.Capacity,
+                    CreatedByUserId = w.CreatedByUserId,
+
+                    Items = w.StockItems
+                        .Where(i => i.Product.Active)
+                        .Sum(i => (int?)i.Quantity) ?? 0,
+
+                    Utilization = w.Capacity == 0
+                        ? 0
+                        : (int)((
+                                (double)(w.StockItems.Where(i => i.Product.Active)
+                                .Sum(i => (int?)i.Quantity) ?? 0)
+                            / w.Capacity) * 100),
+
+                    StockItems = w.StockItems
+                        .Where(i => i.Product.Active)
+                        .ToList()
+                })
+                .ToListAsync();
+        }
+
+        public async Task<int> CountAsync(User user, string? search = null)
+        {
+            var query = _context.Warehouses
+                .Where(w => w.OrganizationId == user.OrganizationId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(w =>
+                    w.Name.Contains(search) ||
+                    w.Location.Contains(search));
+
+            return await query.CountAsync();
         }
 
 

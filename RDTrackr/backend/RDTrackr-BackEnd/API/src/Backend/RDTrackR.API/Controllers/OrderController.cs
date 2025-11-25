@@ -1,12 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RDTrackR.API.Attributes;
 using RDTrackR.Application.UseCases.Orders;
 using RDTrackR.Communication.Requests.Orders;
 using RDTrackR.Communication.Responses.Error;
 using RDTrackR.Communication.Responses.Orders;
-using RDTrackR.Communication.Responses.Product;
-using RDTrackR.Communication.Responses.User.Admin;
 
 namespace RDTrackR.API.Controllers
 {

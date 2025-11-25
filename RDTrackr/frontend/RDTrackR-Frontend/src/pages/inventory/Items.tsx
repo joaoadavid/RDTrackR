@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Search, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   Card,
   CardContent,
@@ -29,14 +27,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
+import { useToast } from "@/hooks/use-toast";
 import {
   ResponseProductJson,
   ResponseStockItemJson,
   RequestRegisterProductJson,
 } from "@/generated/apiClient";
-
 import { api } from "@/lib/api";
 
 // Modais
@@ -44,65 +48,103 @@ import { NewProductDialog } from "@/components/products/NewProductDialog";
 import { EditProductDialog } from "@/components/products/EditProductDialog";
 import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
 
+// Pagination UI
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
+
 export default function Items() {
   const { toast } = useToast();
 
+  // ----------------------------
+  // ESTADOS
+  // ----------------------------
   const [products, setProducts] = useState<ResponseProductJson[]>([]);
   const [stockItems, setStockItems] = useState<ResponseStockItemJson[]>([]);
-  const [search, setSearch] = useState("");
 
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+
+  const [sortColumn, setSortColumn] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Modais
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
   const [selected, setSelected] = useState<ResponseProductJson | null>(null);
 
-  // =============================
-  // 🔥 Carregar produtos + estoque
-  // =============================
+  // ----------------------------
+  // SEARCH COM DEBOUNCE
+  // ----------------------------
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [prodResp, stockResp] = await Promise.all([
-          api.productAll(),
-          api.stockitemAll(),
-        ]);
+    const timeout = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timeout);
+  }, [search]);
 
-        setProducts(prodResp);
-        setStockItems(stockResp);
-      } catch {
-        toast({
-          title: "Erro ao carregar dados",
-          description: "Não foi possível conectar ao servidor.",
-          variant: "destructive",
-        });
-      }
-    };
+  // ----------------------------
+  // LOAD PRODUCTS + STOCK ITEMS
+  // ----------------------------
+  const load = useCallback(async () => {
+    try {
+      const prodResp = await api.productGET(page, pageSize, debouncedSearch);
+      const stockResp = await api.stockitemAll();
+
+      setProducts(prodResp.items ?? []);
+      setTotal(prodResp.total ?? 0);
+      setStockItems(stockResp);
+    } catch {
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível conectar ao servidor.",
+        variant: "destructive",
+      });
+    }
+  }, [page, pageSize, debouncedSearch]);
+
+  useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  // =============================
-  // FILTRAR SOMENTE ATIVOS
-  // =============================
-  const activeProducts = products.filter((p) => p.active !== false);
+  // ----------------------------
+  // ORDERNAR TABELA
+  // ----------------------------
+  const toggleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
-  const filtered = activeProducts.filter(
-    (p) =>
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(search.toLowerCase())
-  );
+  const sortedProducts = [...products].sort((a, b) => {
+    const valueA = (a as any)[sortColumn];
+    const valueB = (b as any)[sortColumn];
 
-  // =============================
-  // Criar produto
-  // =============================
+    if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+    if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // ----------------------------
+  // CRUD HANDLERS
+  // ----------------------------
   const handleCreate = async (dto: RequestRegisterProductJson) => {
     try {
-      const created = await api.productPOST(dto);
-      setProducts((prev) => [...prev, created]);
+      await api.productPOST(dto);
+      load(); // recarregar a tabela paginada
 
       toast({
         title: "Produto criado",
-        description: `"${created.name}" foi adicionado.`,
+        description: `"${dto.name}" foi adicionado.`,
       });
 
       setIsNewOpen(false);
@@ -115,22 +157,12 @@ export default function Items() {
     }
   };
 
-  // =============================
-  // Editar produto
-  // =============================
   const handleEdit = async (dto: RequestRegisterProductJson) => {
     if (!selected?.id) return;
 
     try {
       await api.productPUT(selected.id, dto);
-
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === selected.id
-            ? ResponseProductJson.fromJS({ ...p, ...dto })
-            : p
-        )
-      );
+      load();
 
       toast({
         title: "Produto atualizado",
@@ -147,16 +179,12 @@ export default function Items() {
     }
   };
 
-  // =============================
-  // Excluir produto
-  // =============================
   const handleDelete = async () => {
     if (!selected?.id) return;
 
     try {
       await api.productDELETE(selected.id);
-
-      setProducts((prev) => prev.filter((p) => p.id !== selected.id));
+      load();
 
       toast({
         title: "Produto removido",
@@ -174,6 +202,9 @@ export default function Items() {
     }
   };
 
+  // ----------------------------
+  // TABLE RENDER
+  // ----------------------------
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -188,46 +219,79 @@ export default function Items() {
         </Button>
       </div>
 
+      {/* Tabela */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Itens</CardTitle>
           <CardDescription>
-            Visualize e gerencie os produtos ativos
+            Visualize e gerencie produtos com paginação, busca e filtros.
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {/* Busca */}
-          <div className="mb-4">
-            <div className="relative">
+          {/* Busca + PageSize */}
+          <div className="flex justify-between mb-4">
+            <div className="relative w-[300px]">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-8"
               />
             </div>
+
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => setPageSize(Number(v))}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Qtd por página" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Tabela */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>UoM</TableHead>
-                  <TableHead>Preço</TableHead>
-                  <TableHead>Estoque</TableHead>
-                  <TableHead>Distribuição por Warehouse</TableHead>
+                  {[
+                    "sku",
+                    "name",
+                    "category",
+                    "uoM",
+                    "price",
+                    "totalStock",
+                  ].map((col) => (
+                    <TableHead
+                      key={col}
+                      className="cursor-pointer select-none"
+                      onClick={() => toggleSort(col)}
+                    >
+                      {col.toUpperCase()}{" "}
+                      {sortColumn === col
+                        ? sortDirection === "asc"
+                          ? "↑"
+                          : "↓"
+                        : ""}
+                    </TableHead>
+                  ))}
+                  <TableHead>Distribuição</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
-                {filtered.map((p) => {
+                {sortedProducts.map((p) => {
                   const stockForProduct = stockItems.filter(
                     (s) => s.productName === p.name
                   );
@@ -239,11 +303,9 @@ export default function Items() {
                       <TableCell>{p.category}</TableCell>
                       <TableCell>{p.uoM}</TableCell>
                       <TableCell>R$ {p.price?.toFixed(2)}</TableCell>
-
-                      {/* Total Stock */}
                       <TableCell>{p.totalStock ?? 0}</TableCell>
 
-                      {/* Warehouse name + quantity */}
+                      {/* Distribuição */}
                       <TableCell className="text-sm text-muted-foreground">
                         {stockForProduct.length === 0
                           ? "Sem estoque"
@@ -252,7 +314,6 @@ export default function Items() {
                               .join(" | ")}
                       </TableCell>
 
-                      {/* Ações */}
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -292,15 +353,56 @@ export default function Items() {
                   );
                 })}
 
-                {filtered.length === 0 && (
+                {sortedProducts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6">
-                      Nenhum produto ativo encontrado.
+                    <TableCell colSpan={8} className="text-center py-6">
+                      Nenhum produto encontrado.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* PAGINAÇÃO */}
+          <div className="flex items-center justify-between py-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {Math.ceil(total / pageSize)}
+            </span>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage(1)}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page >= Math.ceil(total / pageSize)}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page >= Math.ceil(total / pageSize)}
+                onClick={() => setPage(Math.ceil(total / pageSize))}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
