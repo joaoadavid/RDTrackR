@@ -9,9 +9,9 @@ on:
 env:
   DOTNET_VERSION: '8.0.x'
 
-  # Caminhos corrigidos (case-sensitive!)
-  PROJECT_PATH: RDTrackR/backend/RDTrackR-BackEnd/API
-  API_PATH: RDTrackR/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API
+  # Caminhos corretos (case-sensitive!!)
+  PROJECT_PATH: RDTrackr/backend/RDTrackR-BackEnd/API
+  API_PATH: RDTrackr/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API
 
 jobs:
 
@@ -88,15 +88,3 @@ jobs:
             -Dsonar.projectKey=joaoadavid_RdTrackR-backend
             -Dsonar.sources=${{ env.API_PATH }}
             -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.opencover.xml
-
-
-  # =======================================
-  # DEPLOY (DESATIVADO POR ENQUANTO)
-  # =======================================
-  deploy-backend:
-    runs-on: ubuntu-latest
-    needs: sonar-backend
-    if: false   # desativado até você liberar deploy
-
-    steps:
-      - run: echo "Deploy está desativado no momento."
