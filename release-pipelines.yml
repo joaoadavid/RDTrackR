@@ -1,0 +1,27 @@
+trigger:
+- main
+
+resources:
+- repo: self
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'e53957aa-787f-43bf-bdb5-f7848d501458'
+  imageRepository: 'apirdtrackr'
+  containerRegistry: 'apirdtrackr.azurecr.io'
+  dockerfilePath: 'RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile'
+  tag: '$(Build.BuildId)'
+  pool:
+      vmImage: $(vmImageName)
+
+  steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          latest
+          $(tag)
+    
