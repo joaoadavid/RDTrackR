@@ -47,34 +47,34 @@ export function NewMovementDialog({
     quantity: 1,
   });
 
-  // 🔥 Carregar produtos e depósitos
+  // -----------------------------
+  // CARREGAR PRODUTOS E DEPÓSITOS
+  // -----------------------------
   useEffect(() => {
     if (!open) return;
 
-    api.productAll().then(setProducts);
-    api.warehouseAll().then(setWarehouses);
+    api.productGET(1, 100).then((res) => setProducts(res.items ?? []));
+    api.warehouseGET(1, 100).then((res) => setWarehouses(res.items ?? []));
   }, [open]);
 
+  // -----------------------------
+  // SUBMIT
+  // -----------------------------
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form.productId || !form.warehouseId) return;
 
-    // Ajuste automático do sinal
-    const qty =
-      form.type === "OUTBOUND"
-        ? Math.abs(form.quantity)
-        : Math.abs(form.quantity);
+    const qty = Math.abs(form.quantity);
 
     const newMovement = {
       ...form,
       quantity: qty,
     };
 
-    onCreate(newMovement); // quem chama enviará ao backend
+    onCreate(newMovement);
     onOpenChange(false);
 
-    // Reset
     setForm({
       type: "INBOUND",
       reference: "",
@@ -94,15 +94,15 @@ export function NewMovementDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {/* TYPE */}
           <div>
-            <Label>Tipo</Label>
+            <Label htmlFor="type">Tipo</Label>
             <Select
               value={form.type}
               onValueChange={(v) => setForm({ ...form, type: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger id="type">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -115,8 +115,9 @@ export function NewMovementDialog({
 
           {/* REFERENCE */}
           <div>
-            <Label>Referência</Label>
+            <Label htmlFor="reference">Referência</Label>
             <Input
+              id="reference"
               placeholder="Ex: PO-1093"
               value={form.reference}
               onChange={(e) => setForm({ ...form, reference: e.target.value })}
@@ -126,17 +127,17 @@ export function NewMovementDialog({
 
           {/* PRODUCT */}
           <div>
-            <Label>Produto</Label>
+            <Label htmlFor="product">Produto</Label>
             <Select
-              value={form.productId ? form.productId.toString() : undefined}
+              value={form.productId ? String(form.productId) : undefined}
               onValueChange={(v) => setForm({ ...form, productId: Number(v) })}
             >
-              <SelectTrigger>
+              <SelectTrigger id="product">
                 <SelectValue placeholder="Selecione um produto" />
               </SelectTrigger>
               <SelectContent>
                 {products.map((p) => (
-                  <SelectItem key={p.id} value={p.id!.toString()}>
+                  <SelectItem key={p.id} value={String(p.id)}>
                     {p.name} — {p.sku}
                   </SelectItem>
                 ))}
@@ -146,19 +147,19 @@ export function NewMovementDialog({
 
           {/* WAREHOUSE */}
           <div>
-            <Label>Depósito</Label>
+            <Label htmlFor="warehouse">Depósito</Label>
             <Select
-              value={form.warehouseId ? form.warehouseId.toString() : undefined}
+              value={form.warehouseId ? String(form.warehouseId) : undefined}
               onValueChange={(v) =>
                 setForm({ ...form, warehouseId: Number(v) })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger id="warehouse">
                 <SelectValue placeholder="Selecione um depósito" />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map((w) => (
-                  <SelectItem key={w.id} value={w.id!.toString()}>
+                  <SelectItem key={w.id} value={String(w.id)}>
                     {w.name}
                   </SelectItem>
                 ))}
@@ -168,8 +169,9 @@ export function NewMovementDialog({
 
           {/* QUANTITY */}
           <div>
-            <Label>Quantidade</Label>
+            <Label htmlFor="quantity">Quantidade</Label>
             <Input
+              id="quantity"
               type="number"
               min={1}
               value={form.quantity}

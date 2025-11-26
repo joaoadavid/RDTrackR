@@ -52,11 +52,10 @@ export function GeneratePoDialog({
   const [suppliers, setSuppliers] = useState<ResponseSupplierJson[]>([]);
   const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
 
-  // 🔥 Carregar fornecedores e armazéns quando abrir
   useEffect(() => {
     if (open) {
-      api.supplierAll().then(setSuppliers);
-      api.warehouseAll().then(setWarehouses);
+      api.supplierGET().then((res) => setSuppliers(res.items ?? []));
+      api.warehouseGET().then((res) => setWarehouses(res.items ?? []));
     }
   }, [open]);
 

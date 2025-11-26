@@ -189,7 +189,9 @@ export function NewItemDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit">Salvar Item</Button>
+            <Button type="submit" data-testid="submit">
+              Salvar Item
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

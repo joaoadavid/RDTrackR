@@ -27,10 +27,6 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             _context.Warehouses.Remove(warehouse);
         }
-        public async Task<int> CountAsync(User user)
-        {
-            return await _context.Warehouses.Where(w=>w.OrganizationId == user.OrganizationId).CountAsync();
-        }
 
         public async Task<List<Warehouse>> GetAllAsync(User user)
         {

@@ -1,15 +1,8 @@
 import {
   Package,
   BarChart3,
-  Shield,
   Zap,
-  Database,
-  Settings,
-  AlertCircle,
-  AlertTriangle,
   AlertCircleIcon,
-  MoveIcon,
-  MoveVerticalIcon,
   MoveHorizontal,
   FileIcon,
 } from "lucide-react";
@@ -21,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
-import { Alert } from "../ui/alert";
 
 const features = [
   {

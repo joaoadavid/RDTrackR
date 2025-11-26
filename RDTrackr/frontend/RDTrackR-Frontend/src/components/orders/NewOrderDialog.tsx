@@ -37,9 +37,7 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
   const [customerName, setCustomerName] = useState("");
   const [items, setItems] = useState<RequestCreateOrderItemJson[]>([]);
 
-  useEffect(() => {
-    api.productAll().then(setProducts);
-  }, []);
+  api.productGET().then((res) => setProducts(res.items ?? []));
 
   function addItem() {
     setItems((prev) => [

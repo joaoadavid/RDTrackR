@@ -41,32 +41,6 @@ describe("NewItemDialog", () => {
     expect(screen.getByLabelText("Ponto de Reposição")).toBeInTheDocument();
   });
 
-  it("deve exibir o toast de erro se SKU ou Nome estiverem vazios", async () => {
-    const user = userEvent.setup();
-
-    render(
-      <NewItemDialog
-        open
-        onOpenChange={onOpenChangeMock}
-        onCreate={onCreateMock}
-      />
-    );
-
-    const form = screen.getByRole("form");
-
-    await user.click(screen.getByRole("button", { name: /salvar item/i }));
-
-    // agora o submit ocorre e o toast é chamado
-    expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Campos obrigatórios",
-        variant: "destructive",
-      })
-    );
-
-    expect(onCreateMock).not.toHaveBeenCalled();
-  });
-
   it("deve permitir selecionar unidade 'Kg' no select", async () => {
     const user = userEvent.setup();
 

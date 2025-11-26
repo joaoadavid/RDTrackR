@@ -23,13 +23,6 @@ namespace RDTrackR.Application.UseCases.PurchaseOrders.GetAll
             _mapper = mapper;
         }
 
-        //public async Task<List<ResponsePurchaseOrderJson>> Execute()
-        //{
-        //    var loggedUser = await _loggedUser.User();
-        //    var orders = await _repository.Get(loggedUser);
-        //    return _mapper.Map<List<ResponsePurchaseOrderJson>>(orders);
-        //}
-
         public async Task<PagedResponse<ResponsePurchaseOrderJson>> Execute(RequestGetPurchaseOrdersPagedJson request)
         {
             var user = await _loggedUser.User();

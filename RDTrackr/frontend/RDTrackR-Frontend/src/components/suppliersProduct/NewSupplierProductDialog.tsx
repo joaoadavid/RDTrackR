@@ -52,11 +52,10 @@ export function NewSupplierProductDialog({
   const [price, setPrice] = useState("");
   const [sku, setSku] = useState("");
 
-  // Carrega produtos totais
   useEffect(() => {
     if (!open) return;
 
-    api.productAll().then(setProducts);
+    api.productGET().then((res) => setProducts(res.items ?? []));
   }, [open]);
 
   // Filtragem automática

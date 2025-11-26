@@ -59,19 +59,13 @@ export function NewPurchaseOrderDialog({
     { productId: 0, quantity: 1, unitPrice: 0 },
   ]);
 
-  // ==============================================================
-  // 🔥 Carregar fornecedores e warehouses ao abrir o modal
-  // ==============================================================
   useEffect(() => {
     if (open) {
-      api.supplierAll().then(setSuppliers);
-      api.warehouseAll().then(setWarehouses);
+      api.supplierGET().then((res) => setSuppliers(res.items ?? []));
+      api.warehouseGET().then((res) => setWarehouses(res.items ?? []));
     }
   }, [open]);
 
-  // ==============================================================
-  // 🔥 Carregar produtos do fornecedor
-  // ==============================================================
   useEffect(() => {
     if (!supplierId) return;
 

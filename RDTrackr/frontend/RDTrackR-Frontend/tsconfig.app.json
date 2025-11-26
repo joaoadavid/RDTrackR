@@ -28,5 +28,5 @@
 
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src"]
+  "include": ["src", "src/tests/api-mock.d.ts"]
 }

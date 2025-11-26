@@ -2,9 +2,9 @@
 using CommonTestUtilities.Entities.Warehouses;
 using CommonTestUtilities.LoggedUser;
 using CommonTestUtilities.Mapper;
-using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.Warehouses;
 using RDTrackR.Application.UseCases.Warehouses.GetAll;
+using RDTrackR.Communication.Requests.Warehouse;
 using Shouldly;
 
 namespace UseCases.Test.Warehouse.GetAll
@@ -14,10 +14,10 @@ namespace UseCases.Test.Warehouse.GetAll
         [Fact]
         public async Task Success()
         {
-            (var user , _)=UserBuilder.Build();
-
-            var loggedUser = LoggedUserBuilder.Build(user);
             // Arrange
+            var (user, _) = UserBuilder.Build();
+            var loggedUser = LoggedUserBuilder.Build(user);
+
             var warehouse1 = WarehouseBuilder.Build(user);
             var warehouse2 = WarehouseBuilder.Build(user);
 
@@ -28,20 +28,33 @@ namespace UseCases.Test.Warehouse.GetAll
             };
 
             var repo = new WarehouseRepositoryBuilder()
-                .WithList(user,warehouses); 
+                .WithList(user, warehouses);
 
             var mapper = MapperBuilder.Build();
 
-            var useCase = new GetAllWarehousesUseCase(repo.BuildRead(),loggedUser, mapper);
+            var useCase = new GetAllWarehousesUseCase(
+                repo.BuildRead(),
+                loggedUser,
+                mapper
+            );
+
+            var request = new RequestGetWarehousesPagedJson
+            {
+                Page = 1,
+                PageSize = 10,
+                Search = null
+            };
 
             // Act
-            var result = await useCase.Execute();
+            var result = await useCase.Execute(request);
 
             // Assert
             result.ShouldNotBeNull();
-            result.Count.ShouldBe(2);
-            result[0].Name.ShouldBe(warehouse1.Name);
-            result[1].Name.ShouldBe(warehouse2.Name);
+            result.Total.ShouldBe(2);
+            result.Items.Count.ShouldBe(2);
+
+            result.Items[0].Name.ShouldBe(warehouse2.Name);
+            result.Items[1].Name.ShouldBe(warehouse1.Name);
         }
     }
 }

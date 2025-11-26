@@ -2,14 +2,12 @@
 using CommonTestUtilities.Entities;
 using CommonTestUtilities.Entities.Products;
 using CommonTestUtilities.Entities.Warehouses;
-using CommonTestUtilities.IdEncryption;
+using CommonTestUtilities.Organizations;
 using CommonTestUtilities.PurchaseOrders;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RDTrackR.Domain.Entities;
-using RDTrackR.Domain.Enums;
 using RDTrackR.Infrastructure.DataAccess;
 
 
@@ -21,6 +19,7 @@ namespace WebApi.Test
         private RDTrackR.Domain.Entities.Warehouse _warehouse = default!;
         private RDTrackR.Domain.Entities.Product _product = default!;
         private RDTrackR.Domain.Entities.PurchaseOrder _purchaseOrder = default!;
+        private RDTrackR.Domain.Entities.Organization _organization = default!;
         private string _password = string.Empty;
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -63,6 +62,7 @@ namespace WebApi.Test
         public long GetPurchaseOrderId() => _purchaseOrder.Id;
         public string GetProductName() => _product.Name;
 
+        public string GetOrganizationName() => _organization.Name;
 
         private void StartDatabase(RDTrackRDbContext dbContext)
         {
@@ -71,11 +71,13 @@ namespace WebApi.Test
             _warehouse = WarehouseBuilder.Build(_user);
             _product = ProductBuilder.Build(createdBy: _user);
             _purchaseOrder = PurchaseOrderBuilder.Build(createdByUserId:_user.Id,productId:_product.Id);
+            _organization = OrganizationBuilder.Build();
 
             dbContext.Users.Add(_user);
             dbContext.Warehouses.Add(_warehouse);
             dbContext.Products.Add(_product);
             dbContext.PurchaseOrders.Add(_purchaseOrder);
+            dbContext.Organizations.Add(_organization);
 
             dbContext.SaveChanges();
         }

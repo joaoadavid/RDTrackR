@@ -9,6 +9,7 @@ using CommonTestUtilities.Repositories.Products;
 using CommonTestUtilities.Repositories.StockItems;
 using CommonTestUtilities.Repositories.Warehouses;
 using CommonTestUtilities.Requests.Movements;
+using CommonTestUtilities.Services.Audit;
 using RDTrackR.Application.UseCases.Movements.Register;
 using RDTrackR.Domain.Entities;
 using RDTrackR.Exceptions;
@@ -63,24 +64,31 @@ namespace UseCases.Test.Movements
 
 
         private static RegisterMovementUseCase CreateUseCase(
-        RDTrackR.Domain.Entities.User user,
-        RDTrackR.Domain.Entities.Product product,
-        RDTrackR.Domain.Entities.Warehouse warehouse)
+         RDTrackR.Domain.Entities.User user,
+         RDTrackR.Domain.Entities.Product product,
+         RDTrackR.Domain.Entities.Warehouse warehouse)
         {
-            var movementRepoBuilder = new MovementRepositoryBuilder();
+            var movementRepoBuilder = new MovementRepositoryBuilder()
+            .WithProduct(product)
+            .WithWarehouse(warehouse);
+
             var movementWrite = movementRepoBuilder.BuildWriteOnly();
             var movementRead = movementRepoBuilder.BuildReadOnly();
+
 
             var stockItemReadRepository = new StockItemRepositoryBuilder().BuildRead();
             var stockItemWriteRepository = new StockItemRepositoryBuilder().BuildWrite();
 
             var productRepository = new ProductRepositoryBuilder()
-                .GetById(product, user) 
+                .GetById(product, user)
                 .BuildRead();
 
             var warehouseRepository = new WarehouseRepositoryBuilder()
-                .GetById(warehouse, user) 
+                .GetById(warehouse, user)
                 .BuildRead();
+
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
             var mapper = MapperBuilder.Build();
             var unitOfWork = UnitOfWorkBuilder.Build();
@@ -89,14 +97,18 @@ namespace UseCases.Test.Movements
             return new RegisterMovementUseCase(
                 movementWrite,
                 movementRead,
+                notificationService,
+                auditService,
                 stockItemReadRepository,
                 stockItemWriteRepository,
                 productRepository,
                 warehouseRepository,
                 loggedUser,
                 unitOfWork,
-                mapper);
+                mapper
+            );
         }
+
 
     }
 }

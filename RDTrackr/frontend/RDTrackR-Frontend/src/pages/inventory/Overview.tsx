@@ -51,17 +51,15 @@ export default function InventoryOverview() {
   const [movementStats, setMovementStats] = useState<any[]>([]);
 
   useEffect(() => {
-    api.overview().then(setOverview);
+    api.productGET(1, 9999).then((result) => {
+      const criticalList = (result.items ?? [])
+        .filter((p) => p.totalStock < p.reorderPoint)
+        .sort((a, b) => a.totalStock - b.totalStock)
+        .slice(0, 5);
+
+      setLowStockItems(criticalList);
+    });
   }, []);
-
-  api.productGET(1, 9999).then((result) => {
-    const criticalList = (result.items ?? [])
-      .filter((p) => p.totalStock < p.reorderPoint)
-      .sort((a, b) => a.totalStock - b.totalStock)
-      .slice(0, 5);
-
-    setLowStockItems(criticalList);
-  });
 
   useEffect(() => {
     api.movementGET().then((movements) => {

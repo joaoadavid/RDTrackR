@@ -22,8 +22,13 @@ namespace RDTrackR.Infrastructure.Extensions
 
             if (databaseType == Domain.Enums.DatabaseType.SqlServer)
                 return configuration.GetConnectionString("ConnectionSqlServer")!;
+            else if (databaseType == Domain.Enums.DatabaseType.SqlServer)
+            {
+                return configuration.GetConnectionString("ConnectionPostgreeSQL")!;
+            }
             else
                 return "";
+            
 
         }
     }

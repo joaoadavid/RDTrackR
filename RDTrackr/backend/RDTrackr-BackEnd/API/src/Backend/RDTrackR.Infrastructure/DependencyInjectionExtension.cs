@@ -80,6 +80,11 @@ namespace RDTrackR.Infrastructure
                 AddDbContext_SqlServer(services, configuration);
                 services.AddFluentMigrator_SqlServer(configuration);
             }
+            else if (databaseType == DatabaseType.PostgreSQL)
+            {
+                AddDbContext_PostgreeSQL(services, configuration);
+                services.AddFluentMigrator_PostgreeSQL(configuration);
+            }
 
 
         }
@@ -91,6 +96,37 @@ namespace RDTrackR.Infrastructure
             services.AddDbContext<RDTrackRDbContext>(dbContextOptions =>
             {
                 dbContextOptions.UseSqlServer(connectionString);
+            });
+        }
+
+        private static void AddFluentMigrator_SqlServer(this IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.ConnectionString();
+            services.AddFluentMigratorCore().ConfigureRunner(options =>
+            {
+                options.AddSqlServer().WithGlobalConnectionString(connectionString)
+                .ScanIn(Assembly.Load("RDTrackR.Infrastructure")).For.All();
+            });
+        }
+
+        private static void AddDbContext_PostgreeSQL(IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.ConnectionString();
+            //necessario instalar o sqlserver entity framework
+            services.AddDbContext<RDTrackRDbContext>(dbContextOptions =>
+            {
+                dbContextOptions.UseNpgsql(connectionString);
+            });
+        }
+
+
+        private static void AddFluentMigrator_PostgreeSQL(this IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.ConnectionString();
+            services.AddFluentMigratorCore().ConfigureRunner(options =>
+            {
+                options.AddPostgres().WithGlobalConnectionString(connectionString)
+                .ScanIn(Assembly.Load("RDTrackR.Infrastructure")).For.All();
             });
         }
 
@@ -122,15 +158,7 @@ namespace RDTrackR.Infrastructure
             services.AddScoped<INotificationRepository, NotificationRepository>();
         }
 
-        private static void AddFluentMigrator_SqlServer(this IServiceCollection services, IConfiguration configuration)
-        {
-            var connectionString = configuration.ConnectionString();
-            services.AddFluentMigratorCore().ConfigureRunner(options =>
-            {
-                options.AddSqlServer().WithGlobalConnectionString(connectionString)
-                .ScanIn(Assembly.Load("RDTrackR.Infrastructure")).For.All();
-            });
-        }
+        
 
         private static void AddTokens(IServiceCollection services, IConfiguration configuration)
         {

@@ -36,7 +36,11 @@ namespace WebApi.Test.Product.GetAll
 
             var bodyString = await response.Content.ReadAsStringAsync();
 
-            var firstProduct = responseData.RootElement.EnumerateArray().First();
+            var firstProduct = responseData
+                .RootElement
+                .GetProperty("items")
+                .EnumerateArray()
+                .First();
 
             var name = firstProduct.GetProperty("name").GetString();
 

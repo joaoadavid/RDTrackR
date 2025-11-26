@@ -49,11 +49,10 @@ export function EditSupplierProductDialog({
   const [productId, setProductId] = useState<number | null>(null);
   const [price, setPrice] = useState("");
 
-  // Carregar lista de produtos
   useEffect(() => {
     if (!open) return;
 
-    api.productAll().then(setProducts);
+    api.productGET().then((res) => setProducts(res.items ?? []));
   }, [open]);
 
   // Preencher formulário ao abrir

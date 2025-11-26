@@ -190,11 +190,14 @@ export default function PurchaseOrders() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger
+                className="w-[200px]"
+                data-testid="status-filter-trigger"
+              >
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
 
-              <SelectContent>
+              <SelectContent data-testid="status-filter-menu">
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="DRAFT">Rascunho</SelectItem>
                 <SelectItem value="PENDING">Pendente</SelectItem>

@@ -45,10 +45,11 @@ namespace RDTrackR.Application.UseCases.Login.DoLogin
         public async Task<ResponseRegisterUserJson> Execute(RequestLoginJson request)
         {
             var user = await _repository.GetByEmail(request.Email);
-            var organization = await _organizationRepository.GetByIdAsync(user.OrganizationId);
 
             if (user is null || _passwordEncripter.IsValid(request.Password, user.Password).IsFalse())
                 throw new InvalidLoginException();
+
+            var organization = await _organizationRepository.GetByIdAsync(user.OrganizationId);
 
             await _tokenRepository.RevokeAllUserTokens(user.Id);
 
