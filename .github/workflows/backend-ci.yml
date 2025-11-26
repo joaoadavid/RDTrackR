@@ -8,6 +8,8 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
+
+  # corrigido (case sensitive)
   PROJECT_PATH: RDTrackr/backend/RDTrackr-BackEnd/API
   API_PATH: RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
   DOCKERFILE_PATH: RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile
@@ -35,10 +37,16 @@ jobs:
             /p:CoverletOutput=TestResults/ \
             /p:CoverletOutputFormat=opencover
 
+      - name: Debug Test Results
+        run: |
+          echo "== TestResults folder =="
+          ls -R ${{ env.PROJECT_PATH }}/TestResults || echo "❌ TestResults not found"
+
       - uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: ${{ env.PROJECT_PATH }}/TestResults/
+
 
   # ==========================
   # SONAR BACKEND
@@ -57,6 +65,11 @@ jobs:
           name: backend-coverage
           path: backend-coverage/
 
+      - name: List Coverage Files
+        run: |
+          echo "== Arquivos baixados =="
+          ls -R backend-coverage
+
       - name: SonarCloud Scan - Backend
         uses: SonarSource/sonarqube-scan-action@v6
         env:
@@ -70,44 +83,16 @@ jobs:
             -Dsonar.sources=${{ env.API_PATH }}
             -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.opencover.xml
 
-  # ==========================
-  # BUILD DOCKER + DEPLOY AZURE
-  # ==========================
+
+  # ===========================================================
+  # ⚠ O DEPLOY CONTINUA AQUI, MAS DESABILITADO POR ENQUANTO
+  # ===========================================================
   deploy-backend:
     runs-on: ubuntu-latest
     needs: sonar-backend
-    if: github.ref == 'refs/heads/main'
+
+    # Desativa deploy por enquanto
+    if: false
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Build & Push Docker Image to ACR
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
-
-      - name: Docker Build & Push
-        run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/rdtrackr-api:latest -f ${{ env.DOCKERFILE_PATH }} .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/rdtrackr-api:latest
-
-      - name: Deploy to Azure App Service
-        run: |
-          az webapp config container set \
-            --name rdtrackr-api \
-            --resource-group RDTrackR \
-            --docker-custom-image-name ${{ secrets.ACR_LOGIN_SERVER }}/rdtrackr-api:latest \
-            --docker-registry-server-url https://${{ secrets.ACR_LOGIN_SERVER }} \
-            --docker-registry-server-user ${{ secrets.ACR_USERNAME }} \
-            --docker-registry-server-password ${{ secrets.ACR_PASSWORD }}
-
-          az webapp restart \
-            --name rdtrackr-api \
-            --resource-group RDTrackR
+      - run: echo "Deploy temporarily disabled."
