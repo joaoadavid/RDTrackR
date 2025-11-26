@@ -1,27 +1,47 @@
 trigger:
 - main
 
-resources:
-- repo: self
 variables:
-  # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: 'e53957aa-787f-43bf-bdb5-f7848d501458'
   imageRepository: 'apirdtrackr'
   containerRegistry: 'apirdtrackr.azurecr.io'
-  dockerfilePath: 'RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile'
+  dockerfilePath: 'RDTrackR/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile'
   tag: '$(Build.BuildId)'
-  pool:
-      vmImage: $(vmImageName)
+  vmImageName: 'ubuntu-latest'
 
-  steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          latest
-          $(tag)
-    
+pool:
+  vmImage: $(vmImageName)
+
+steps:
+
+# ===============================
+# 1. Baixar appsettings.Production.json
+# ===============================
+- task: DownloadSecureFile@1
+  name: appsettingsProd
+  displayName: Download appsettings.Production.json
+  inputs:
+    secureFile: 'appsettings.Production.json'
+
+# ===============================
+# 2. Copiar appsettings para pasta antes do docker build
+# ===============================
+- script: |
+    echo "Copiando appsettings.Production.json para a pasta da API..."
+    cp "$(appsettingsProd.secureFilePath)" "RDTrackR/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API/appsettings.Production.json"
+  displayName: Copiar appsettings.Production.json
+
+
+# ===============================
+# 3. Build + Push da imagem Docker
+# ===============================
+- task: Docker@2
+  displayName: Build and Push Docker Image
+  inputs:
+    command: buildAndPush
+    repository: $(imageRepository)
+    dockerfile: $(dockerfilePath)
+    containerRegistry: $(dockerRegistryServiceConnection)
+    tags: |
+      latest
+      $(tag)
