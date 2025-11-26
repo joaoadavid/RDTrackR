@@ -8,9 +8,9 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  PROJECT_PATH: RDTrackR/backend/RDTrackR-BackEnd/API
-  API_PATH: RDTrackR/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API
-  DOCKERFILE_PATH: RDTrackR/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile
+  PROJECT_PATH: RDTrackR/backend/RDTrackr-BackEnd/API
+  API_PATH: RDTrackR/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
+  DOCKERFILE_PATH: RDTrackR/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile
 
 jobs:
 
