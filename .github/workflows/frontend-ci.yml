@@ -72,7 +72,7 @@ jobs:
           args: >
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=joaoadavid
-            -Dsonar.projectKey=joaoadavid_RdTrackR-frontend
+            -Dsonar.projectKey=joaoadavid_rdtrackr-frontend
             -Dsonar.sources=${{ env.FRONT_PATH }}/src
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
