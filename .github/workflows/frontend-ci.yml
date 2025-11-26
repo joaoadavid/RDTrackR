@@ -7,10 +7,13 @@ on:
     branches: [ main, develop ]
 
 env:
-  FRONT_PATH: RDTrackR/frontend/RDTrackR-Frontend
+  FRONT_PATH: RDTrackr/frontend/RDTrackR-Frontend
 
 jobs:
 
+  # =======================================
+  # FRONTEND – TESTES + COVERAGE
+  # =======================================
   test-frontend:
     runs-on: ubuntu-latest
 
@@ -21,13 +24,21 @@ jobs:
         with:
           node-version: 20
 
+      - name: DEBUG — listar pastas
+        run: |
+          echo "== ROOT =="
+          ls -R .
+
+          echo "== FRONT_PATH =="
+          ls -R ${{ env.FRONT_PATH }}
+
       - name: Install dependencies
         working-directory: ${{ env.FRONT_PATH }}
         run: npm ci
 
       - name: Run tests with coverage
         working-directory: ${{ env.FRONT_PATH }}
-        run: npx vitest run --coverage
+        run: npx vitest --run --coverage
 
       - uses: actions/upload-artifact@v4
         with:
@@ -35,6 +46,9 @@ jobs:
           path: ${{ env.FRONT_PATH }}/coverage/
 
 
+  # =======================================
+  # FRONTEND – SONAR
+  # =======================================
   sonar-frontend:
     runs-on: ubuntu-latest
     needs: test-frontend
@@ -63,6 +77,9 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
 
+  # =======================================
+  # DEPLOY (APENAS EM MAIN)
+  # =======================================
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: sonar-frontend
