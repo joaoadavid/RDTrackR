@@ -9,9 +9,9 @@ on:
 env:
   DOTNET_VERSION: '8.0.x'
 
-  # Caminhos corretos (case-sensitive!!)
-  PROJECT_PATH: RDTrackr/backend/RDTrackR-BackEnd/API
-  API_PATH: RDTrackr/backend/RDTrackR-BackEnd/API/src/Backend/RDTrackR.API
+  # Caminhos corrigidos (case-sensitive)
+  PROJECT_PATH: RDTrackr/backend/RDTrackr-BackEnd/API
+  API_PATH: RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
 
 jobs:
 
@@ -32,11 +32,7 @@ jobs:
         working-directory: ${{ env.PROJECT_PATH }}
         run: |
           echo "➡️ Executando test com cobertura via Coverlet"
-          dotnet test \
-            --collect:"XPlat Code Coverage" \
-            /p:CollectCoverage=true \
-            /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=TestResults/coverage.opencover.xml
+          dotnet test
 
       - name: Debug coverage output
         working-directory: ${{ env.PROJECT_PATH }}
@@ -48,9 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: |
-            ${{ env.PROJECT_PATH }}/tests/**/TestResults/coverage.opencover.xml
-          retention-days: 5
+          path: ${{ env.PROJECT_PATH }}/**/coverage.opencover.xml
 
 
   # =======================================
@@ -88,3 +82,15 @@ jobs:
             -Dsonar.projectKey=joaoadavid_RdTrackR-backend
             -Dsonar.sources=${{ env.API_PATH }}
             -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.opencover.xml
+
+
+  # =======================================
+  # DEPLOY (DESATIVADO POR ENQUANTO)
+  # =======================================
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: sonar-backend
+    if: false   # desativado até você liberar deploy
+
+    steps:
+      - run: echo "Deploy está desativado no momento."
