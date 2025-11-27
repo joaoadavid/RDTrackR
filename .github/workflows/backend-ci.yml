@@ -23,29 +23,36 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Install dotnet-coverage
+        run: dotnet tool install --global dotnet-coverage
+
       - name: Build solution
         working-directory: ${{ env.API_ROOT }}
         run: |
           echo "➡️ Construindo solução..."
           dotnet build --configuration Debug
 
-      - name: Run all tests (OpenCover)
+      - name: Run tests with coverage (dotnet-coverage)
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "➡️ Executando testes..."
-          dotnet test --configuration Debug
+          echo "➡️ Executando testes com coverage..."
+          dotnet-coverage collect "dotnet test --no-build --logger trx" \
+            -f xml \
+            -o coverage.xml
 
-      - name: Debug coverage output
+      - name: Debug coverage.xml
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "== Procurando coverage.opencover.xml =="
-          find . -name "coverage.opencover.xml" || echo "❌ Nada encontrado"
+          echo "== Conteúdo da pasta =="
+          ls -lha
+          echo "== Verificando coverage.xml =="
+          test -f coverage.xml && echo "✔️ coverage.xml encontrado" || echo "❌ Não encontrado"
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: ${{ env.API_ROOT }}/tests/**/TestResults/coverage.opencover.xml
+          path: ${{ env.API_ROOT }}/coverage.xml
 
   sonar-backend:
     runs-on: ubuntu-latest
@@ -78,5 +85,5 @@ jobs:
             -Dsonar.organization=joaoadavid
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.sources=${{ env.API_SRC }}
-            -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.opencover.xml
+            -Dsonar.cs.vscoveragexml.reportsPaths=backend-coverage/coverage.xml
             -Dsonar.exclusions=**/frontend/**
