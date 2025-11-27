@@ -26,26 +26,21 @@ jobs:
       - name: Run solution tests with OpenCover coverage
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "➡️ Executando testes com cobertura (OpenCover)..."
-          # O "|| true" garante que o pipeline não quebre mesmo com testes falhando
           dotnet test \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=./TestResults/coverage.xml \
-            || echo "⚠️ Testes falharam, mas o pipeline continuará."
+            /p:CoverletOutput=TestResults/
 
       - name: Debug coverage output
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "== Procurando coverage.xml (OpenCover) =="
-          find . -name "coverage.xml" || echo "❌ Nenhum arquivo encontrado"
+          find . -name "coverage.opencover.xml" || echo "❌ Nenhum arquivo encontrado"
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: ${{ env.API_ROOT }}/**/coverage.xml
-
+          path: ${{ env.API_ROOT }}/tests/**/TestResults/coverage.opencover.xml
 
   sonar-backend:
     runs-on: ubuntu-latest
