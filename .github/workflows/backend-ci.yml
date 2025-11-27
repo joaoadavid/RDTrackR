@@ -1,4 +1,4 @@
-name: SonarCloud Backend
+name: RDTrackR Backend
 on:
   push:
     branches: [ "master" ]
