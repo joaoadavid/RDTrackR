@@ -27,7 +27,7 @@ jobs:
         working-directory: ${{ env.API_ROOT }}
         run: |
           echo "➡️ Executando testes..."
-          dotnet test
+          dotnet test --no-build
 
       - name: Debug coverage output
         working-directory: ${{ env.API_ROOT }}
