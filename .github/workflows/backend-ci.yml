@@ -23,18 +23,17 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Run solution tests with OpenCover coverage
+      - name: Run all tests (OpenCover)
         working-directory: ${{ env.API_ROOT }}
         run: |
-          dotnet test \
-            /p:CollectCoverage=true \
-            /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=TestResults/
+          echo "➡️ Executando testes..."
+          dotnet test
 
       - name: Debug coverage output
         working-directory: ${{ env.API_ROOT }}
         run: |
-          find . -name "coverage.opencover.xml" || echo "❌ Nenhum arquivo encontrado"
+          echo "== Procurando coverage.opencover.xml =="
+          find . -name "coverage.opencover.xml" || echo "❌ Nada encontrado"
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v4
@@ -73,5 +72,5 @@ jobs:
             -Dsonar.organization=joaoadavid
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.sources=${{ env.API_SRC }}
-            -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.xml
+            -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.opencover.xml
             -Dsonar.exclusions=**/frontend/**
