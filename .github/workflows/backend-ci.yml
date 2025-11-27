@@ -23,11 +23,17 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Build solution
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          echo "➡️ Construindo solução..."
+          dotnet build --configuration Debug
+
       - name: Run all tests (OpenCover)
         working-directory: ${{ env.API_ROOT }}
         run: |
           echo "➡️ Executando testes..."
-          dotnet test --no-build
+          dotnet test --configuration Debug
 
       - name: Debug coverage output
         working-directory: ${{ env.API_ROOT }}
