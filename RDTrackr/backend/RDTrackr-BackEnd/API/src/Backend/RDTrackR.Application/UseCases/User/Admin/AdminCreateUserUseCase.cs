@@ -36,7 +36,6 @@ namespace RDTrackR.Application.UseCases.User.Admin
 
         public async Task<ResponseAdminCreateUserJson> Execute(RequestAdminCreateUserJson request)
         {
-            // 1) Validar se o email já existe
             var emailExists = await _readRepository.ExistsActiveUserWithEmail(request.Email);
             if (emailExists)
             {
@@ -46,19 +45,17 @@ namespace RDTrackR.Application.UseCases.User.Admin
                 });
             }
 
-            // 2) Buscar admin logado
             var admin = await _loggedUser.User();
 
-            if (admin is null || admin.Role.ToLower() != "admin")
+            if (admin is null || admin.Role.ToLower() != "admin"!)
                 throw new ErrorOnValidationException([ResourceMessagesException.ADMIN_CREATE_USER]);
 
-            // 3) Criar usuário
             var newUser = new RDTrackR.Domain.Entities.User
             {
                 Name = request.Name,
                 Email = request.Email,
                 Password = _passwordEncripter.Encrypt(request.Password),
-                Role = "user",
+                Role = request.Role,
                 OrganizationId = admin.OrganizationId,
                 Active = true
             };

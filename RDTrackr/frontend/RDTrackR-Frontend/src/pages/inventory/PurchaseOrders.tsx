@@ -59,15 +59,12 @@ const statusMap = {
 export default function PurchaseOrders() {
   const { toast } = useToast();
 
-  // PAGINAÇÃO
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // FILTROS
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
 
-  // DATA
   const [data, setData] =
     useState<ResponsePurchaseOrderJsonPagedResponse | null>(null);
 
@@ -76,14 +73,13 @@ export default function PurchaseOrders() {
   const [selectedOrder, setSelectedOrder] =
     useState<ResponsePurchaseOrderJson | null>(null);
 
-  // -------- LOAD FROM API (PAGINADO) --------
   const loadOrders = async () => {
     try {
       const result = await api.purchaseorderGET(
         page,
         pageSize,
-        statusFilter,
-        search
+        statusFilter === "all" ? undefined : statusFilter,
+        search === "" ? undefined : search
       );
 
       setData(result);
@@ -99,7 +95,6 @@ export default function PurchaseOrders() {
     loadOrders();
   }, [page, pageSize, statusFilter, search]);
 
-  // -------- UPDATE STATUS --------
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
       const dto = RequestUpdatePurchaseOrderStatusJson.fromJS({
@@ -116,7 +111,6 @@ export default function PurchaseOrders() {
     }
   };
 
-  // -------- DELETE --------
   const handleDelete = async (id: number) => {
     try {
       await api.purchaseorderDELETE(id);
@@ -131,7 +125,6 @@ export default function PurchaseOrders() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -170,7 +163,6 @@ export default function PurchaseOrders() {
         </CardHeader>
 
         <CardContent>
-          {/* SEARCH */}
           <div className="flex items-center gap-4 mb-4">
             <Input
               placeholder="Buscar por número ou fornecedor..."
@@ -182,7 +174,6 @@ export default function PurchaseOrders() {
               className="w-[300px]"
             />
 
-            {/* STATUS FILTER */}
             <Select
               value={statusFilter}
               onValueChange={(v) => {
@@ -208,7 +199,6 @@ export default function PurchaseOrders() {
             </Select>
           </div>
 
-          {/* TABLE */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -329,7 +319,6 @@ export default function PurchaseOrders() {
                 );
               })}
 
-              {/* EMPTY STATE */}
               {data?.items?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-6">
@@ -340,7 +329,6 @@ export default function PurchaseOrders() {
             </TableBody>
           </Table>
 
-          {/* PAGINATION */}
           <div className="flex justify-between items-center mt-4">
             <Button
               variant="outline"

@@ -8,11 +8,12 @@ import LogoRDTrackR from "@/assets/LogoRDTrackR.svg";
 import { useAuth } from "@/context/AuthContext";
 
 export function Header() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isRestoringSession, user, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
+  // Detectar scroll
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
@@ -25,6 +26,17 @@ export function Header() {
     { href: "/support", label: "Suporte" },
   ];
 
+  // ======================================
+  // 🔥 Evitar flicker enquanto restaura sessão
+  // ======================================
+  if (isRestoringSession) {
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-center bg-background/80 backdrop-blur-md border-b border-border animate-pulse">
+        <span className="text-muted-foreground text-sm">Carregando...</span>
+      </header>
+    );
+  }
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -35,6 +47,7 @@ export function Header() {
     >
       <Container>
         <nav className="flex items-center justify-between h-16 lg:h-20">
+          {/* LOGO */}
           <Link to="/" className="flex items-center gap-3 shrink-0">
             <img
               src={LogoRDTrackR}
@@ -43,7 +56,7 @@ export function Header() {
             />
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* LINKS - Desktop */}
           <div className="hidden lg:flex items-center space-x-1">
             {navLinks.map((link) => (
               <Button key={link.href} variant="ghost" asChild>
@@ -52,7 +65,7 @@ export function Header() {
             ))}
           </div>
 
-          {/* Desktop Actions */}
+          {/* AÇÕES - Desktop */}
           <div className="hidden lg:flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "light" ? <Moon /> : <Sun />}
@@ -73,9 +86,8 @@ export function Header() {
                   Olá, <strong>{user?.name}</strong>
                 </span>
 
-                {/* Botão entrar na aplicação */}
                 <Button asChild variant="default">
-                  <Link to="/dashboard">Entrar na aplicação</Link>
+                  <Link to="/inventory">Entrar na aplicação</Link>
                 </Button>
 
                 <Button variant="outline" onClick={logout}>
@@ -90,6 +102,7 @@ export function Header() {
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "light" ? <Moon /> : <Sun />}
             </Button>
+
             <Button
               variant="ghost"
               size="icon"
@@ -118,10 +131,10 @@ export function Header() {
 
               {!isAuthenticated ? (
                 <>
-                  <Button asChild>
+                  <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
                     <Link to="/login">Entrar</Link>
                   </Button>
-                  <Button asChild>
+                  <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
                     <Link to="/register">Criar Conta</Link>
                   </Button>
                 </>
@@ -130,10 +143,17 @@ export function Header() {
                   <span className="px-2">Olá, {user?.name}</span>
 
                   <Button asChild onClick={() => setIsMobileMenuOpen(false)}>
-                    <Link to="/dashboard">Entrar na aplicação</Link>
+                    <Link to="/inventory">Entrar na aplicação</Link>
                   </Button>
 
-                  <Button onClick={logout}>Sair</Button>
+                  <Button
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    Sair
+                  </Button>
                 </>
               )}
             </div>

@@ -68,7 +68,6 @@ export default function Login() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
@@ -80,7 +79,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Senha */}
             <div className="space-y-2">
               <Label>Senha</Label>
               <Input
@@ -92,7 +90,6 @@ export default function Login() {
               />
             </div>
 
-            {/* 🔗 LINKS abaixo da senha */}
             <div className="flex justify-between text-sm mt-1">
               <button
                 type="button"

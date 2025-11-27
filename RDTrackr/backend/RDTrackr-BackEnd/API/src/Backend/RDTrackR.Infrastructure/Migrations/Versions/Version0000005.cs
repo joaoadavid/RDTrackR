@@ -7,7 +7,7 @@ namespace RDTrackR.Infrastructure.Migrations.Versions
     {
         public override void Up()
         {
-            Create.Table("Products")
+            CreateTable("Products")
                 .WithColumn("Sku").AsString(50).NotNullable()
                 .WithColumn("Name").AsString(255).NotNullable()
                 .WithColumn("Category").AsString(100).NotNullable()

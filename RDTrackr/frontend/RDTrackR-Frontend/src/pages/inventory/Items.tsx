@@ -75,23 +75,16 @@ export default function Items() {
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Modais
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<ResponseProductJson | null>(null);
 
-  // ----------------------------
-  // SEARCH COM DEBOUNCE
-  // ----------------------------
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(timeout);
   }, [search]);
 
-  // ----------------------------
-  // LOAD PRODUCTS + STOCK ITEMS
-  // ----------------------------
   const load = useCallback(async () => {
     try {
       const prodResp = await api.productGET(page, pageSize, debouncedSearch);
@@ -113,9 +106,6 @@ export default function Items() {
     load();
   }, [load]);
 
-  // ----------------------------
-  // ORDERNAR TABELA
-  // ----------------------------
   const toggleSort = (column: string) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -134,13 +124,10 @@ export default function Items() {
     return 0;
   });
 
-  // ----------------------------
-  // CRUD HANDLERS
-  // ----------------------------
   const handleCreate = async (dto: RequestRegisterProductJson) => {
     try {
       await api.productPOST(dto);
-      load(); // recarregar a tabela paginada
+      load();
 
       toast({
         title: "Produto criado",
@@ -202,9 +189,6 @@ export default function Items() {
     }
   };
 
-  // ----------------------------
-  // TABLE RENDER
-  // ----------------------------
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -219,7 +203,6 @@ export default function Items() {
         </Button>
       </div>
 
-      {/* Tabela */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Itens</CardTitle>
@@ -229,7 +212,6 @@ export default function Items() {
         </CardHeader>
 
         <CardContent>
-          {/* Busca + PageSize */}
           <div className="flex justify-between mb-4">
             <div className="relative w-[300px]">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -266,11 +248,11 @@ export default function Items() {
                 <TableRow>
                   {[
                     "sku",
-                    "name",
-                    "category",
+                    "nome",
+                    "categoria",
                     "uoM",
-                    "price",
-                    "totalStock",
+                    "preço",
+                    "total em estoque",
                   ].map((col) => (
                     <TableHead
                       key={col}
@@ -305,7 +287,6 @@ export default function Items() {
                       <TableCell>R$ {p.price?.toFixed(2)}</TableCell>
                       <TableCell>{p.totalStock ?? 0}</TableCell>
 
-                      {/* Distribuição */}
                       <TableCell className="text-sm text-muted-foreground">
                         {stockForProduct.length === 0
                           ? "Sem estoque"
@@ -407,7 +388,6 @@ export default function Items() {
         </CardContent>
       </Card>
 
-      {/* Modais */}
       <NewProductDialog
         open={isNewOpen}
         onOpenChange={setIsNewOpen}

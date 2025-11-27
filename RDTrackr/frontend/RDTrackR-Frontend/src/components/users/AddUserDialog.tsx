@@ -106,8 +106,8 @@ export function AddUserDialog({
                 <SelectValue placeholder="Selecione um papel" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin / Gerente</SelectItem>
-                <SelectItem value="user">Usuário Padrão</SelectItem>
+                <SelectItem value="Admin">Admin / Gerente</SelectItem>
+                <SelectItem value="User">Usuário Padrão</SelectItem>
               </SelectContent>
             </Select>
           </div>

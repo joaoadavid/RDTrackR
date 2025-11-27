@@ -54,7 +54,6 @@ export default function Movements() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // 🔄 Requisição com paginação
   async function loadMovements() {
     try {
       const result: ResponseMovementJsonPagedResponse = await api.movementGET(
@@ -87,10 +86,9 @@ export default function Movements() {
     }
   }, [isDialogOpen]);
 
-  // ➕ Registrar nova movimentação
   const handleAddMovement = async (movementRequest: any) => {
     try {
-      await api.movementGET(movementRequest);
+      await api.movementPOST(movementRequest);
 
       toast({
         title: "Movimentação registrada",

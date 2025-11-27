@@ -107,6 +107,16 @@ export function EditProductDialog({
               onChange={(e) => update("price", Number(e.target.value))}
             />
           </div>
+
+          <div>
+            <Label>Reorder Point</Label>
+            <Input
+              type="number"
+              min={0}
+              value={form.reorderPoint ?? 0}
+              onChange={(e) => update("reorderPoint", Number(e.target.value))}
+            />
+          </div>
         </div>
 
         <DialogFooter>

@@ -47,7 +47,7 @@ export default function Register() {
         description: `Administrador ${formData.nome} registrado.`,
       });
 
-      navigate("/dashboard");
+      navigate("/inventory");
     } catch (error: any) {
       const msg =
         error?.result?.message ??

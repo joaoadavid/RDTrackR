@@ -47,9 +47,6 @@ export function NewMovementDialog({
     quantity: 1,
   });
 
-  // -----------------------------
-  // CARREGAR PRODUTOS E DEPÓSITOS
-  // -----------------------------
   useEffect(() => {
     if (!open) return;
 
@@ -57,9 +54,6 @@ export function NewMovementDialog({
     api.warehouseGET(1, 100).then((res) => setWarehouses(res.items ?? []));
   }, [open]);
 
-  // -----------------------------
-  // SUBMIT
-  // -----------------------------
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -113,7 +107,6 @@ export function NewMovementDialog({
             </Select>
           </div>
 
-          {/* REFERENCE */}
           <div>
             <Label htmlFor="reference">Referência</Label>
             <Input
@@ -125,11 +118,10 @@ export function NewMovementDialog({
             />
           </div>
 
-          {/* PRODUCT */}
           <div>
             <Label htmlFor="product">Produto</Label>
             <Select
-              value={form.productId ? String(form.productId) : undefined}
+              value={form.productId === 0 ? "" : String(form.productId)}
               onValueChange={(v) => setForm({ ...form, productId: Number(v) })}
             >
               <SelectTrigger id="product">
@@ -145,11 +137,10 @@ export function NewMovementDialog({
             </Select>
           </div>
 
-          {/* WAREHOUSE */}
           <div>
             <Label htmlFor="warehouse">Depósito</Label>
             <Select
-              value={form.warehouseId ? String(form.warehouseId) : undefined}
+              value={form.warehouseId === 0 ? "" : String(form.warehouseId)}
               onValueChange={(v) =>
                 setForm({ ...form, warehouseId: Number(v) })
               }
@@ -167,7 +158,6 @@ export function NewMovementDialog({
             </Select>
           </div>
 
-          {/* QUANTITY */}
           <div>
             <Label htmlFor="quantity">Quantidade</Label>
             <Input

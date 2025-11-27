@@ -11,7 +11,7 @@ namespace RDTrackR.Infrastructure.Extensions
         }
         public static DatabaseType DatabaseType(this IConfiguration configuration)
         {
-            var databaseType = configuration.GetConnectionString("DatabaseType");
+            var databaseType = configuration.GetValue<string>("DatabaseType");
 
             return (DatabaseType)Enum.Parse(typeof(DatabaseType), databaseType!);
         }
@@ -21,11 +21,7 @@ namespace RDTrackR.Infrastructure.Extensions
             var databaseType = configuration.DatabaseType();
 
             if (databaseType == Domain.Enums.DatabaseType.SqlServer)
-                return configuration.GetConnectionString("ConnectionSqlServer")!;
-            else if (databaseType == Domain.Enums.DatabaseType.SqlServer)
-            {
-                return configuration.GetConnectionString("ConnectionPostgreeSQL")!;
-            }
+                return configuration.GetConnectionString("DefaultConnection")!;
             else
                 return "";
             

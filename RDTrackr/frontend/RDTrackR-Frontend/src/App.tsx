@@ -18,11 +18,11 @@ import Home from "./pages/Home";
 import Contact from "./pages/Contact";
 import Support from "./pages/Support";
 import Register from "./pages/Register";
-import ForgotPassword from "@/pages/forgotPassword";
+import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Login from "./pages/Login";
 import NotificationsPage from "./pages/Notifications";
-
+import ReplenishmentInfo from "./pages/ReplenishmentInfo";
 import Replenishment from "./pages/inventory/Replenishment";
 import Users from "./pages/Users";
 import Orders from "./pages/Orders";
@@ -73,32 +73,31 @@ const App = () => (
 
           <BrowserRouter>
             <Routes>
-              {/* ROTAS PÚBLICAS */}
               <Route path="/" element={<Home />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/support" element={<Support />} />
+              <Route
+                path="/replenishment-info"
+                element={<ReplenishmentInfo />}
+              />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
-              {/* 🔐 ROTAS PROTEGIDAS */}
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
-                  {/* Páginas dentro do Layout */}
                   <Route path="/users" element={<Users />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/audit-log" element={<AuditLog />} />
 
-                  {/* Notifications */}
                   <Route
                     path="/notifications"
                     element={<NotificationsPage />}
                   />
 
-                  {/* Módulo Inventory */}
                   <Route path="/inventory" element={<InventoryOverview />} />
                   <Route path="/inventory/items" element={<InventoryItems />} />
                   <Route
@@ -118,7 +117,6 @@ const App = () => (
                 </Route>
               </Route>
 
-              {/* NOT FOUND */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

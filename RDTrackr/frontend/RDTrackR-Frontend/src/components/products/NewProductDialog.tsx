@@ -1,5 +1,4 @@
-// src/components/items/NewProductDialog.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,28 +23,87 @@ export function NewProductDialog({ open, onOpenChange, onCreate }: Props) {
   const [category, setCategory] = useState("");
   const [uoM, setUoM] = useState("");
   const [price, setPrice] = useState(0);
+  const [reorderPoint, setReorderPoint] = useState(0);
+
+  const [errors, setErrors] = useState<string[]>([]);
+
+  function resetForm() {
+    setName("");
+    setSku("");
+    setCategory("");
+    setUoM("");
+    setPrice(0);
+    setReorderPoint(0);
+    setErrors([]);
+  }
+
+  function validateForm(): string[] {
+    const temp: string[] = [];
+
+    if (!name.trim()) temp.push("Nome é obrigatório.");
+    if (!sku.trim()) temp.push("SKU é obrigatório.");
+    if (!category.trim()) temp.push("Categoria é obrigatória.");
+    if (!uoM.trim()) temp.push("Unidade de medida (UoM) é obrigatória.");
+    if (reorderPoint < 0) temp.push("Reorder Point não pode ser negativo.");
+
+    return temp;
+  }
 
   async function handleSubmit() {
+    const validation = validateForm();
+    if (validation.length > 0) {
+      setErrors(validation);
+      return;
+    }
+
     const dto = new RequestRegisterProductJson({
       name,
       sku,
       category,
       uoM,
       price,
+      reorderPoint,
     });
 
-    await onCreate(dto);
-    onOpenChange(false);
+    try {
+      await onCreate(dto);
+      resetForm();
+      onOpenChange(false);
+    } catch (error: any) {
+      const apiErrors = error?.response?.data?.errors ??
+        error?.body?.errors ?? ["Erro inesperado ao criar o produto."];
+      setErrors(apiErrors);
+    }
   }
 
+  useEffect(() => {
+    if (!open) resetForm();
+  }, [open]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(state) => {
+        if (!state) resetForm();
+        onOpenChange(state);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Novo Produto</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {errors.length > 0 && (
+            <div className="bg-red-100 text-red-800 p-3 rounded">
+              <ul className="list-disc list-inside">
+                {errors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div>
             <Label>Nome</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -75,6 +133,16 @@ export function NewProductDialog({ open, onOpenChange, onCreate }: Props) {
               type="number"
               value={price}
               onChange={(e) => setPrice(Number(e.target.value))}
+            />
+          </div>
+
+          <div>
+            <Label>Reorder Point</Label>
+            <Input
+              type="number"
+              min={0}
+              value={reorderPoint}
+              onChange={(e) => setReorderPoint(Number(e.target.value))}
             />
           </div>
         </div>

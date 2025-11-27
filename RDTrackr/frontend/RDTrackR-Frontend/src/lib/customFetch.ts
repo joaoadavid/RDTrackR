@@ -1,53 +1,79 @@
 import { ApiError } from "./apiError";
-import { api } from "./api";
-import { RequestNewTokenJson } from "@/generated/apiClient";
 
 export async function customFetch(input: RequestInfo, init?: RequestInit) {
-  let accessToken = localStorage.getItem("accessToken");
+  const accessToken = localStorage.getItem("accessToken");
 
-  const newInit: RequestInit = {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      Authorization: accessToken ? `Bearer ${accessToken}` : "",
-    },
+  // Headers iniciais (não sobrescreve os existentes)
+  const headers: Record<string, string> = {
+    ...(init?.headers as Record<string, string>),
   };
 
-  let response = await fetch(input, newInit);
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
 
-  // Token expirado -> tenta refresh
+  let response = await fetch(input, {
+    ...init,
+    headers,
+  });
+
+  //
+  // ============================
+  //   TENTAR REFRESH TOKEN
+  // ============================
+  //
   if (response.status === 401) {
     const refreshToken = localStorage.getItem("refreshToken");
 
     if (refreshToken) {
       try {
-        const body = new RequestNewTokenJson();
-        body.refreshToken = refreshToken;
+        // CHAMADA DIRETA (sem o ApiClient/NSwag)
+        const refreshResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/token/refresh-token`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken }),
+          }
+        );
 
-        const newTokens = await api.refreshToken(body);
+        if (!refreshResponse.ok) {
+          throw new Error("Refresh token inválido.");
+        }
 
+        const newTokens = await refreshResponse.json();
+
+        // Salvar novos tokens
         localStorage.setItem("accessToken", newTokens.accessToken);
         localStorage.setItem("refreshToken", newTokens.refreshToken);
 
-        // refaz request
-        newInit.headers = {
+        // Refazer request original com token atualizado
+        const retryHeaders: any = {
           ...(init?.headers ?? {}),
           Authorization: `Bearer ${newTokens.accessToken}`,
         };
 
-        response = await fetch(input, newInit);
-      } catch (error) {
+        response = await fetch(input, {
+          ...init,
+          headers: retryHeaders,
+        });
+      } catch (err) {
+        // Refresh falhou → derruba sessão completamente
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
-        throw error;
+        throw err;
       }
     }
   }
 
+  //
+  // ============================
+  //  ERRO APÓS REFRESH
+  // ============================
+  //
   if (!response.ok) {
     let json;
-
     try {
       json = await response.json();
     } catch {

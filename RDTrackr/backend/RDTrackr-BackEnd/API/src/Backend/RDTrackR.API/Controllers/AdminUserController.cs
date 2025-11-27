@@ -2,7 +2,6 @@
 using RDTrackR.API.Attributes;
 using RDTrackR.Application.UseCases.User.Admin;
 using RDTrackR.Communication.Requests.User;
-using RDTrackR.Communication.Responses.User;
 using RDTrackR.Communication.Responses.User.Admin;
 
 namespace RDTrackR.API.Controllers
