@@ -1,14 +1,56 @@
-name: RDTrackR Backend
+name: RDTrackR Backend - CI
+
 on:
   push:
-    branches: [ "master" ]
+    branches: [ main, develop, master ]
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    branches: [ main, develop, master ]
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  PROJECT_PATH: RDTrackr/backend/RDTrackR-BackEnd/API
+  API_SOURCE: RDTrackr/backend/RDTrackR-BackEnd/API/src
+  TESTS_PATH: RDTrackr/backend/RDTrackR-BackEnd/API/tests
 
 jobs:
-  analyze-backend:
-    name: Analyze .NET backend
-    runs-on: windows-latest
+
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore & Test with Coverage
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          echo "➡️ Executando testes com cobertura..."
+          dotnet test ${{ env.TESTS_PATH }} \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./coverage/ \
+            --configuration Release
+
+      - name: Debug coverage output
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          echo "== Procurando arquivos de cobertura =="
+          find . -name "coverage.opencover.xml" || echo "❌ Nenhum coverage encontrado"
+
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: ${{ env.PROJECT_PATH }}/**/coverage.opencover.xml
+
+  sonar-backend:
+    runs-on: ubuntu-latest
+    needs: backend-tests
 
     steps:
       - name: Checkout
@@ -16,51 +58,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Download Coverage Artifact
+        uses: actions/download-artifact@v4
         with:
-          dotnet-version: "8.0.x"
+          name: backend-coverage
+          path: backend-coverage/
 
-      - name: Setup JDK (required for SonarCloud)
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "17"
+      - name: Debug Coverage Files
+        run: |
+          echo "== Arquivos de cobertura disponíveis =="
+          ls -R backend-coverage
 
-      - name: Cache SonarCloud scanner
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}\scanner
-          key: ${{ runner.os }}-sonar-scanner
-          restore-keys: ${{ runner.os }}-sonar-scanner
-
-      - name: Install SonarCloud scanner
-        run: dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
-
-      - name: Begin SonarCloud analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
-            /k:"joaoadavid_rdtrackr-backend" `
-            /o:"joaoadavid" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.sources="RDTrackr/backend/RDTrackR-BackEnd/API/src" `
-            /d:sonar.tests="RDTrackr/backend/RDTrackR-BackEnd/API/tests" `
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
-            /d:sonar.exclusions="frontend/**"
-
-      - name: Build backend
-        run: dotnet build RDTrackr/backend/RDTrackR-BackEnd/API/src -c Release
-
-      - name: Run tests with coverage
-        run: |
-          dotnet test RDTrackr/backend/RDTrackR-BackEnd/API/tests `
-            /p:CollectCoverage=true `
-            /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput=coverage/
-
-      - name: End SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=joaoadavid_rdtrackr-backend
+            -Dsonar.organization=joaoadavid
+            -Dsonar.sources=${{ env.API_SOURCE }}
+            -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.opencover.xml
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.exclusions=**/frontend/**
