@@ -9,9 +9,8 @@ on:
 env:
   DOTNET_VERSION: "8.0.x"
 
-  PROJECT_PATH: RDTrackr/backend/RDTrackr-BackEnd/API
-  API_PATH: RDTrackR/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
-  TESTS_PATH: RDTrackR/backend/RDTrackr-BackEnd/API/tests
+  API_ROOT: RDTrackr/backend/RDTrackr-BackEnd/API
+  API_SRC: RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
 
 jobs:
 
@@ -25,25 +24,25 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore & Test with Coverage
-        working-directory: ${{ env.PROJECT_PATH }}
+      - name: Run solution tests with coverage
+        working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "➡️ Executando testes com cobertura..."
-          dotnet test ${{ env.TESTS_PATH }} \
+          echo "➡️ Executando TODOS os testes com cobertura..."
+          dotnet test \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults
 
       - name: Debug coverage output
-        working-directory: ${{ env.PROJECT_PATH }}
+        working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "== Procurando arquivos de cobertura =="
-          find . -name "coverage.cobertura.xml" || echo "❌ Nenhum coverage encontrado"
+          echo "== Procurando arquivos coverage.cobertura.xml =="
+          find . -name "coverage.cobertura.xml" || echo "❌ Nada encontrado"
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: ${{ env.PROJECT_PATH }}/**/coverage.cobertura.xml
+          path: ${{ env.API_ROOT }}/**/coverage.cobertura.xml
 
   sonar-backend:
     runs-on: ubuntu-latest
@@ -62,7 +61,7 @@ jobs:
 
       - name: Debug Coverage Files
         run: |
-          echo "== Arquivos de cobertura encontrados =="
+          echo "== Coverage encontrado =="
           ls -R backend-coverage
 
       - name: SonarCloud Scan - Backend
@@ -72,9 +71,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.organization=joaoadavid
             -Dsonar.projectKey=joaoadavid_rdtrackr-backend
-            -Dsonar.sources=${{ env.API_PATH }}
+            -Dsonar.organization=joaoadavid
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.sources=${{ env.API_SRC }}
             -Dsonar.cs.opencover.reportsPaths=backend-coverage/**/coverage.cobertura.xml
             -Dsonar.exclusions=**/frontend/**
