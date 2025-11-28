@@ -12,7 +12,6 @@ obj/
 *.user
 *.vs/
 *.dbmdl
-*.db
 *.mdf
 *.ldf
 *.suo
