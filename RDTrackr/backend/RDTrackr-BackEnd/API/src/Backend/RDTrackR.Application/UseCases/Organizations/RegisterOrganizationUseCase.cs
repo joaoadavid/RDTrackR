@@ -45,7 +45,8 @@ namespace RDTrackR.Application.UseCases.Organizations
 
         public async Task<ResponseRegisterOrganizationJson> Execute(RequestRegisterOrganizationJson request)
         {
-            // 1) Criar Organização
+            await Validate(request);
+
             var org = new Organization
             {
                 Name = request.Name
@@ -67,7 +68,6 @@ namespace RDTrackR.Application.UseCases.Organizations
             await _userRepo.Add(admin);
             await _unitOfWork.Commit();
 
-            // 3) Gerar tokens
             var tokenId = Guid.NewGuid().ToString();
             var accessToken = _tokenGenerator.GenerateWithTokenId(
                 admin, tokenId);

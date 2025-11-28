@@ -49,13 +49,24 @@ public class NotificationServiceBuilder
             })
             .Returns(Task.CompletedTask);
 
+        // ACEITA QUALQUER GUID/STRING
         _hubClients
-            .Setup(x => x.User(_userId.ToString()))
+            .Setup(x => x.User(It.IsAny<string>()))
             .Returns(_clientProxy.Object);
 
+        // MOCKA O Clients corretamente
         _hub
             .Setup(x => x.Clients)
             .Returns(_hubClients.Object);
+
+        // MOCKA O MÉTODO QUE O SIGNALR USA INTERNAMENTE
+        _clientProxy
+            .Setup(x => x.SendCoreAsync(
+                It.IsAny<string>(),
+                It.IsAny<object[]>(),
+                default
+            ))
+            .Returns(Task.CompletedTask);
 
         return new NotificationService(
             _repo.Object,

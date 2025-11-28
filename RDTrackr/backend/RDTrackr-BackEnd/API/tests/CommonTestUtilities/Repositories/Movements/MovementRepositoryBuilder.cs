@@ -39,9 +39,46 @@ namespace CommonTestUtilities.Repositories.Movements
                 );
         }
 
+        public MovementRepositoryBuilder ReturnNullPagedResult()
+        {
+            _readMock.Setup(r => r.GetPagedAsync(
+                It.IsAny<long?>(),
+                It.IsAny<MovementType?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<User>(),
+                It.IsAny<int>(),
+                It.IsAny<int>()
+            )).ReturnsAsync((PagedResult<Movement>?)null);
+
+            return this;
+        }
+
         public MovementRepositoryBuilder WithProduct(Product product)
         {
             _product = product;
+            return this;
+        }
+        public MovementRepositoryBuilder GetPaged(
+         List<Movement> movements,
+         User user,
+         long? warehouseId = null)
+        {
+            _readMock.Setup(r => r.GetPagedAsync(
+                    warehouseId,
+                    It.IsAny<MovementType?>(),
+                    It.IsAny<DateTime?>(),
+                    It.IsAny<DateTime?>(),
+                    user,
+                    It.IsAny<int>(),
+                    It.IsAny<int>()
+                ))
+                .ReturnsAsync(new PagedResult<Movement>
+                {
+                    Items = movements,
+                    Total = movements.Count
+                });
+
             return this;
         }
 

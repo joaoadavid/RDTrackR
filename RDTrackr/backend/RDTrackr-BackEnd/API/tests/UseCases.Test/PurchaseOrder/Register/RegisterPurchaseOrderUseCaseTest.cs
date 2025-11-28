@@ -59,7 +59,7 @@ namespace UseCases.Test.PurchaseOrder.Register
             var auditLog = new AuditServiceBuilder().Build();
             var unitOfWork = UnitOfWorkBuilder.Build();
 
-            return new RegisterPurchaseOrderUseCase(mapper,notification,auditLog, repositoryBuilder, loggedUser, unitOfWork);
+            return new RegisterPurchaseOrderUseCase(mapper, notification, auditLog, repositoryBuilder, loggedUser, unitOfWork);
         }
     }
 }

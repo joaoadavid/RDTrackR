@@ -21,6 +21,13 @@ namespace CommonTestUtilities.Repositories.Products
             return this;
         }
 
+        public ProductRepositoryBuilder Exists(long productId, bool exists)
+        {
+            _readMock.Setup(r => r.Exists(productId)).ReturnsAsync(exists);
+            return this;
+        }
+
+
         public ProductRepositoryBuilder Add()
         {
             _writeMock.Setup(r => r.AddAsync(It.IsAny<Product>()))

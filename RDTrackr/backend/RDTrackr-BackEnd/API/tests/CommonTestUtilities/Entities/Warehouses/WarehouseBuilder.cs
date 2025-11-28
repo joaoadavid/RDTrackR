@@ -25,6 +25,6 @@ namespace CommonTestUtilities.Entities.Warehouses
                 CreatedOn = DateTime.UtcNow,
                 StockItems = new List<StockItem>()
             };
-        }       
+        }
     }
 }
