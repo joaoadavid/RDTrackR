@@ -6,7 +6,6 @@ import { MemoryRouter } from "react-router-dom";
 
 import ReplenishmentInfo from "@/pages/ReplenishmentInfo";
 
-// mock Header e Footer
 vi.mock("@/components/marketing/Header", () => ({
   Header: () => <div data-testid="header" />,
 }));
@@ -15,12 +14,10 @@ vi.mock("@/components/marketing/Footer", () => ({
   Footer: () => <div data-testid="footer" />,
 }));
 
-// mock da imagem
 vi.mock("@/assets/replenishment-info.png", () => ({
   default: "mocked-image.png",
 }));
 
-// ⭐ Função helper para renderizar com router
 const renderWithRouter = (ui: React.ReactElement) =>
   render(<MemoryRouter>{ui}</MemoryRouter>);
 
