@@ -18,13 +18,8 @@ import {
   ResponseProductJson,
 } from "@/generated/apiClient";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { OrderItemCard } from "./OrderItemCard";
 
 interface Props {
   open: boolean;
@@ -33,11 +28,18 @@ interface Props {
 }
 
 export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
+  const { toast } = useToast();
+
   const [products, setProducts] = useState<ResponseProductJson[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [items, setItems] = useState<RequestCreateOrderItemJson[]>([]);
 
-  api.productGET().then((res) => setProducts(res.items ?? []));
+  const [nameError, setNameError] = useState(false);
+
+  // Carrega produtos apenas uma vez
+  useEffect(() => {
+    api.productGET().then((res) => setProducts(res.items ?? []));
+  }, []);
 
   function addItem() {
     setItems((prev) => [
@@ -56,36 +58,102 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
     setItems(clone);
   }
 
-  // 🔢 CALCULO SUBTOTAL POR ITEM
   const itemTotals = useMemo(
     () => items.map((i) => i.quantity * i.price),
     [items]
   );
 
-  // 💰 TOTAL GERAL
   const grandTotal = useMemo(
-    () => itemTotals.reduce((acc, t) => acc + t, 0),
+    () => itemTotals.reduce((a, b) => a + b, 0),
     [itemTotals]
   );
 
   async function handleSubmit() {
-    const payload = new RequestCreateOrderJson({
-      customerName,
-      items,
-    });
+    // 🔒 VALIDAÇÃO DO NOME
+    if (!customerName || customerName.trim().length < 3) {
+      setNameError(true);
+      return toast({
+        title: "Nome inválido",
+        description: "O nome do cliente deve ter pelo menos 3 caracteres.",
+        variant: "destructive",
+      });
+    }
+    setNameError(false);
 
-    await api.ordersPOST(payload);
-    onSuccess();
-    onOpenChange(false);
+    // 🔒 VALIDAÇÃO DE ITENS
+    if (items.length === 0) {
+      return toast({
+        title: "Nenhum item no pedido",
+        description: "Adicione ao menos um item para criar o pedido.",
+        variant: "destructive",
+      });
+    }
 
-    // reset
-    setCustomerName("");
-    setItems([]);
+    for (const item of items) {
+      if (!item.productId || item.productId === 0) {
+        return toast({
+          title: "Produto obrigatório",
+          description:
+            "Existem itens sem produto selecionado. Verifique e tente novamente.",
+          variant: "destructive",
+        });
+      }
+
+      if (item.quantity <= 0) {
+        return toast({
+          title: "Quantidade inválida",
+          description: "A quantidade deve ser maior que zero.",
+          variant: "destructive",
+        });
+      }
+
+      if (item.price <= 0) {
+        return toast({
+          title: "Preço inválido",
+          description: "O preço deve ser maior que zero.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    // 🔄 ENVIO SEGURo
+    try {
+      const payload = new RequestCreateOrderJson({
+        customerName,
+        items,
+      });
+
+      await api.ordersPOST(payload);
+
+      toast({
+        title: "Pedido criado!",
+        description: "O pedido foi registrado com sucesso.",
+      });
+
+      onSuccess();
+      onOpenChange(false);
+
+      // reset
+      setCustomerName("");
+      setItems([]);
+    } catch (error: any) {
+      const message =
+        error?.result?.messages?.[0] ??
+        error?.result?.message ??
+        error?.body?.message ??
+        "Não foi possível registrar o pedido.";
+
+      toast({
+        title: "Erro ao registrar pedido",
+        description: message,
+        variant: "destructive",
+      });
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Pedido</DialogTitle>
           <DialogDescription>
@@ -101,71 +169,26 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
               placeholder="Ex: João Silva"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
+              className={nameError ? "border-red-500" : ""}
             />
           </div>
 
           {/* ITENS */}
-          <div className="space-y-3">
+          <div className="space-y-3 pb-2">
             <Label>Itens do Pedido</Label>
 
             {items.map((item, i) => (
-              <div
+              <OrderItemCard
                 key={i}
-                className="border rounded-md p-3 space-y-3 bg-muted/20"
-              >
-                {/* PRODUTO */}
-                <div>
-                  <Label>Produto</Label>
-                  <Select
-                    value={String(item.productId)}
-                    onValueChange={(v) => updateItem(i, "productId", Number(v))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um produto" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {products.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.name} — R$ {p.price?.toFixed(2)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* GRID QTD + PREÇO */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Quantidade</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={item.quantity}
-                      onChange={(e) =>
-                        updateItem(i, "quantity", Number(e.target.value))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Preço Unitário</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.price}
-                      onChange={(e) =>
-                        updateItem(i, "price", Number(e.target.value))
-                      }
-                    />
-                  </div>
-                </div>
-
-                {/* SUBTOTAL */}
-                <div className="text-right text-sm text-muted-foreground">
-                  Subtotal: <strong>R$ {itemTotals[i].toFixed(2)}</strong>
-                </div>
-              </div>
+                index={i}
+                item={item}
+                products={products}
+                itemTotal={itemTotals[i]}
+                updateItem={updateItem}
+                removeItem={() =>
+                  setItems((prev) => prev.filter((_, idx) => idx !== i))
+                }
+              />
             ))}
 
             <Button variant="outline" onClick={addItem} className="w-full">
@@ -173,8 +196,8 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
             </Button>
           </div>
 
-          {/* TOTAL GERAL */}
-          <div className="text-right text-lg font-bold">
+          {/* TOTAL */}
+          <div className="text-right text-lg font-bold pb-3">
             Total do Pedido: R$ {grandTotal.toFixed(2)}
           </div>
 

@@ -1,4 +1,6 @@
-﻿namespace RDTrackR.Communication.Responses.Warehouse
+﻿using RDTrackR.Communication.Responses.StockItem;
+
+namespace RDTrackR.Communication.Responses.Warehouse
 {
     public class ResponseWarehouseJson
     {
@@ -12,10 +14,11 @@
 
         public long CreatedByUserId { get; set; }
         public string CreatedByName { get; set; } = null!;
-
         public long? UpdatedByUserId { get; set; }
         public string? UpdatedByName { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public List<ResponseStockItemJson> StockItems { get; set; } = new();
+
     }
 
 }

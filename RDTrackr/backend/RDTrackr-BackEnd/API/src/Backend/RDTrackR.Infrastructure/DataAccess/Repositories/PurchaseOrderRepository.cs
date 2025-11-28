@@ -95,9 +95,9 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         }
 
         public async Task<int> CountAsync(
-    User user,
-    string? status,
-    string? search)
+        User user,
+        string? status,
+        string? search)
         {
             var query = _context.PurchaseOrders
                 .Where(p => p.CreatedByUserId == user.Id);

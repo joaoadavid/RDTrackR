@@ -6,7 +6,6 @@ namespace RDTrackR.Application.UseCases.Warehouses.GetAll
 {
     public interface IGetAllWarehousesUseCase
     {
-        //Task<List<ResponseWarehouseJson>> Execute();
         Task<PagedResponse<ResponseWarehouseJson>> Execute(RequestGetWarehousesPagedJson request);
     }
 }

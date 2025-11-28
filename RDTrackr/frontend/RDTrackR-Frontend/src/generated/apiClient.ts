@@ -5709,6 +5709,7 @@ export class ResponseStockItemJson implements IResponseStockItemJson {
     warehouseName?: string | undefined;
     quantity?: number;
     updatedAt?: Date;
+    productId?: number;
     createdByUserId?: number;
     createdByName?: string | undefined;
 
@@ -5728,6 +5729,7 @@ export class ResponseStockItemJson implements IResponseStockItemJson {
             this.warehouseName = _data["warehouseName"];
             this.quantity = _data["quantity"];
             this.updatedAt = _data["updatedAt"] ? new Date(_data["updatedAt"].toString()) : undefined as any;
+            this.productId = _data["productId"];
             this.createdByUserId = _data["createdByUserId"];
             this.createdByName = _data["createdByName"];
         }
@@ -5747,6 +5749,7 @@ export class ResponseStockItemJson implements IResponseStockItemJson {
         data["warehouseName"] = this.warehouseName;
         data["quantity"] = this.quantity;
         data["updatedAt"] = this.updatedAt ? this.updatedAt.toISOString() : undefined as any;
+        data["productId"] = this.productId;
         data["createdByUserId"] = this.createdByUserId;
         data["createdByName"] = this.createdByName;
         return data;
@@ -5759,6 +5762,7 @@ export interface IResponseStockItemJson {
     warehouseName?: string | undefined;
     quantity?: number;
     updatedAt?: Date;
+    productId?: number;
     createdByUserId?: number;
     createdByName?: string | undefined;
 }
@@ -6132,6 +6136,7 @@ export class ResponseWarehouseJson implements IResponseWarehouseJson {
     updatedByUserId?: number | undefined;
     updatedByName?: string | undefined;
     updatedAt?: Date | undefined;
+    stockItems?: ResponseStockItemJson[] | undefined;
 
     constructor(data?: IResponseWarehouseJson) {
         if (data) {
@@ -6156,6 +6161,11 @@ export class ResponseWarehouseJson implements IResponseWarehouseJson {
             this.updatedByUserId = _data["updatedByUserId"];
             this.updatedByName = _data["updatedByName"];
             this.updatedAt = _data["updatedAt"] ? new Date(_data["updatedAt"].toString()) : undefined as any;
+            if (Array.isArray(_data["stockItems"])) {
+                this.stockItems = [] as any;
+                for (let item of _data["stockItems"])
+                    this.stockItems!.push(ResponseStockItemJson.fromJS(item));
+            }
         }
     }
 
@@ -6180,6 +6190,11 @@ export class ResponseWarehouseJson implements IResponseWarehouseJson {
         data["updatedByUserId"] = this.updatedByUserId;
         data["updatedByName"] = this.updatedByName;
         data["updatedAt"] = this.updatedAt ? this.updatedAt.toISOString() : undefined as any;
+        if (Array.isArray(this.stockItems)) {
+            data["stockItems"] = [];
+            for (let item of this.stockItems)
+                data["stockItems"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -6197,6 +6212,7 @@ export interface IResponseWarehouseJson {
     updatedByUserId?: number | undefined;
     updatedByName?: string | undefined;
     updatedAt?: Date | undefined;
+    stockItems?: ResponseStockItemJson[] | undefined;
 }
 
 export class ResponseWarehouseJsonPagedResponse implements IResponseWarehouseJsonPagedResponse {

@@ -27,6 +27,7 @@ import {
 
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { ItemCard } from "./ItemCard"; // ⬅️ importe o componente separado
 
 interface Props {
   open: boolean;
@@ -95,7 +96,9 @@ export function NewPurchaseOrderDialog({
 
   function handleProductSelect(index: number, productId: number) {
     const p = supplierProducts.find((x) => x.productId === productId);
+
     updateItem(index, "productId", productId);
+
     updateItem(index, "unitPrice", p?.unitPrice ?? 0);
   }
 
@@ -109,9 +112,6 @@ export function NewPurchaseOrderDialog({
     [itemTotals]
   );
 
-  // ==============================================================
-  // 🟢 Handle Submit — VALIDAÇÃO APRIMORADA
-  // ==============================================================
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isSubmitting) return;
@@ -139,7 +139,7 @@ export function NewPurchaseOrderDialog({
     try {
       const dto = RequestCreatePurchaseOrderJson.fromJS({
         supplierId,
-        warehouseId, // 🔥 AGORA GARANTIDO CORRETAMENTE
+        warehouseId,
         number: orderNumber,
         items,
       });
@@ -154,7 +154,6 @@ export function NewPurchaseOrderDialog({
       onCreate(created);
       onOpenChange(false);
 
-      // reset
       setSupplierId(null);
       setWarehouseId(null);
       setOrderNumber("");
@@ -179,7 +178,7 @@ export function NewPurchaseOrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Pedido de Compra</DialogTitle>
           <DialogDescription>
@@ -188,7 +187,6 @@ export function NewPurchaseOrderDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Número */}
           <div>
             <Label>Número do Pedido</Label>
             <Input
@@ -199,7 +197,6 @@ export function NewPurchaseOrderDialog({
             />
           </div>
 
-          {/* Fornecedor */}
           <div>
             <Label>Fornecedor</Label>
             <Select
@@ -220,7 +217,6 @@ export function NewPurchaseOrderDialog({
             </Select>
           </div>
 
-          {/* Warehouse */}
           <div>
             <Label>Armazém</Label>
 
@@ -242,67 +238,24 @@ export function NewPurchaseOrderDialog({
             </Select>
           </div>
 
-          {/* Itens */}
           <div className="space-y-3">
             <Label>Itens do Pedido</Label>
 
             {items.map((item, index) => (
-              <div
+              <ItemCard
                 key={index}
-                className="border p-3 rounded-md space-y-2 bg-muted/20"
-              >
-                {/* Produto */}
-                <Select
-                  value={item.productId ? item.productId.toString() : undefined}
-                  onValueChange={(v) => handleProductSelect(index, Number(v))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Produto" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {supplierProducts.map((p) => (
-                      <SelectItem
-                        key={p.productId}
-                        value={p.productId!.toString()}
-                      >
-                        {p.productName} — R$ {p.unitPrice?.toFixed(2)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Quantidade</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={item.quantity}
-                      onChange={(e) =>
-                        updateItem(index, "quantity", Number(e.target.value))
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Preço Unitário</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.unitPrice}
-                      onChange={(e) =>
-                        updateItem(index, "unitPrice", Number(e.target.value))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  Subtotal: <strong>R$ {itemTotals[index].toFixed(2)}</strong>
-                </div>
-              </div>
+                index={index}
+                item={item}
+                supplierProducts={supplierProducts}
+                itemTotals={itemTotals}
+                updateItem={updateItem}
+                handleProductSelect={handleProductSelect}
+                removeItem={() =>
+                  setItems((prev) => prev.filter((_, i) => i !== index))
+                }
+                warehouses={warehouses}
+                warehouseId={warehouseId}
+              />
             ))}
 
             <Button
@@ -315,7 +268,6 @@ export function NewPurchaseOrderDialog({
             </Button>
           </div>
 
-          {/* Total */}
           <div className="text-right text-lg font-bold mt-2">
             Total: R$ {grandTotal.toFixed(2)}
           </div>
