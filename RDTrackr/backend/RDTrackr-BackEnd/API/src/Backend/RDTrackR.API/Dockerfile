@@ -9,7 +9,7 @@ COPY . .
 
 # Agora a solution está visível aqui:
 # /src/RDTrackR-BackEnd/API/RDTrackR.sln
-WORKDIR /src/RDTrackR-BackEnd/API
+WORKDIR /src/RDTrackr-BackEnd/API
 
 RUN dotnet restore RDTrackR.sln
 

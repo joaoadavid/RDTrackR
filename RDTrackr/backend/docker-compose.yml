@@ -27,7 +27,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: RDTrackR-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile
+      dockerfile: RDTrackr-BackEnd/API/src/Backend/RDTrackR.API/Dockerfile
     ports:
       - "8080:8080"
     depends_on:
