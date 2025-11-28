@@ -28,14 +28,15 @@ public class NotificationService : INotificationService
     public async Task Notify(string message, long? targetUserId = null)
     {
         var loggedUser = await _loggedUser.User();
-        var userId = targetUserId ?? _user.UserId;
+        var userGuid = loggedUser.UserIdentifier.ToString();
 
-        if (userId <= 0)
+
+        if (userGuid.Length <= 0)
             throw new InvalidOperationException("UserId inválido para envio de notificação.");
 
         var notification = new Notification
         {
-            UserId = userId,
+            UserId = loggedUser.Id,
             Message = message,
             Read = false,
             OrganizationId = loggedUser.OrganizationId,
@@ -43,14 +44,15 @@ public class NotificationService : INotificationService
         };
 
         await _repo.AddAsync(notification);
-       
-        await _hub.Clients.User(userId.ToString())
-            .SendAsync("ReceiveNotification", new
-            {
-                id = notification.Id,
-                message = notification.Message,
-                createdAt = notification.CreatedOn,
-                read = notification.Read
-            });
+
+        await _hub.Clients.User(userGuid)
+         .SendAsync("ReceiveNotification", new
+         {
+             id = notification.Id,
+             message = notification.Message,
+             createdAt = notification.CreatedOn,
+             read = notification.Read
+         });
+
     }
 }

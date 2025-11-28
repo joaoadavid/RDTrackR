@@ -14,7 +14,6 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mantém conexão única
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   async function load() {
@@ -39,14 +38,22 @@ export function useNotifications() {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }
 
+  async function markAllAsRead() {
+    if (notifications.length === 0) return;
+
+    await Promise.all(notifications.map((n) => api.read(n.id)));
+
+    setNotifications([]);
+  }
+
   useEffect(() => {
     load();
 
-    // Conectar ao SignalR
     const token = localStorage.getItem("accessToken");
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://3.129.244.42:8080/notificationsHub", {
+      .withUrl("http://3.129.244.42:8080/hub/notifications", {
+        //.withUrl("https://localhost:7148/hub/notifications", {
         accessTokenFactory: () => token ?? "",
       })
       .withAutomaticReconnect()
@@ -83,6 +90,7 @@ export function useNotifications() {
     unreadCount: notifications.filter((n) => !n.isRead).length,
     loading,
     markAsRead,
+    markAllAsRead,
     reload: load,
   };
 }

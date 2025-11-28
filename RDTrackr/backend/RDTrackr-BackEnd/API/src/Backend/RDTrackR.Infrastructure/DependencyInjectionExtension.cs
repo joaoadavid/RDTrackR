@@ -1,6 +1,7 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Azure.Storage.Blobs;
 using FluentMigrator.Runner;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +44,7 @@ using RDTrackR.Infrastructure.Security.Tokens.Refresh;
 using RDTrackR.Infrastructure.Services.Audit;
 using RDTrackR.Infrastructure.Services.Email;
 using RDTrackR.Infrastructure.Services.LoggedUser;
+using RDTrackR.Infrastructure.Services.Notifications;
 using RDTrackR.Infrastructure.Services.ServiceBus;
 using RDTrackR.Infrastructure.Services.Storage;
 using System.Reflection;
@@ -160,6 +162,7 @@ namespace RDTrackR.Infrastructure
         private static void AddHub(IServiceCollection services)
         {
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
         }
 
         private static void AddAzureStorage(this IServiceCollection services, IConfiguration configuration)

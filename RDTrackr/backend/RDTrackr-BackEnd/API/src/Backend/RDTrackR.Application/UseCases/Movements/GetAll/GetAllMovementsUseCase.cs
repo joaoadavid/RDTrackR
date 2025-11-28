@@ -24,24 +24,6 @@ namespace RDTrackR.Application.UseCases.Movements.GetAll
             _mapper = mapper;
         }
 
-        //public async Task<List<ResponseMovementJson>> Execute(RequestGetMovementsJson request)
-        //{
-        //    var loggedUser = await _loggedUser.User();
-        //    var type = request.Type.HasValue
-        //        ? (RDTrackR.Domain.Enums.MovementType?)(request.Type.Value)
-        //        : null;
-
-        //    var movements = await _repository.GetFilteredAsync(
-        //        request.WarehouseId,
-        //        type,
-        //        request.StartDate,
-        //        request.EndDate,
-        //        loggedUser
-        //    );
-
-        //    return _mapper.Map<List<ResponseMovementJson>>(movements);
-        //}
-
         public async Task<PagedResponse<ResponseMovementJson>> Execute(RequestGetMovementsPagedJson request)
         {
             var user = await _loggedUser.User();

@@ -227,6 +227,7 @@ namespace RDTrackR.Application
         {
             services.AddScoped<ICreateOrderUseCase, CreateOrderUseCase>();
             services.AddScoped<IGetAllOrdersUseCase, GetAllOrdersUseCase>();
+            services.AddScoped<IGetOrdersPagedUseCase, GetOrdersPagedUseCase>();
             services.AddScoped<IUpdateOrderStatusUseCase, UpdateOrderStatusUseCase>();
             services.AddScoped<IDeleteOrderUseCase, DeleteOrderUseCase>();
         }

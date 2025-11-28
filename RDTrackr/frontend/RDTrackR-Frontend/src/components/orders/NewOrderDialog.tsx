@@ -69,7 +69,6 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
   );
 
   async function handleSubmit() {
-    // 🔒 VALIDAÇÃO DO NOME
     if (!customerName || customerName.trim().length < 3) {
       setNameError(true);
       return toast({
@@ -80,21 +79,19 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
     }
     setNameError(false);
 
-    // 🔒 VALIDAÇÃO DE ITENS
     if (items.length === 0) {
       return toast({
         title: "Nenhum item no pedido",
-        description: "Adicione ao menos um item para criar o pedido.",
+        description: "Adicione ao menos um item.",
         variant: "destructive",
       });
     }
 
     for (const item of items) {
-      if (!item.productId || item.productId === 0) {
+      if (!item.productId) {
         return toast({
           title: "Produto obrigatório",
-          description:
-            "Existem itens sem produto selecionado. Verifique e tente novamente.",
+          description: "Selecione um produto antes de continuar.",
           variant: "destructive",
         });
       }
@@ -110,13 +107,24 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
       if (item.price <= 0) {
         return toast({
           title: "Preço inválido",
-          description: "O preço deve ser maior que zero.",
+          description: "O valor unitário deve ser maior que zero.",
+          variant: "destructive",
+        });
+      }
+
+      // 🔥 Validação de estoque aqui!
+      const product = products.find((p) => p.id === item.productId);
+      const available = product?.totalStock ?? 0;
+
+      if (item.quantity > available) {
+        return toast({
+          title: "Estoque insuficiente",
+          description: `O produto possui apenas ${available} unidade(s) disponíveis.`,
           variant: "destructive",
         });
       }
     }
 
-    // 🔄 ENVIO SEGURo
     try {
       const payload = new RequestCreateOrderJson({
         customerName,
@@ -132,20 +140,12 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
 
       onSuccess();
       onOpenChange(false);
-
-      // reset
       setCustomerName("");
       setItems([]);
     } catch (error: any) {
-      const message =
-        error?.result?.messages?.[0] ??
-        error?.result?.message ??
-        error?.body?.message ??
-        "Não foi possível registrar o pedido.";
-
       toast({
         title: "Erro ao registrar pedido",
-        description: message,
+        description: error?.result?.message ?? "Falha ao registrar o pedido.",
         variant: "destructive",
       });
     }

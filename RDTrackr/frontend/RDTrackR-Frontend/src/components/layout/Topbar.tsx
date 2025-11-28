@@ -16,9 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/hooks/use-notifications";
 
-// ----------------------
 // Helper para gerar iniciais
-// ----------------------
 function getInitials(name: string | undefined): string {
   if (!name) return "U";
   const parts = name.trim().split(" ");
@@ -35,7 +33,8 @@ export function Topbar() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
 
   const initials = getInitials(user?.name);
 
@@ -52,7 +51,7 @@ export function Topbar() {
             </span>
           )}
 
-          {/* LOGO À ESQUERDA */}
+          {/* LOGO */}
           <div className="flex items-center gap-3">
             <img
               src={LogoRDTrackR}
@@ -71,6 +70,7 @@ export function Topbar() {
               </span>
             )}
 
+            {/* TEMA */}
             <Button
               variant="ghost"
               size="icon"
@@ -79,6 +79,7 @@ export function Topbar() {
               {theme === "dark" ? <Sun /> : <Moon />}
             </Button>
 
+            {/* NOTIFICAÇÕES */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
@@ -91,7 +92,7 @@ export function Topbar() {
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>Notificações</DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
@@ -104,10 +105,24 @@ export function Topbar() {
                     <DropdownMenuItem
                       key={n.id}
                       onClick={() => markAsRead(n.id)}
+                      className="cursor-pointer"
                     >
                       {n.message}
                     </DropdownMenuItem>
                   ))
+                )}
+
+                {/* 🔥 Botão de marcar todas como lidas */}
+                {notifications.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={markAllAsRead}
+                      className="cursor-pointer text-blue-600"
+                    >
+                      Marcar todas como lidas
+                    </DropdownMenuItem>
+                  </>
                 )}
 
                 <DropdownMenuSeparator />
@@ -118,6 +133,7 @@ export function Topbar() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* USER MENU */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="h-9 w-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center">

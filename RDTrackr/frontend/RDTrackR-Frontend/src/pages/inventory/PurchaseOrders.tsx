@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Plus, MoreHorizontal, Eye, Check, X } from "lucide-react";
+import {
+  Plus,
+  MoreHorizontal,
+  Eye,
+  Check,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Select,
   SelectContent,
@@ -33,6 +43,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
@@ -59,41 +70,49 @@ const statusMap = {
 export default function PurchaseOrders() {
   const { toast } = useToast();
 
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [total, setTotal] = useState<number>(0);
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
 
-  const [data, setData] =
-    useState<ResponsePurchaseOrderJsonPagedResponse | null>(null);
+  const [orders, setOrders] = useState<ResponsePurchaseOrderJson[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] =
     useState<ResponsePurchaseOrderJson | null>(null);
 
-  const loadOrders = async () => {
+  async function loadOrders() {
     try {
-      const result = await api.purchaseorderGET(
-        page,
-        pageSize,
-        statusFilter === "all" ? undefined : statusFilter,
-        search === "" ? undefined : search
-      );
+      const result: ResponsePurchaseOrderJsonPagedResponse =
+        await api.purchaseorderGET(
+          page,
+          pageSize,
+          statusFilter === "all" ? undefined : statusFilter,
+          search === "" ? undefined : search
+        );
 
-      setData(result);
+      setOrders(result.items ?? []);
+      setTotal(result.total ?? 0);
     } catch {
       toast({
         title: "Erro ao carregar pedidos",
         variant: "destructive",
       });
     }
-  };
+  }
 
   useEffect(() => {
     loadOrders();
   }, [page, pageSize, statusFilter, search]);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      loadOrders();
+    }
+  }, [isDialogOpen]);
 
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
@@ -123,8 +142,11 @@ export default function PurchaseOrders() {
     }
   };
 
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
     <div className="space-y-6">
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -140,7 +162,7 @@ export default function PurchaseOrders() {
         </Button>
       </div>
 
-      {/* MODALS */}
+      {/* DIALOGS */}
       <NewPurchaseOrderDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -154,6 +176,7 @@ export default function PurchaseOrders() {
         onUpdateStatus={handleUpdateStatus}
       />
 
+      {/* LIST TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Pedidos</CardTitle>
@@ -163,6 +186,7 @@ export default function PurchaseOrders() {
         </CardHeader>
 
         <CardContent>
+          {/* FILTER BAR */}
           <div className="flex items-center gap-4 mb-4">
             <Input
               placeholder="Buscar por número ou fornecedor..."
@@ -174,6 +198,7 @@ export default function PurchaseOrders() {
               className="w-[300px]"
             />
 
+            {/* STATUS FILTER */}
             <Select
               value={statusFilter}
               onValueChange={(v) => {
@@ -181,14 +206,11 @@ export default function PurchaseOrders() {
                 setPage(1);
               }}
             >
-              <SelectTrigger
-                className="w-[200px]"
-                data-testid="status-filter-trigger"
-              >
+              <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
 
-              <SelectContent data-testid="status-filter-menu">
+              <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="DRAFT">Rascunho</SelectItem>
                 <SelectItem value="PENDING">Pendente</SelectItem>
@@ -197,8 +219,27 @@ export default function PurchaseOrders() {
                 <SelectItem value="CANCELLED">Cancelado</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* PAGE SIZE */}
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Itens" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / página</SelectItem>
+                <SelectItem value="25">25 / página</SelectItem>
+                <SelectItem value="50">50 / página</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* TABLE */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -213,8 +254,8 @@ export default function PurchaseOrders() {
             </TableHeader>
 
             <TableBody>
-              {data?.items?.map((order) => {
-                const total =
+              {orders.map((order) => {
+                const totalCalc =
                   order.items?.reduce(
                     (acc, item) =>
                       acc + (item.unitPrice ?? 0) * (item.quantity ?? 0),
@@ -226,18 +267,17 @@ export default function PurchaseOrders() {
                     <TableCell className="font-medium">
                       {order.number}
                     </TableCell>
-
                     <TableCell>{order.supplierName}</TableCell>
 
                     <TableCell>
                       <Badge
                         variant={
-                          statusMap[order.status as keyof typeof statusMap]
+                          statusMap[order.status! as keyof typeof statusMap]
                             .variant
                         }
                       >
                         {
-                          statusMap[order.status as keyof typeof statusMap]
+                          statusMap[order.status! as keyof typeof statusMap]
                             .label
                         }
                       </Badge>
@@ -249,7 +289,7 @@ export default function PurchaseOrders() {
 
                     <TableCell className="text-right">
                       R$
-                      {total.toLocaleString("pt-BR", {
+                      {totalCalc.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>
@@ -319,36 +359,41 @@ export default function PurchaseOrders() {
                 );
               })}
 
-              {data?.items?.length === 0 && (
+              {orders.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-6">
-                    Nenhum pedido encontrado
+                    Nenhum pedido encontrado.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
 
-          <div className="flex justify-between items-center mt-4">
-            <Button
-              variant="outline"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Anterior
-            </Button>
-
-            <span className="text-sm">
-              Página {page} de {Math.ceil((data?.total ?? 0) / pageSize)}
+          {/* PAGINATION */}
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages}
             </span>
 
-            <Button
-              variant="outline"
-              disabled={page * pageSize >= (data?.total ?? 0)}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Próxima
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próximo
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

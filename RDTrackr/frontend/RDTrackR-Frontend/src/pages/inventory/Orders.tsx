@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
-import { Plus, MoreHorizontal, Eye, X, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Eye,
+  Check,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { NewOrderDialog } from "@/components/orders/NewOrderDialog";
-import { OrderConfirmPaymentDialog } from "@/components/orders/OrderConfirmPaymentDialog";
-import { OrderCancelDialog } from "@/components/orders/OrderCancelDialog";
-import { OrderDetailsDialog } from "@/components/orders/OrderDetailsDialog";
-
 import {
   Table,
   TableBody,
@@ -17,13 +20,15 @@ import {
 } from "@/components/ui/table";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 import {
   Select,
@@ -34,17 +39,26 @@ import {
 } from "@/components/ui/select";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api";
-import { ResponseOrderJson } from "@/generated/apiClient";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+
+import {
+  ResponseOrderJson,
+  ResponseOrderJsonPagedResponse,
+} from "@/generated/apiClient";
+
+import { NewOrderDialog } from "@/components/orders/NewOrderDialog";
+import { OrderConfirmPaymentDialog } from "@/components/orders/OrderConfirmPaymentDialog";
+import { OrderCancelDialog } from "@/components/orders/OrderCancelDialog";
+import { OrderDetailsDialog } from "@/components/orders/OrderDetailsDialog";
 
 const statusMap = {
   PENDING: { label: "Pendente", variant: "secondary" as const },
@@ -56,67 +70,61 @@ const statusMap = {
 export default function Orders() {
   const { toast } = useToast();
 
+  // Pagination
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [total, setTotal] = useState<number>(0);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState<string>("");
+
+  // Data
   const [orders, setOrders] = useState<ResponseOrderJson[]>([]);
-  const [statusFilter, setStatusFilter] = useState("all");
 
+  // Modals
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Modais
   const [selectedOrder, setSelectedOrder] = useState<ResponseOrderJson | null>(
     null
   );
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isCancelOpen, setIsCancelOpen] = useState(false);
 
-  // 🔥 Modal de Detalhes
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [detailsOrder, setDetailsOrder] = useState<ResponseOrderJson | null>(
-    null
-  );
-
-  const loadOrders = async () => {
+  async function loadOrders() {
     try {
-      const result = await api.ordersAll();
-      setOrders(result);
+      const result: ResponseOrderJsonPagedResponse = await api.ordersGET(
+        page,
+        pageSize,
+        statusFilter === "all" ? undefined : statusFilter,
+        search === "" ? undefined : search
+      );
+
+      setOrders(result.items ?? []);
+      setTotal(result.total ?? 0);
     } catch {
       toast({
         title: "Erro ao carregar pedidos",
-        description: "Não foi possível conectar ao servidor.",
+        description: "Não foi possível obter os dados do servidor.",
         variant: "destructive",
       });
     }
-  };
+  }
 
   useEffect(() => {
     loadOrders();
-  }, []);
+  }, [page, pageSize, statusFilter, search]);
 
-  // Criar pedido
-  const handleCreateOrder = async (req: any) => {
-    try {
-      const created = await api.ordersPOST(req);
-      setOrders((prev) => [...prev, created]);
+  useEffect(() => {
+    if (!isDialogOpen) loadOrders();
+  }, [isDialogOpen]);
 
-      toast({
-        title: "Pedido criado",
-        description: "O pedido foi registrado com sucesso.",
-      });
-    } catch {
-      toast({
-        title: "Erro ao criar pedido",
-        description: "Verifique os dados enviados.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredOrders = orders.filter(
-    (o) => statusFilter === "all" || o.status === statusFilter
-  );
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Pedidos</h2>
@@ -129,13 +137,34 @@ export default function Orders() {
         </Button>
       </div>
 
-      {/* Modal de criação */}
+      {/* MODALS */}
       <NewOrderDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
+        onSuccess={() => loadOrders()}
+      />
+
+      <OrderConfirmPaymentDialog
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        order={selectedOrder}
         onSuccess={loadOrders}
       />
 
+      <OrderCancelDialog
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        order={selectedOrder}
+        onSuccess={loadOrders}
+      />
+
+      <OrderDetailsDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        order={selectedOrder}
+      />
+
+      {/* LISTA */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Pedidos</CardTitle>
@@ -145,9 +174,26 @@ export default function Orders() {
         </CardHeader>
 
         <CardContent>
-          {/* Filtro */}
-          <div className="mb-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+          {/* FILTER BAR */}
+          <div className="mb-4 flex gap-4 items-center">
+            <Input
+              placeholder="Buscar por número ou cliente..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-[300px]"
+            />
+
+            {/* STATUS FILTER */}
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -160,9 +206,27 @@ export default function Orders() {
                 <SelectItem value="CANCELLED">Cancelado</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* PAGE SIZE */}
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Itens" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / página</SelectItem>
+                <SelectItem value="25">25 / página</SelectItem>
+                <SelectItem value="50">50 / página</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Tabela */}
+          {/* TABLE */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -177,7 +241,7 @@ export default function Orders() {
             </TableHeader>
 
             <TableBody>
-              {filteredOrders.map((order) => (
+              {orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>{order.orderNumber}</TableCell>
                   <TableCell>{order.customerName}</TableCell>
@@ -217,10 +281,9 @@ export default function Orders() {
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
 
-                        {/* 🔥 Ver Detalhes */}
                         <DropdownMenuItem
                           onClick={() => {
-                            setDetailsOrder(order);
+                            setSelectedOrder(order);
                             setIsDetailsOpen(true);
                           }}
                         >
@@ -258,7 +321,7 @@ export default function Orders() {
                 </TableRow>
               ))}
 
-              {filteredOrders.length === 0 && (
+              {orders.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-6">
                     Nenhum pedido encontrado.
@@ -267,30 +330,35 @@ export default function Orders() {
               )}
             </TableBody>
           </Table>
+
+          {/* PAGINATION */}
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages}
+            </span>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próximo
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Modais secundários */}
-      <OrderConfirmPaymentDialog
-        open={isConfirmOpen}
-        onOpenChange={setIsConfirmOpen}
-        order={selectedOrder}
-        onSuccess={loadOrders}
-      />
-
-      <OrderCancelDialog
-        open={isCancelOpen}
-        onOpenChange={setIsCancelOpen}
-        order={selectedOrder}
-        onSuccess={loadOrders}
-      />
-
-      {/* 🔥 Modal de Detalhes */}
-      <OrderDetailsDialog
-        open={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-        order={detailsOrder}
-      />
     </div>
   );
 }

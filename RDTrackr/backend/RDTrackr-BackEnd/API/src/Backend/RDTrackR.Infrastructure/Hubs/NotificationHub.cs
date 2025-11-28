@@ -4,9 +4,17 @@ namespace RDTrackR.Infrastructure.Hubs
 {
     public class NotificationHub : Hub
     {
-        public override Task OnConnectedAsync()
+        public override async Task OnConnectedAsync()
         {
-            return base.OnConnectedAsync();
+            var userId = Context.UserIdentifier;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+            }
+
+            await base.OnConnectedAsync();
         }
     }
+
 }

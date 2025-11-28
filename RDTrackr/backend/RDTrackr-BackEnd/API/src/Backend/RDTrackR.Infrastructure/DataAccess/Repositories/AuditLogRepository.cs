@@ -31,5 +31,32 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<(List<AuditLog> Logs, int Total)> GetPagedAsync(
+        int page,
+        int pageSize,
+        string? filterType,
+        string? search)
+        {
+            var query = _context.AuditLogs.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filterType) && filterType != "all")
+                query = query.Where(x => x.ActionType.ToString() == filterType);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(x => x.Description.Contains(search));
+
+            var total = await query.CountAsync();
+
+            var logs = await query
+                .OrderByDescending(x => x.Timestamp)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return (logs, total);
+        }
+
     }
 }

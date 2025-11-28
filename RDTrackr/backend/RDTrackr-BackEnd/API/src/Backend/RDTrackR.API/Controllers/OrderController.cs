@@ -4,6 +4,7 @@ using RDTrackR.Application.UseCases.Orders;
 using RDTrackR.Communication.Requests.Orders;
 using RDTrackR.Communication.Responses.Error;
 using RDTrackR.Communication.Responses.Orders;
+using RDTrackR.Communication.Responses.Pages;
 
 namespace RDTrackR.API.Controllers
 {
@@ -33,13 +34,23 @@ namespace RDTrackR.API.Controllers
             return NoContent();
         }
 
+        //[HttpGet]
+        //[ProducesResponseType(typeof(List<ResponseOrderJson>), StatusCodes.Status200OK)]
+        //public async Task<IActionResult> GetAll(
+        //    [FromServices] IGetAllOrdersUseCase useCase)
+        //{
+        //    return Ok(await useCase.Execute());
+        //}
+
         [HttpGet]
-        [ProducesResponseType(typeof(List<ResponseOrderJson>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll(
-            [FromServices] IGetAllOrdersUseCase useCase)
+        [ProducesResponseType(typeof(PagedResponse<ResponseOrderJson>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Get(
+        [FromQuery] RequestGetOrdersPagedJson request,
+        [FromServices] IGetOrdersPagedUseCase useCase)
         {
-            return Ok(await useCase.Execute());
+            return Ok(await useCase.Execute(request));
         }
+
 
         [HttpDelete("orders/{id:long}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]

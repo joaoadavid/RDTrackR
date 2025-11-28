@@ -1,4 +1,6 @@
-﻿using RDTrackR.Communication.Responses.Audit;
+﻿using RDTrackR.Communication.Requests.AuditLogs;
+using RDTrackR.Communication.Responses.Audit;
+using RDTrackR.Communication.Responses.Pages;
 using RDTrackR.Domain.Repositories.Audit;
 
 namespace RDTrackR.Application.UseCases.AuditLogs
@@ -12,19 +14,29 @@ namespace RDTrackR.Application.UseCases.AuditLogs
             _repo = repo;
         }
 
-        public async Task<List<ResponseAuditLogJson>> Execute(string? type, string? search)
+        public async Task<PagedResponse<ResponseAuditLogJson>> Execute(RequestGetAuditLogsPagedJson request)
         {
-            var logs = await _repo.GetRecentAsync(type, search);
+            int page = request.Page <= 0 ? 1 : request.Page;
+            int pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
 
-            return logs
-                .Select(log => new ResponseAuditLogJson
+            var (logs, total) = await _repo.GetPagedAsync(
+                page, pageSize, request.Type, request.Search
+            );
+
+            return new PagedResponse<ResponseAuditLogJson>
+            {
+                Items = logs.Select(log => new ResponseAuditLogJson
                 {
                     User = log.UserName,
                     Action = log.Description,
                     Type = log.ActionType.ToString(),
                     Date = log.Timestamp
-                })
-                .ToList();
+                }).ToList(),
+                Total = total,
+                Page = page,
+                PageSize = pageSize
+            };
         }
     }
 }
+

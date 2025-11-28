@@ -41,7 +41,13 @@ export function OrderItemCard({
     updateItem(index, "productId", productId);
 
     const p = products.find((x) => x.id === productId);
-    setStock(p?.totalStock ?? null);
+    const available = p?.totalStock ?? 0;
+
+    // Atualiza visual
+    setStock(available);
+
+    // 🔥 envia estoque ao pai
+    updateItem(index, "availableStock", available);
   }
 
   return (

@@ -37,11 +37,13 @@ export interface IApiClient {
     toggle(id: number, signal?: AbortSignal): Promise<void>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
      * @param type (optional) 
      * @param search (optional) 
      * @return OK
      */
-    logs(type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseAuditLogJson[]>;
+    logs(page?: number | undefined, pageSize?: number | undefined, type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseAuditLogJsonPagedResponse>;
 
     /**
      * @param body (optional) 
@@ -112,9 +114,13 @@ export interface IApiClient {
     ordersPOST(body?: RequestCreateOrderJson | undefined, signal?: AbortSignal): Promise<ResponseOrderJson>;
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param status (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    ordersAll(signal?: AbortSignal): Promise<ResponseOrderJson[]>;
+    ordersGET(page?: number | undefined, pageSize?: number | undefined, status?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseOrderJsonPagedResponse>;
 
     /**
      * @param body (optional) 
@@ -572,20 +578,30 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
      * @param type (optional) 
      * @param search (optional) 
      * @return OK
      */
-    logs(type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseAuditLogJson[]> {
+    logs(page?: number | undefined, pageSize?: number | undefined, type?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseAuditLogJsonPagedResponse> {
         let url_ = this.baseUrl + "/auditlog/audit/logs?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
         if (type === null)
             throw new globalThis.Error("The parameter 'type' cannot be null.");
         else if (type !== undefined)
-            url_ += "type=" + encodeURIComponent("" + type) + "&";
+            url_ += "Type=" + encodeURIComponent("" + type) + "&";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
         else if (search !== undefined)
-            url_ += "search=" + encodeURIComponent("" + search) + "&";
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -601,21 +617,14 @@ export class ApiClient implements IApiClient {
         });
     }
 
-    protected processLogs(response: Response): Promise<ResponseAuditLogJson[]> {
+    protected processLogs(response: Response): Promise<ResponseAuditLogJsonPagedResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseAuditLogJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = ResponseAuditLogJsonPagedResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -623,7 +632,7 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseAuditLogJson[]>(null as any);
+        return Promise.resolve<ResponseAuditLogJsonPagedResponse>(null as any);
     }
 
     /**
@@ -1127,10 +1136,30 @@ export class ApiClient implements IApiClient {
     }
 
     /**
+     * @param page (optional) 
+     * @param pageSize (optional) 
+     * @param status (optional) 
+     * @param search (optional) 
      * @return OK
      */
-    ordersAll(signal?: AbortSignal): Promise<ResponseOrderJson[]> {
-        let url_ = this.baseUrl + "/orders";
+    ordersGET(page?: number | undefined, pageSize?: number | undefined, status?: string | undefined, search?: string | undefined, signal?: AbortSignal): Promise<ResponseOrderJsonPagedResponse> {
+        let url_ = this.baseUrl + "/orders?";
+        if (page === null)
+            throw new globalThis.Error("The parameter 'page' cannot be null.");
+        else if (page !== undefined)
+            url_ += "Page=" + encodeURIComponent("" + page) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (status === null)
+            throw new globalThis.Error("The parameter 'status' cannot be null.");
+        else if (status !== undefined)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (search === null)
+            throw new globalThis.Error("The parameter 'search' cannot be null.");
+        else if (search !== undefined)
+            url_ += "Search=" + encodeURIComponent("" + search) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -1142,25 +1171,18 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processOrdersAll(_response);
+            return this.processOrdersGET(_response);
         });
     }
 
-    protected processOrdersAll(response: Response): Promise<ResponseOrderJson[]> {
+    protected processOrdersGET(response: Response): Promise<ResponseOrderJsonPagedResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ResponseOrderJson.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = ResponseOrderJsonPagedResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -1168,7 +1190,7 @@ export class ApiClient implements IApiClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResponseOrderJson[]>(null as any);
+        return Promise.resolve<ResponseOrderJsonPagedResponse>(null as any);
     }
 
     /**
@@ -4627,6 +4649,62 @@ export interface IResponseAuditLogJson {
     date?: Date;
 }
 
+export class ResponseAuditLogJsonPagedResponse implements IResponseAuditLogJsonPagedResponse {
+    items?: ResponseAuditLogJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseAuditLogJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseAuditLogJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseAuditLogJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseAuditLogJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseAuditLogJsonPagedResponse {
+    items?: ResponseAuditLogJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+}
+
 export class ResponseErrorJson implements IResponseErrorJson {
     errors?: string[] | undefined;
     tokenExpired?: boolean;
@@ -4957,6 +5035,62 @@ export interface IResponseOrderJson {
     status?: OrderStatus;
     createdOn?: Date;
     items?: ResponseOrderItemJson[] | undefined;
+}
+
+export class ResponseOrderJsonPagedResponse implements IResponseOrderJsonPagedResponse {
+    items?: ResponseOrderJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
+
+    constructor(data?: IResponseOrderJsonPagedResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ResponseOrderJson.fromJS(item));
+            }
+            this.total = _data["total"];
+            this.page = _data["page"];
+            this.pageSize = _data["pageSize"];
+        }
+    }
+
+    static fromJS(data: any): ResponseOrderJsonPagedResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResponseOrderJsonPagedResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["total"] = this.total;
+        data["page"] = this.page;
+        data["pageSize"] = this.pageSize;
+        return data;
+    }
+}
+
+export interface IResponseOrderJsonPagedResponse {
+    items?: ResponseOrderJson[] | undefined;
+    total?: number;
+    page?: number;
+    pageSize?: number;
 }
 
 export class ResponseOverviewJson implements IResponseOverviewJson {

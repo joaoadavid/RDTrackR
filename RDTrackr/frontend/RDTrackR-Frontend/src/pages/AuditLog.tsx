@@ -22,14 +22,19 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { ResponseAuditLogJson } from "@/generated/apiClient";
+import { Button } from "@/components/ui/button";
+
+import {
+  ResponseAuditLogJsonPagedResponse,
+  ResponseAuditLogJson,
+} from "@/generated/apiClient";
 
 // ========================================
-// 🔥 Mapa de tipos (não muda nada no layout)
+// 🔥 Mapa de tipos (mesmo de antes)
 // ========================================
 const typeMap = {
   CREATE: { label: "Criação", variant: "default" as const },
@@ -39,7 +44,7 @@ const typeMap = {
 };
 
 // ========================================
-// 🔄 Debounce avançado (melhor UX)
+// 🔄 Debounce para busca
 // ========================================
 function useDebounce(value: string, delay = 350) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -60,47 +65,47 @@ export default function AuditLog() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [total, setTotal] = useState<number>(0);
+
   const debouncedSearch = useDebounce(search, 350);
 
   // ========================================
-  // 🔥 Função principal de carregamento
+  // 🔥 Carregamento com paginação
   // ========================================
   const loadLogs = useCallback(async () => {
     setLoading(true);
 
     try {
-      const result = await api.logs(
+      const result: ResponseAuditLogJsonPagedResponse = await api.logs(
+        page,
+        pageSize,
         filter === "all" ? undefined : filter,
         debouncedSearch || undefined
       );
 
-      setLogs(Array.isArray(result) ? result : []);
-    } catch (err: any) {
-      const message =
-        err?.result?.messages?.[0] ??
-        err?.result?.message ??
-        err?.body?.message ??
-        "Erro ao carregar logs.";
-
+      setLogs(result.items ?? []);
+      setTotal(result.total ?? 0);
+    } catch {
       toast({
         title: "Erro ao carregar auditoria",
-        description: message,
+        description: "Não foi possível obter os dados do servidor.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [filter, debouncedSearch, toast]);
+  }, [page, pageSize, filter, debouncedSearch, toast]);
 
-  // ========================================
-  // 🔄 Atualiza automaticamente
-  // ========================================
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
 
+  const totalPages = Math.ceil(total / pageSize);
+
   // ========================================
-  // 🦴 Skeleton Loader (UX PROFISSIONAL)
+  // 🦴 Skeleton Loader
   // ========================================
   const renderSkeleton = () => (
     <TableRow>
@@ -123,7 +128,6 @@ export default function AuditLog() {
         </div>
       </div>
 
-      {/* Card Principal */}
       <Card>
         <CardHeader>
           <CardTitle>Log de Auditoria</CardTitle>
@@ -135,19 +139,28 @@ export default function AuditLog() {
         <CardContent>
           {/* Filtros */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-            {/* Pesquisa */}
+            {/* Busca */}
             <div className="flex items-center w-full sm:w-1/2 relative">
               <Search className="absolute left-2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Pesquisar ação..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-8"
               />
             </div>
 
-            {/* Select Tipo */}
-            <Select value={filter} onValueChange={setFilter}>
+            {/* Tipo */}
+            <Select
+              value={filter}
+              onValueChange={(v) => {
+                setFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Tipo de ação" />
               </SelectTrigger>
@@ -157,6 +170,24 @@ export default function AuditLog() {
                 <SelectItem value="UPDATE">Atualização</SelectItem>
                 <SelectItem value="DELETE">Exclusão</SelectItem>
                 <SelectItem value="LOGIN">Login</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Itens por página */}
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Itens / página" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / página</SelectItem>
+                <SelectItem value="25">25 / página</SelectItem>
+                <SelectItem value="50">50 / página</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -173,25 +204,21 @@ export default function AuditLog() {
             </TableHeader>
 
             <TableBody>
-              {/* Skeleton */}
               {loading &&
                 Array.from({ length: 5 }).map((_, i) => (
                   <Fragment key={i}>{renderSkeleton()}</Fragment>
                 ))}
 
-              {/* Dados */}
               {!loading &&
-                logs.map((log, idx) => (
-                  <TableRow key={idx}>
+                logs.map((log, index) => (
+                  <TableRow key={index}>
                     <TableCell className="font-medium">{log.user}</TableCell>
                     <TableCell>{log.action}</TableCell>
-
                     <TableCell>
                       <Badge variant={typeMap[log.type].variant}>
                         {typeMap[log.type].label}
                       </Badge>
                     </TableCell>
-
                     <TableCell>
                       {log.date
                         ? new Date(log.date).toLocaleString("pt-BR")
@@ -200,7 +227,6 @@ export default function AuditLog() {
                   </TableRow>
                 ))}
 
-              {/* Vazio */}
               {!loading && logs.length === 0 && (
                 <TableRow>
                   <TableCell
@@ -213,6 +239,33 @@ export default function AuditLog() {
               )}
             </TableBody>
           </Table>
+
+          {/* Paginação */}
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">
+              Página {page} de {totalPages}
+            </span>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Próximo
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
