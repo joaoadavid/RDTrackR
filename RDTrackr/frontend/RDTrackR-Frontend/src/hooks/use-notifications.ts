@@ -46,7 +46,7 @@ export function useNotifications() {
     const token = localStorage.getItem("accessToken");
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:8080/notificationsHub", {
+      .withUrl("http://3.129.244.42:8080/notificationsHub", {
         accessTokenFactory: () => token ?? "",
       })
       .withAutomaticReconnect()

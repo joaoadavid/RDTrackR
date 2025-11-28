@@ -24,13 +24,7 @@ obj/
 *.vssscc
 project.lock.json
 
-# Configurações locais / sensíveis
-secrets.json
-*.env
-.env.*
-#!appsettings.json
-#!appsettings.Test.json
-
+# Configurações locais / sensívei
 
 # Testes
 TestResults/
@@ -69,10 +63,6 @@ yarn-error.log*
 bun.lockb
 
 # Variáveis de ambiente
-.env.local
-.env.development
-.env.production
-.env.test
 
 # IDEs / Editores
 .vscode/
