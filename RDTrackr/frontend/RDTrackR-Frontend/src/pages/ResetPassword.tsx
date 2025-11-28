@@ -24,10 +24,6 @@ export default function ResetPassword() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // ==========================
-    // 🔐 Validações
-    // ==========================
-
     if (!password || !confirm) {
       toast({
         title: "Campos obrigatórios",
@@ -100,9 +96,9 @@ export default function ResetPassword() {
               <Label>Nova Senha</Label>
               <Input
                 type="password"
+                data-testid="password"
                 value={password}
                 onChange={(e) => setNewPassword(e.target.value)}
-                required
               />
             </div>
 
@@ -110,9 +106,9 @@ export default function ResetPassword() {
               <Label>Confirmar Nova Senha</Label>
               <Input
                 type="password"
+                data-testid="confirm"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                required
               />
             </div>
 

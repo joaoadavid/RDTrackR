@@ -14,15 +14,13 @@ export default function ReplenishmentInfo() {
 
       <main className="flex-1 py-24">
         <Container className="space-y-20">
-
-          {/* HERO */}
           <section className="text-center space-y-6 max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
               Planejamento Inteligente de Reposição
             </h1>
             <p className="text-muted-foreground text-lg">
-              Mantenha seu estoque sempre no nível ideal com sugestões automáticas de compra
-              baseadas em consumo, lead time e segurança.
+              Mantenha seu estoque sempre no nível ideal com sugestões
+              automáticas de compra baseadas em consumo, lead time e segurança.
             </p>
             <Button size="lg" className="mt-4" asChild>
               <Link to="/register">
@@ -31,24 +29,23 @@ export default function ReplenishmentInfo() {
             </Button>
           </section>
 
-          {/* BENEFICIOS */}
           <section className="grid md:grid-cols-3 gap-8">
             {[
               {
                 icon: Layers,
                 title: "Evite rupturas",
-                desc: "Reabasteça antes que o estoque acabe."
+                desc: "Reabasteça antes que o estoque acabe.",
               },
               {
                 icon: Timer,
                 title: "Lead Time considerado",
-                desc: "Reposição calculada com base no tempo de entrega."
+                desc: "Reposição calculada com base no tempo de entrega.",
               },
               {
                 icon: BarChart3,
                 title: "Baseado em consumo real",
-                desc: "Sugestões precisas com base no histórico."
-              }
+                desc: "Sugestões precisas com base no histórico.",
+              },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -65,32 +62,31 @@ export default function ReplenishmentInfo() {
             })}
           </section>
 
-          {/* SCREENSHOT */}
           <section className="text-center space-y-6">
             <h2 className="text-3xl font-bold">Veja na prática</h2>
             <p className="text-muted-foreground text-lg">
-              Você recebe recomendações automáticas baseadas em dados reais do estoque.
+              Você recebe recomendações automáticas baseadas em dados reais do
+              estoque.
             </p>
 
             <div className="rounded-xl border shadow-lg overflow-hidden">
-               <img
+              <img
                 src={replenishmentinfo}
                 alt="Dashboard RdTrackR - Interface moderna de gestão empresarial"
                 className="w-full h-auto rounded-lg"
                 loading="eager"
               />
             </div>
-           
           </section>
 
-          {/* CTA FINAL */}
           <section className="text-center space-y-4">
-            <h2 className="text-2xl font-bold">Pronto para otimizar seu estoque?</h2>
+            <h2 className="text-2xl font-bold">
+              Pronto para otimizar seu estoque?
+            </h2>
             <Button size="lg" asChild>
               <Link to="/register">Começar agora</Link>
             </Button>
           </section>
-
         </Container>
       </main>
 

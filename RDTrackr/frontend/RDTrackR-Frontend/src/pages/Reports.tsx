@@ -84,7 +84,6 @@ export default function Reports() {
 
   return (
     <div className="space-y-8">
-      {/* Cabeçalho */}
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
         <p className="text-muted-foreground">
@@ -92,9 +91,7 @@ export default function Reports() {
         </p>
       </div>
 
-      {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total de pedidos */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -108,7 +105,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Valor total comprado */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -129,7 +125,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Pendentes */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
@@ -143,7 +138,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Cancelados */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Cancelados</CardTitle>
@@ -158,7 +152,6 @@ export default function Reports() {
 
       <Separator />
 
-      {/* Tabela de pedidos recentes */}
       <Card>
         <CardHeader>
           <CardTitle>Pedidos Recentes</CardTitle>
@@ -179,7 +172,6 @@ export default function Reports() {
             </TableHeader>
 
             <TableBody>
-              {/* Loading */}
               {loading && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-6">
@@ -188,7 +180,6 @@ export default function Reports() {
                 </TableRow>
               )}
 
-              {/* Dados reais */}
               {!loading &&
                 data?.recentOrders?.map(
                   (order: ResponseRecentPurchaseOrderJson, i) => (
@@ -225,7 +216,6 @@ export default function Reports() {
                   )
                 )}
 
-              {/* Sem registros */}
               {!loading &&
                 (!data?.recentOrders || data.recentOrders.length === 0) && (
                   <TableRow>

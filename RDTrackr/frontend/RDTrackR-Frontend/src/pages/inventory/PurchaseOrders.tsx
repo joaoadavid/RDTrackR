@@ -210,7 +210,7 @@ export default function PurchaseOrders() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
 
-              <SelectContent>
+              <SelectContent data-testid="status-filter-menu">
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="DRAFT">Rascunho</SelectItem>
                 <SelectItem value="PENDING">Pendente</SelectItem>
@@ -220,7 +220,6 @@ export default function PurchaseOrders() {
               </SelectContent>
             </Select>
 
-            {/* PAGE SIZE */}
             <Select
               value={String(pageSize)}
               onValueChange={(v) => {
@@ -239,7 +238,6 @@ export default function PurchaseOrders() {
             </Select>
           </div>
 
-          {/* TABLE */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -369,7 +367,6 @@ export default function PurchaseOrders() {
             </TableBody>
           </Table>
 
-          {/* PAGINATION */}
           <div className="flex items-center justify-between mt-4">
             <span className="text-sm text-muted-foreground">
               Página {page} de {totalPages}

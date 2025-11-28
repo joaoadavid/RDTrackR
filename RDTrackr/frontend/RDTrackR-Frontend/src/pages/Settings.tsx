@@ -22,9 +22,6 @@ import {
 
 import { Eye, EyeOff } from "lucide-react";
 
-// =================================================================
-// 🔥 Componente de Input com ícone de mostrar/ocultar senha
-// =================================================================
 function PasswordInput({ value, onChange, placeholder }: any) {
   const [show, setShow] = useState(false);
 
@@ -55,9 +52,6 @@ function PasswordInput({ value, onChange, placeholder }: any) {
   );
 }
 
-// =================================================================
-// 🔥 Página de Settings
-// =================================================================
 export default function Settings() {
   const { toast } = useToast();
 
@@ -66,14 +60,10 @@ export default function Settings() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Campos de senha
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  // ============================================================
-  // 🔄 Carregar perfil do usuário logado
-  // ============================================================
   useEffect(() => {
     api.userPOST().then((p) => {
       setProfile(p);
@@ -82,9 +72,6 @@ export default function Settings() {
     });
   }, []);
 
-  // ============================================================
-  // 🔥 Atualizar perfil (nome + email)
-  // ============================================================
   async function handleUpdateProfile() {
     const body = new RequestUpdateUserJson({
       name,
@@ -107,9 +94,6 @@ export default function Settings() {
     }
   }
 
-  // ============================================================
-  // 🔥 Alterar senha
-  // ============================================================
   async function handleChangePassword() {
     if (!password || !newPassword || !confirm) {
       toast({
@@ -162,9 +146,6 @@ export default function Settings() {
         </p>
       </div>
 
-      {/* =========================== */}
-      {/* 🔥 Atualizar Perfil */}
-      {/* =========================== */}
       <Card>
         <CardHeader>
           <CardTitle>Perfil</CardTitle>
@@ -190,9 +171,6 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* =========================== */}
-      {/* 🔥 Alterar Senha */}
-      {/* =========================== */}
       <Card>
         <CardHeader>
           <CardTitle>Alterar Senha</CardTitle>

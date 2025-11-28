@@ -1,7 +1,13 @@
 import { Header } from "@/components/marketing/Header";
 import { Footer } from "@/components/marketing/Footer";
 import { Container } from "@/components/ui/container";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, MessageCircle, HelpCircle, ExternalLink } from "lucide-react";
@@ -15,17 +21,16 @@ export default function Support() {
       <main className="flex-1 pt-24 pb-20">
         <Container>
           <div className="max-w-4xl mx-auto space-y-12">
-
-            {/* Header */}
             <div className="text-center space-y-4">
               <Badge variant="secondary">Central de Suporte</Badge>
-              <h1 className="text-4xl font-bold tracking-tight">Como podemos ajudar?</h1>
+              <h1 className="text-4xl font-bold tracking-tight">
+                Como podemos ajudar?
+              </h1>
               <p className="text-lg text-muted-foreground">
                 Você pode abrir um chamado ou falar conosco diretamente.
               </p>
             </div>
 
-            {/* Status */}
             <Card className="text-center">
               <CardHeader>
                 <HelpCircle className="w-10 h-10 mx-auto text-primary mb-3" />
@@ -34,9 +39,7 @@ export default function Support() {
               </CardHeader>
             </Card>
 
-            {/* Contact Options */}
             <div className="grid sm:grid-cols-2 gap-6">
-
               <Card>
                 <CardHeader className="text-center space-y-2">
                   <Mail className="w-8 h-8 mx-auto text-primary" />
@@ -56,7 +59,9 @@ export default function Support() {
                 <CardHeader className="text-center space-y-2">
                   <MessageCircle className="w-8 h-8 mx-auto text-primary" />
                   <CardTitle>Formulário de Contato</CardTitle>
-                  <CardDescription>Envie sua solicitação diretamente</CardDescription>
+                  <CardDescription>
+                    Envie sua solicitação diretamente
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                   <Button asChild variant="outline" className="w-full">
@@ -67,9 +72,7 @@ export default function Support() {
                   </Button>
                 </CardContent>
               </Card>
-
             </div>
-
           </div>
         </Container>
       </main>

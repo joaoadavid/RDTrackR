@@ -14,15 +14,10 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState<"email" | "code">("email");
-
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-
   const [loading, setLoading] = useState(false);
 
-  // ===============================================================
-  // 1️⃣ ENVIAR CÓDIGO VIA E-MAIL
-  // ===============================================================
   async function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -47,9 +42,6 @@ export default function ForgotPassword() {
     }
   }
 
-  // ===============================================================
-  // 2️⃣ VALIDAR CÓDIGO VIA API (VALIDAÇÃO REAL)
-  // ===============================================================
   async function handleValidateCode() {
     if (!code.trim()) {
       toast({
@@ -98,8 +90,9 @@ export default function ForgotPassword() {
           {step === "email" && (
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
-                <Label>Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
+                  id="email"
                   type="email"
                   required
                   value={email}
@@ -121,8 +114,9 @@ export default function ForgotPassword() {
               </p>
 
               <div>
-                <Label>Código</Label>
+                <Label htmlFor="code">Código</Label>
                 <Input
+                  id="code"
                   type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}

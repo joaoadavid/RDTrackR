@@ -71,9 +71,6 @@ export default function AuditLog() {
 
   const debouncedSearch = useDebounce(search, 350);
 
-  // ========================================
-  // 🔥 Carregamento com paginação
-  // ========================================
   const loadLogs = useCallback(async () => {
     setLoading(true);
 
@@ -104,9 +101,6 @@ export default function AuditLog() {
 
   const totalPages = Math.ceil(total / pageSize);
 
-  // ========================================
-  // 🦴 Skeleton Loader
-  // ========================================
   const renderSkeleton = () => (
     <TableRow>
       <TableCell className="animate-pulse bg-muted/40 h-6 rounded"></TableCell>
@@ -118,7 +112,6 @@ export default function AuditLog() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Auditoria</h2>
@@ -137,9 +130,7 @@ export default function AuditLog() {
         </CardHeader>
 
         <CardContent>
-          {/* Filtros */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-            {/* Busca */}
             <div className="flex items-center w-full sm:w-1/2 relative">
               <Search className="absolute left-2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -153,7 +144,6 @@ export default function AuditLog() {
               />
             </div>
 
-            {/* Tipo */}
             <Select
               value={filter}
               onValueChange={(v) => {
@@ -173,7 +163,6 @@ export default function AuditLog() {
               </SelectContent>
             </Select>
 
-            {/* Itens por página */}
             <Select
               value={String(pageSize)}
               onValueChange={(v) => {
@@ -192,7 +181,6 @@ export default function AuditLog() {
             </Select>
           </div>
 
-          {/* Tabela */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -240,7 +228,6 @@ export default function AuditLog() {
             </TableBody>
           </Table>
 
-          {/* Paginação */}
           <div className="flex items-center justify-between mt-4">
             <span className="text-sm text-muted-foreground">
               Página {page} de {totalPages}

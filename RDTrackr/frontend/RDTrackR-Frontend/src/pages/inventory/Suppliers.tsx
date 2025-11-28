@@ -267,8 +267,15 @@ export default function Suppliers() {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          data-testid={`supplier-actions-trigger-${s.id}`}
+                        >
+                          <MoreHorizontal
+                            data-testid="supplier-actions-trigger"
+                            className="h-4 w-4"
+                          />
                         </Button>
                       </DropdownMenuTrigger>
 

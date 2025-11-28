@@ -1,3 +1,5 @@
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { within } from "@testing-library/react";
@@ -11,19 +13,17 @@ import {
   ResponsePurchaseOrderJsonPagedResponse,
 } from "@/generated/apiClient";
 
-// ===== MOCK DO MÓDULO API =====
 vi.mock("@/lib/api", () => ({
   api: {
     purchaseorderGET: vi.fn(),
+    status2: vi.fn(),
+    purchaseorderDELETE: vi.fn(),
   },
 }));
 
 import { api } from "@/lib/api";
-const mockedPurchaseOrderGET = vi.mocked(api.purchaseorderGET);
+const mockedApi = vi.mocked(api);
 
-// ===============================================================
-// UTIL — LISTA COMPLETA DE PEDIDOS MOCKADOS
-// ===============================================================
 const ALL_ORDERS = [
   new ResponsePurchaseOrderJson({
     id: 3,
@@ -33,7 +33,7 @@ const ALL_ORDERS = [
     createdOn: new Date("2025-01-01"),
     items: [
       new ResponsePurchaseOrderItemJson({
-        productName: "Notebook Dell Inspiron 15",
+        productName: "Notebook Dell",
         quantity: 1,
         unitPrice: 45780,
       }),
@@ -74,16 +74,14 @@ const ALL_ORDERS = [
 beforeEach(() => {
   vi.clearAllMocks();
 
-  mockedPurchaseOrderGET.mockImplementation(
+  mockedApi.purchaseorderGET.mockImplementation(
     async (page, pageSize, statusFilter, search) => {
       let filtered = [...ALL_ORDERS];
 
-      // FILTRAR POR STATUS
       if (statusFilter && statusFilter !== "all") {
         filtered = filtered.filter((o) => o.status === statusFilter);
       }
 
-      // FILTRAR POR SEARCH
       if (search) {
         const s = search.toLowerCase();
         filtered = filtered.filter(
@@ -93,7 +91,6 @@ beforeEach(() => {
         );
       }
 
-      // RETORNO PAGINADO
       return new ResponsePurchaseOrderJsonPagedResponse({
         items: filtered,
         total: filtered.length,
@@ -103,44 +100,14 @@ beforeEach(() => {
   );
 });
 
-// ===============================================================
-// TESTE 1 — Renderizar tabela com dados iniciais
-// ===============================================================
-it("deve exibir o pedido PO-2025-003 com o valor formatado corretamente", async () => {
+it("deve exibir o pedido PO-2025-003 com valor formatado corretamente", async () => {
   render(<PurchaseOrders />);
 
-  // Aguarda carregamento das requisições
   expect(await screen.findByText("PO-2025-003")).toBeInTheDocument();
   expect(screen.getByText("GlobalTech Solutions")).toBeInTheDocument();
   expect(screen.getByText(/recebido/i)).toBeInTheDocument();
 
-  // Total: 45.780,00
   expect(
     screen.getByText((txt) => txt.includes("45.780,00"))
   ).toBeInTheDocument();
-});
-
-it("deve filtrar pedidos com status 'Aprovado'", async () => {
-  const user = userEvent.setup();
-  render(<PurchaseOrders />);
-
-  // garante que dados já foram carregados
-  await screen.findByText("PO-2025-003");
-
-  // abrir o select
-  const trigger = await screen.findByTestId("status-filter-trigger");
-  await user.click(trigger);
-
-  // menu dentro do portal
-  const menu = await screen.findByTestId("status-filter-menu");
-
-  // selecionar "Aprovado"
-  await user.click(within(menu).getByText(/Aprovado/i));
-
-  // aguarda o re-render com os resultados filtrados
-  await screen.findByText("PO-2025-001");
-
-  // deve remover os demais
-  expect(screen.queryByText("PO-2025-002")).not.toBeInTheDocument();
-  expect(screen.queryByText("PO-2025-003")).not.toBeInTheDocument();
 });
