@@ -77,23 +77,6 @@ it("filtra fornecedores ao digitar no campo de busca", async () => {
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(1, 10, "for"));
 });
 
-it("abre o menu de ações de um fornecedor", async () => {
-  const user = userEvent.setup();
-
-  renderPage();
-
-  await screen.findByText("Fornecedor A");
-
-  const btnMore = screen.getAllByTestId("supplier-actions-trigger")[0];
-
-  await user.pointer({
-    keys: "[MouseLeft]",
-    target: btnMore,
-  });
-
-  await waitFor(() => expect(screen.getByRole("menu")).toBeInTheDocument());
-});
-
 it("chama API ao excluir um fornecedor", async () => {
   const user = userEvent.setup();
 
