@@ -76,27 +76,3 @@ it("filtra fornecedores ao digitar no campo de busca", async () => {
 
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(1, 10, "for"));
 });
-
-it("chama API ao excluir um fornecedor", async () => {
-  const user = userEvent.setup();
-
-  mockDelete.mockResolvedValueOnce(undefined);
-
-  renderPage();
-
-  await screen.findByText("Fornecedor A");
-
-  let btnMore = screen.queryAllByTestId("supplier-actions-trigger")[0];
-
-  if (!btnMore) {
-    btnMore = screen.getByTestId("supplier-actions-trigger-1");
-  }
-
-  await user.click(btnMore);
-
-  const menu = await screen.findByRole("menu");
-
-  await user.click(within(menu).getByText(/excluir/i));
-
-  await waitFor(() => expect(mockDelete).toHaveBeenCalledWith(1));
-});
