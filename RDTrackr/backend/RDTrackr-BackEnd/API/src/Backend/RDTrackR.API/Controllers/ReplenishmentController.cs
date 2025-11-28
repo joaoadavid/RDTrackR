@@ -13,14 +13,7 @@ namespace RDTrackR.API.Controllers
     [Route("replenishment")]
     public class ReplenishmentController : RDTrackRBaseController
     {
-        //[HttpGet]
-        //[ProducesResponseType(typeof(List<ResponseReplenishmentItemJson>), StatusCodes.Status200OK)]
-        //public async Task<IActionResult> Get(
-        //    [FromServices] IGetReplenishmentItemsUseCase useCase)
-        //{
-        //    var result = await useCase.Execute();
-        //    return Ok(result);
-        //}
+
         [HttpGet]
         [ProducesResponseType(typeof(PagedResponse<ResponseReplenishmentItemJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Get(

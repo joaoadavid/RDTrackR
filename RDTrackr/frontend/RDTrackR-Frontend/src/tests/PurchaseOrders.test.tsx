@@ -30,7 +30,7 @@ const ALL_ORDERS = [
     number: "PO-2025-003",
     supplierName: "GlobalTech Solutions",
     status: "RECEIVED",
-    createdAt: new Date("2025-01-01"),
+    createdOn: new Date("2025-01-01"),
     items: [
       new ResponsePurchaseOrderItemJson({
         productName: "Notebook Dell Inspiron 15",
@@ -45,7 +45,7 @@ const ALL_ORDERS = [
     number: "PO-2025-001",
     supplierName: "TechSupply Ltd.",
     status: "APPROVED",
-    createdAt: new Date("2025-01-02"),
+    createdOn: new Date("2025-01-02"),
     items: [
       new ResponsePurchaseOrderItemJson({
         productName: "Mouse Gamer",
@@ -60,7 +60,7 @@ const ALL_ORDERS = [
     number: "PO-2025-002",
     supplierName: "PrimeSource Import",
     status: "PENDING",
-    createdAt: new Date("2025-01-03"),
+    createdOn: new Date("2025-01-03"),
     items: [
       new ResponsePurchaseOrderItemJson({
         productName: "Headset Bluetooth",
@@ -71,9 +71,6 @@ const ALL_ORDERS = [
   }),
 ];
 
-// ===============================================================
-// BEFORE EACH — CONFIGURA MOCK DINÂMICO
-// ===============================================================
 beforeEach(() => {
   vi.clearAllMocks();
 

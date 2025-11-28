@@ -45,8 +45,8 @@ export function PurchaseOrderDetailsDialog({
 
   if (!order) return null;
 
-  const formattedDate = order.createdAt
-    ? format(order.createdAt, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+  const formattedDate = order.createdOn
+    ? format(order.createdOn, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : "—";
 
   const total =

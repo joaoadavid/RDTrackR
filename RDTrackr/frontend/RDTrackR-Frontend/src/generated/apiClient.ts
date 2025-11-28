@@ -5210,7 +5210,7 @@ export class ResponsePurchaseOrderJson implements IResponsePurchaseOrderJson {
     status?: string | undefined;
     warehouseId?: number;
     warehouseName?: string | undefined;
-    createdAt?: Date;
+    createdOn?: Date;
     createdByName?: string | undefined;
     items?: ResponsePurchaseOrderItemJson[] | undefined;
 
@@ -5231,7 +5231,7 @@ export class ResponsePurchaseOrderJson implements IResponsePurchaseOrderJson {
             this.status = _data["status"];
             this.warehouseId = _data["warehouseId"];
             this.warehouseName = _data["warehouseName"];
-            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : undefined as any;
+            this.createdOn = _data["createdOn"] ? new Date(_data["createdOn"].toString()) : undefined as any;
             this.createdByName = _data["createdByName"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
@@ -5256,7 +5256,7 @@ export class ResponsePurchaseOrderJson implements IResponsePurchaseOrderJson {
         data["status"] = this.status;
         data["warehouseId"] = this.warehouseId;
         data["warehouseName"] = this.warehouseName;
-        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : undefined as any;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
         data["createdByName"] = this.createdByName;
         if (Array.isArray(this.items)) {
             data["items"] = [];
@@ -5274,7 +5274,7 @@ export interface IResponsePurchaseOrderJson {
     status?: string | undefined;
     warehouseId?: number;
     warehouseName?: string | undefined;
-    createdAt?: Date;
+    createdOn?: Date;
     createdByName?: string | undefined;
     items?: ResponsePurchaseOrderItemJson[] | undefined;
 }

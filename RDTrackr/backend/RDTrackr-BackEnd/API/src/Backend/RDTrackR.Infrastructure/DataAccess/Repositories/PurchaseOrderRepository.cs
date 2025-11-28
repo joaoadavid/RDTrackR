@@ -55,7 +55,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return await _context.PurchaseOrders
                 .Include(p => p.Supplier)
                 .Include(p => p.Items)
-                .Where(p => p.CreatedAt >= since)
+                .Where(p => p.CreatedOn >= since)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -69,6 +69,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         {
             var query = _context.PurchaseOrders
                 .Include(p => p.Supplier)
+                .Include(p => p.Warehouse)
                 .Include(p => p.CreatedBy)
                 .Include(p => p.Items).ThenInclude(i => i.Product)
                 .Where(p => p.CreatedByUserId == user.Id)
@@ -86,7 +87,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             }
 
             return await query
-                .OrderByDescending(p => p.CreatedAt)
+                .OrderByDescending(p => p.CreatedOn)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .AsNoTracking()
@@ -120,7 +121,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             var since = DateTime.UtcNow.AddDays(-30);
 
             return await _context.PurchaseOrderItems
-                .Where(i => i.PurchaseOrder.CreatedAt >= since)
+                .Where(i => i.PurchaseOrder.CreatedOn >= since)
                 .SumAsync(i => i.Quantity * i.UnitPrice);
         }
 

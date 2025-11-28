@@ -19,7 +19,7 @@ describe("PurchaseOrderDetailsDialog", () => {
     number: "PO-250101-001",
     supplierName: "TechSupply Brasil",
     status: "APPROVED",
-    createdAt: new Date("2025-01-01"),
+    createdOn: new Date("2025-01-01"),
 
     items: [
       new ResponsePurchaseOrderItemJson({

@@ -6,7 +6,7 @@ using RDTrackR.Communication.Responses.Reports;
 namespace RDTrackR.API.Controllers
 {
     
-    [AuthenticatedUser]
+    [AuthenticatedUser("Admin")]
     public class ReportsController : RDTrackRBaseController
     {
         [HttpGet]

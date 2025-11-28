@@ -50,6 +50,11 @@ const inventoryItems = [
     icon: ShoppingBag,
     href: "/inventory/purchase-orders",
   },
+  {
+    title: "Pedidos (Saída)",
+    icon: FileText, // ou outro ícone
+    href: "/inventory/orders",
+  },
 ];
 
 const profileItems = [
@@ -65,7 +70,6 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        {/* ADMIN */}
         {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-sidebar-primary">
@@ -96,7 +100,6 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* INVENTORY */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-primary">
             Estoque

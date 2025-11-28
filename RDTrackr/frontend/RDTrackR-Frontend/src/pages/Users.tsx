@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Search, UserPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ const roleMap = {
 export default function Users() {
   const [users, setUsers] = useState<ResponseUserListItemJson[]>([]);
   const [search, setSearch] = useState("");
+  const { toast } = useToast();
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -54,22 +56,49 @@ export default function Users() {
   const [selectedUser, setSelectedUser] =
     useState<ResponseUserListItemJson | null>(null);
 
-  // CARREGAR LISTA
   async function loadUsers() {
     const result = await api.adminAll();
     setUsers(result);
   }
 
   useEffect(() => {
-    loadUsers();
+    loadUsers().then(() => {
+      console.log("USERS:", users);
+    });
   }, []);
 
-  // RECARREGAR APÓS AÇÃO
-  function handleSuccess() {
-    loadUsers();
+  function handleSuccess(action: "created" | "updated" | "deleted") {
+    try {
+      loadUsers();
+
+      const messages = {
+        created: {
+          title: "Usuário criado",
+          description: "O usuário foi registrado com sucesso.",
+        },
+        updated: {
+          title: "Usuário atualizado",
+          description: "As informações foram salvas com sucesso.",
+        },
+        deleted: {
+          title: "Usuário excluído",
+          description: "O usuário foi removido do sistema.",
+        },
+      };
+
+      toast({
+        title: messages[action].title,
+        description: messages[action].description,
+      });
+    } catch {
+      toast({
+        title: "Erro ao salvar usuário",
+        description: "Verifique as informações e tente novamente.",
+        variant: "destructive",
+      });
+    }
   }
 
-  // FILTRO
   const filteredUsers = users.filter(
     (u) =>
       u.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -78,7 +107,6 @@ export default function Users() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Usuários</h2>
@@ -93,7 +121,6 @@ export default function Users() {
         </Button>
       </div>
 
-      {/* CARD */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Usuários</CardTitle>
@@ -101,7 +128,6 @@ export default function Users() {
         </CardHeader>
 
         <CardContent>
-          {/* Busca */}
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -114,7 +140,6 @@ export default function Users() {
             </div>
           </div>
 
-          {/* Tabela */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -134,8 +159,8 @@ export default function Users() {
                   <TableCell>{u.email}</TableCell>
 
                   <TableCell>
-                    <Badge variant={roleMap[u.role!]?.variant}>
-                      {roleMap[u.role!]?.label}
+                    <Badge variant={roleMap[u.role!.toLowerCase()]?.variant}>
+                      {roleMap[u.role!.toLowerCase()]?.label}
                     </Badge>
                   </TableCell>
 
@@ -191,25 +216,24 @@ export default function Users() {
         </CardContent>
       </Card>
 
-      {/* MODAIS */}
       <AddUserDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        onSuccess={handleSuccess}
+        onSuccess={() => handleSuccess("created")}
       />
 
       <EditUserDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         user={selectedUser}
-        onSuccess={handleSuccess}
+        onSuccess={() => handleSuccess("updated")}
       />
 
       <DeleteUserDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         user={selectedUser}
-        onSuccess={handleSuccess}
+        onSuccess={() => handleSuccess("deleted")}
       />
     </div>
   );

@@ -21,7 +21,7 @@ namespace CommonTestUtilities.PurchaseOrders
                 WarehouseId = faker.Random.Long(1, 10),
                 CreatedByUserId = createdByUserId ?? faker.Random.Long(1, 100),
                 Status = status,
-                CreatedAt = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 Items = new List<PurchaseOrderItem>()
             };
 

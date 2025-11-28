@@ -38,6 +38,7 @@ namespace RDTrackR.Application.UseCases.User.Admin
             user.Name = request.Name;
             user.Email = request.Email;
             user.Active = request.Active;
+            user.Role = request.Role;
 
             if (!string.IsNullOrWhiteSpace(request.NewPassword))
             {

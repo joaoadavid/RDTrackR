@@ -76,7 +76,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         public async Task<List<User>> GetAllAsync(User user)
         {
             return await _dbContext.Users
-                .Where(u => u.OrganizationId == user.OrganizationId && u.Role == "User")
+                .Where(u => u.OrganizationId == user.OrganizationId && u.Role == "User" || u.Role == "Admin" && u.Id != user.Id)
                 .AsNoTracking()
                 .OrderBy(u => u.Name)
                 .ToListAsync();

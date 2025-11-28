@@ -25,7 +25,7 @@ import NotificationsPage from "./pages/Notifications";
 import ReplenishmentInfo from "./pages/ReplenishmentInfo";
 import Replenishment from "./pages/inventory/Replenishment";
 import Users from "./pages/Users";
-import Orders from "./pages/Orders";
+import Orders from "./pages/inventory/Orders";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import AuditLog from "./pages/AuditLog";
@@ -88,7 +88,6 @@ const App = () => (
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/users" element={<Users />} />
-                  <Route path="/orders" element={<Orders />} />
                   <Route path="/reports" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/audit-log" element={<AuditLog />} />
@@ -114,6 +113,7 @@ const App = () => (
                     path="/inventory/purchase-orders"
                     element={<PurchaseOrders />}
                   />
+                  <Route path="/inventory/orders" element={<Orders />} />
                 </Route>
               </Route>
 

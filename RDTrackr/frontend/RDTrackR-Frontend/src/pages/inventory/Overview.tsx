@@ -62,6 +62,12 @@ export default function InventoryOverview() {
   }, []);
 
   useEffect(() => {
+    api.overview().then((result) => {
+      setOverview(result);
+    });
+  }, []);
+
+  useEffect(() => {
     api.movementGET().then((movements) => {
       const monthsPT = [
         "jan.",

@@ -255,8 +255,8 @@ export default function PurchaseOrders() {
                     </TableCell>
 
                     <TableCell>
-                      {order.createdAt
-                        ? new Date(order.createdAt).toLocaleDateString("pt-BR")
+                      {order.createdOn
+                        ? new Date(order.createdOn).toLocaleDateString("pt-BR")
                         : "-"}
                     </TableCell>
 

@@ -71,7 +71,7 @@ namespace CommonTestUtilities.Repositories.PurchaseOrders
                     }
 
                     return query
-                        .OrderByDescending(x => x.CreatedAt)
+                        .OrderByDescending(x => x.CreatedOn)
                         .Skip((page - 1) * pageSize)
                         .Take(pageSize)
                         .ToList();

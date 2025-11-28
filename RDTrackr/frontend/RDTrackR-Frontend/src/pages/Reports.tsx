@@ -72,10 +72,6 @@ export default function Reports() {
     };
   }, [data]);
 
-  // =========================
-  // 🔠 Status dos pedidos recentes
-  // (expanda conforme seu domínio real)
-  // =========================
   const statusMap: Record<string, { label: string; variant: any }> = {
     PAID: { label: "Pago", variant: "default" },
     PENDING: { label: "Pendente", variant: "secondary" },

@@ -14,7 +14,6 @@ namespace RDTrackR.Domain.Entities
         public Warehouse Warehouse { get; set; } = null!;
 
         public PurchaseOrderStatus Status { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public long CreatedByUserId { get; set; }
 

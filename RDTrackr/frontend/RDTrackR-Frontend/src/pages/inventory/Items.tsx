@@ -1,5 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
-import { Search, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 import {
   Select,
@@ -48,20 +59,9 @@ import { NewProductDialog } from "@/components/products/NewProductDialog";
 import { EditProductDialog } from "@/components/products/EditProductDialog";
 import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
 
-// Pagination UI
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
-
 export default function Items() {
   const { toast } = useToast();
 
-  // ----------------------------
-  // ESTADOS
-  // ----------------------------
   const [products, setProducts] = useState<ResponseProductJson[]>([]);
   const [stockItems, setStockItems] = useState<ResponseStockItemJson[]>([]);
 
@@ -80,11 +80,52 @@ export default function Items() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<ResponseProductJson | null>(null);
 
+  // -------- CRITICALITY --------
+  const getCriticalityLevel = (
+    stock: number,
+    reorder: number
+  ): "critical" | "warning" | "ok" => {
+    if (stock < reorder) return "critical";
+    if (stock <= reorder + 10) return "warning";
+    return "ok";
+  };
+
+  const getStatusBadge = (stock: number, reorder: number) => {
+    const level = getCriticalityLevel(stock, reorder);
+
+    switch (level) {
+      case "critical":
+        return (
+          <Badge className="bg-red-500 text-white text-xs px-2 py-0.5">
+            Crítico
+          </Badge>
+        );
+      case "warning":
+        return (
+          <Badge className="bg-yellow-400 text-black text-xs px-2 py-0.5">
+            Atenção
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
+            OK
+          </Badge>
+        );
+    }
+  };
+
+  // -------- FILTER STATES --------
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [criticalityFilter, setCriticalityFilter] = useState<string>("all");
+
+  // -------- DEBOUNCE SEARCH --------
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(timeout);
   }, [search]);
 
+  // -------- LOAD DATA --------
   const load = useCallback(async () => {
     try {
       const prodResp = await api.productGET(page, pageSize, debouncedSearch);
@@ -106,6 +147,7 @@ export default function Items() {
     load();
   }, [load]);
 
+  // -------- SORTING --------
   const toggleSort = (column: string) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -115,15 +157,31 @@ export default function Items() {
     }
   };
 
-  const sortedProducts = [...products].sort((a, b) => {
-    const valueA = (a as any)[sortColumn];
-    const valueB = (b as any)[sortColumn];
+  // -------- FILTERING --------
+  const filteredProducts = products.filter((p) => {
+    const stock = p.totalStock ?? 0;
+    const reorder = p.reorderPoint ?? 0;
+    const criticality = getCriticalityLevel(stock, reorder);
 
-    if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
-    if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+    const categoryMatch =
+      categoryFilter === "all" || p.category === categoryFilter;
+
+    const criticalityMatch =
+      criticalityFilter === "all" || criticalityFilter === criticality;
+
+    return categoryMatch && criticalityMatch;
+  });
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const valA = (a as any)[sortColumn];
+    const valB = (b as any)[sortColumn];
+
+    if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+    if (valA > valB) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
 
+  // -------- CRUD --------
   const handleCreate = async (dto: RequestRegisterProductJson) => {
     try {
       await api.productPOST(dto);
@@ -189,9 +247,10 @@ export default function Items() {
     }
   };
 
+  // -------- UI --------
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Itens</h2>
@@ -212,7 +271,9 @@ export default function Items() {
         </CardHeader>
 
         <CardContent>
-          <div className="flex justify-between mb-4">
+          {/* FILTERS */}
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            {/* SEARCH */}
             <div className="relative w-[300px]">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -226,6 +287,44 @@ export default function Items() {
               />
             </div>
 
+            {/* CATEGORY FILTER */}
+            <Select
+              value={categoryFilter}
+              onValueChange={(v) => setCategoryFilter(v)}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas categorias</SelectItem>
+
+                {Array.from(new Set(products.map((p) => p.category))).map(
+                  (cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+
+            {/* CRITICALITY FILTER */}
+            <Select
+              value={criticalityFilter}
+              onValueChange={(v) => setCriticalityFilter(v)}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Criticidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="critical">Crítico</SelectItem>
+                <SelectItem value="warning">Atenção</SelectItem>
+                <SelectItem value="ok">OK</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* PAGE SIZE */}
             <Select
               value={String(pageSize)}
               onValueChange={(v) => setPageSize(Number(v))}
@@ -242,6 +341,7 @@ export default function Items() {
             </Select>
           </div>
 
+          {/* TABLE */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -267,6 +367,7 @@ export default function Items() {
                         : ""}
                     </TableHead>
                   ))}
+                  <TableHead>Estoque Mínimo</TableHead>
                   <TableHead>Distribuição</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -286,6 +387,16 @@ export default function Items() {
                       <TableCell>{p.uoM}</TableCell>
                       <TableCell>R$ {p.price?.toFixed(2)}</TableCell>
                       <TableCell>{p.totalStock ?? 0}</TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span>{p.reorderPoint ?? 0}</span>
+                          {getStatusBadge(
+                            p.totalStock ?? 0,
+                            p.reorderPoint ?? 0
+                          )}
+                        </div>
+                      </TableCell>
 
                       <TableCell className="text-sm text-muted-foreground">
                         {stockForProduct.length === 0
@@ -345,7 +456,7 @@ export default function Items() {
             </Table>
           </div>
 
-          {/* PAGINAÇÃO */}
+          {/* PAGINATION */}
           <div className="flex items-center justify-between py-4">
             <span className="text-sm text-muted-foreground">
               Página {page} de {Math.ceil(total / pageSize)}

@@ -27,5 +27,6 @@
         public const int ADD_DELETE_CASCADE = 22;
         public const int ADD_WAREHOUSE_TO_PURCHASE_ORDER = 23;
         public const int ALTER_CREATEDON = 24;
+        public const int ALTER_QUANTITY = 25;
     }
 }

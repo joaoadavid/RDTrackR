@@ -11,7 +11,6 @@ namespace RDTrackR.Infrastructure.Migrations.Versions
                 .WithColumn("Number").AsString(30).NotNullable()
                 .WithColumn("SupplierId").AsInt64().NotNullable().ForeignKey("FK_PO_Supplier", "Suppliers", "Id")
                 .WithColumn("Status").AsInt16().NotNullable()
-                .WithColumn("CreatedAt").AsDateTime().NotNullable()
                 .WithColumn("CreatedByUserId").AsInt64().NotNullable().ForeignKey("FK_PO_User", "Users", "Id")
                 .WithColumn("OrganizationId").AsInt64().NotNullable()
                     .ForeignKey("FK_PurchaseOrders_Organization", "Organizations", "Id");

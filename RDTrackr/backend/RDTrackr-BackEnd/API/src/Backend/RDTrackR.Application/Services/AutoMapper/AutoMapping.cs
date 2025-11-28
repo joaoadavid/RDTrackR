@@ -141,6 +141,7 @@ namespace RDTrackR.Application.Services.AutoMapper
                 .ForMember(dest => dest.WarehouseName, o => o.MapFrom(src => src.Warehouse.Name))
                 .ForMember(dest => dest.WarehouseId, o => o.MapFrom(src => src.WarehouseId))
                 .ForMember(dest => dest.Status, o => o.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.CreatedOn, o => o.MapFrom(src => src.CreatedOn))
                 .ForMember(dest => dest.CreatedByName, o => o.MapFrom(src => src.CreatedBy.Name))
                 .ForMember(dest => dest.Items, o => o.MapFrom(src => src.Items));
 
