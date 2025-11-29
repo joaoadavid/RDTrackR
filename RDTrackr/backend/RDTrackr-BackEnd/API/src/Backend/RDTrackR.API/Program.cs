@@ -1,4 +1,7 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MyRecipeBook.API.Token;
 using RDTrackR.API.BackgroundServices;
 using RDTrackR.API.Converters;
@@ -6,36 +9,82 @@ using RDTrackR.API.Filters;
 using RDTrackR.API.Middleware;
 using RDTrackR.Application;
 using RDTrackR.Domain.Security.Tokens;
+using RDTrackR.Exceptions;
 using RDTrackR.Infrastructure;
 using RDTrackR.Infrastructure.Extensions;
 using RDTrackR.Infrastructure.Hubs;
 using RDTrackR.Infrastructure.Migrations;
+using RDTrackR.Infrastructure.Services.Notifications;
+using System.Text;
 using System.Text.Json.Serialization;
 
 const string AUTHENTICATION_TYPE = "Bearer";
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Continua tratando strings (mantemos StringConverter!)
         options.JsonSerializerOptions.Converters.Add(new StringConverter());
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
+
 builder.Services.AddSignalR();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                context.HttpContext.Request.Path.StartsWithSegments("/hub/notifications"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
+
+    var jwtKey = builder.Configuration["Settings:Jwt:SigningKey"];
+    if (string.IsNullOrWhiteSpace(jwtKey))
+        throw new Exception(ResourceMessagesException.NO_TOKEN);
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<IdsFilter>();
     options.AddSecurityDefinition(AUTHENTICATION_TYPE, new OpenApiSecurityScheme
     {
-        Description = @"JWT Authorization header using the Bearer scheme.
-                    Enter 'Beare' [space] and then your token in the text input below.
-                    Example: 'Beare' 1234abcdef",
+        Description = @"JWT Authorization header using the Bearer scheme.",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -51,44 +100,46 @@ builder.Services.AddSwaggerGen(options =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = AUTHENTICATION_TYPE
-                },
-                Scheme = "oauth2",
-                Name = AUTHENTICATION_TYPE,
-                In = ParameterLocation.Header
+                }
             },
             new List<string>()
         }
     });
 });
 
-builder.Services.AddMvc(options => options.Filters.Add(typeof(ExceptionFilter)));
+builder.Services.AddMvc(options =>
+    options.Filters.Add(typeof(ExceptionFilter)));
 
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<ITokenProvider, HttpContextTokenValue>();
 
 builder.Services.AddRouting(opt => opt.LowercaseUrls = true);
-
 builder.Services.AddHttpContextAccessor();
+
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://3.129.244.42:5173"
+            )
+            .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowCredentials();
     });
 });
-
 
 
 builder.Services.AddHostedService<DeleteUserService>();
 
 var app = builder.Build();
+
 app.MapHub<NotificationHub>("/hub/notifications");
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -102,9 +153,7 @@ app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
-app.MapControllers();
-
+app.UseAuthorization();
 
 app.MapControllers();
 
