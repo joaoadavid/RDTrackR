@@ -37,6 +37,13 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Server=db,1433;Database=RDTrackR;User=sa;Password=Your_password123;TrustServerCertificate=True;"
       DatabaseType: "SqlServer"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: sa-east-1 # coloque sua região
+        awslogs-group: /rdtrackr/api # nome do Log Group
+        awslogs-stream: api-container # nome do Stream
+        awslogs-create-group: "true" # cria automaticamente
     networks:
       - rdnet
 
@@ -49,6 +56,13 @@ services:
       - api
     ports:
       - "5173:80"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: sa-east-1
+        awslogs-group: /rdtrackr/frontend
+        awslogs-stream: frontend-container
+        awslogs-create-group: "true"
     networks:
       - rdnet
 

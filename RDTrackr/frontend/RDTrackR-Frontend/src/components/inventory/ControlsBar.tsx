@@ -41,7 +41,6 @@ export function ControlsBar({
   return (
     <Card className="p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        {/* Busca */}
         <div className="lg:col-span-2">
           <Label htmlFor="search">Buscar produto</Label>
           <div className="relative">
@@ -56,7 +55,6 @@ export function ControlsBar({
           </div>
         </div>
 
-        {/* Categoria */}
         <div>
           <Label htmlFor="category">Categoria</Label>
           <Select value={category} onValueChange={onCategoryChange}>
@@ -72,10 +70,12 @@ export function ControlsBar({
           </Select>
         </div>
 
-        {/* Janela de Consumo */}
         <div>
           <Label htmlFor="window">Janela (dias)</Label>
-          <Select value={window.toString()} onValueChange={(v) => onWindowChange(Number(v))}>
+          <Select
+            value={window.toString()}
+            onValueChange={(v) => onWindowChange(Number(v))}
+          >
             <SelectTrigger id="window">
               <SelectValue />
             </SelectTrigger>
@@ -87,10 +87,12 @@ export function ControlsBar({
           </Select>
         </div>
 
-        {/* Sazonalidade */}
         <div>
           <Label htmlFor="seasonality">Sazonalidade (%)</Label>
-          <Select value={seasonality.toString()} onValueChange={(v) => onSeasonalityChange(Number(v))}>
+          <Select
+            value={seasonality.toString()}
+            onValueChange={(v) => onSeasonalityChange(Number(v))}
+          >
             <SelectTrigger id="seasonality">
               <SelectValue />
             </SelectTrigger>
@@ -104,10 +106,12 @@ export function ControlsBar({
           </Select>
         </div>
 
-        {/* Cobertura Extra */}
         <div>
           <Label htmlFor="coverage">Cobertura extra</Label>
-          <Select value={coverageDays.toString()} onValueChange={(v) => onCoverageDaysChange(Number(v))}>
+          <Select
+            value={coverageDays.toString()}
+            onValueChange={(v) => onCoverageDaysChange(Number(v))}
+          >
             <SelectTrigger id="coverage">
               <SelectValue />
             </SelectTrigger>

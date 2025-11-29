@@ -9,10 +9,6 @@ import {
   ResponseRecentPurchaseOrderJson,
 } from "@/generated/apiClient";
 
-// ============================
-// 🔧 Mocks
-// ============================
-
 const toastMock = vi.fn();
 vi.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: toastMock }),
@@ -27,9 +23,6 @@ vi.mock("@/lib/api", () => ({
 import { api } from "@/lib/api";
 const mockedReports = vi.mocked(api.reports);
 
-// ============================
-// 🔹 Mock de dados
-// ============================
 const MOCK_REPORTS = new ResponseReportsJson({
   totalPurchaseOrders: 10,
   totalValuePurchased: 12345.67,
@@ -60,9 +53,6 @@ const setup = () => {
   render(<Reports />);
 };
 
-// ===========================================
-// 🔹 Exibe estado de carregamento
-// ===========================================
 it("deve exibir 'Carregando...' enquanto busca os relatórios", async () => {
   mockedReports.mockImplementationOnce(
     () => new Promise(() => {}) as any // promise pendente
@@ -73,9 +63,6 @@ it("deve exibir 'Carregando...' enquanto busca os relatórios", async () => {
   expect(await screen.findByText(/carregando\.\.\./i)).toBeInTheDocument();
 });
 
-// ===========================================
-// 🔹 Renderiza KPIs com dados da API
-// ===========================================
 it("deve renderizar os KPIs com os valores retornados pela API", async () => {
   setup();
 
@@ -83,16 +70,12 @@ it("deve renderizar os KPIs com os valores retornados pela API", async () => {
     expect(mockedReports).toHaveBeenCalledTimes(1);
   });
 
-  // Total de pedidos = 10
   expect(screen.getByText("10")).toBeInTheDocument();
 
-  // Valor total comprado (usa Intl, pode ter espaço não-quebrável)
   expect(screen.getByText(/12\.345,67/)).toBeInTheDocument();
 
-  // Pendentes = 3
   expect(screen.getByText("3")).toBeInTheDocument();
 
-  // Cancelados = 2
   expect(screen.getByText("2")).toBeInTheDocument();
 });
 
@@ -107,11 +90,9 @@ it("deve renderizar tabela com pedidos recentes", async () => {
   expect(screen.getByText("01/02/2025")).toBeInTheDocument();
   expect(screen.getByText("10/02/2025")).toBeInTheDocument();
 
-  // status "Pago" na linha do Fornecedor A
   const rowA = rowSupplierA.closest("tr") as HTMLTableRowElement;
   expect(within(rowA).getByText(/pago/i)).toBeInTheDocument();
 
-  // status "Pendente" na linha do Fornecedor B
   const cellSupplierB = await screen.findByText(/fornecedor b/i);
   const rowB = cellSupplierB.closest("tr") as HTMLTableRowElement;
   expect(within(rowB).getByText(/pendente/i)).toBeInTheDocument();
