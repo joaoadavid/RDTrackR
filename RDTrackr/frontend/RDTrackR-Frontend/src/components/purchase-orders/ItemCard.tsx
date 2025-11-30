@@ -47,15 +47,12 @@ export function ItemCard({
   function onProductChange(productId: number) {
     handleProductSelect(index, productId);
 
-    // Seleciona o warehouse ativo
     const warehouse = warehouses.find((w) => w.id === warehouseId);
 
-    // Busca o stockItem pelo productId
     const stockItem = warehouse?.stockItems?.find(
       (x: any) => x.productId === productId
     );
 
-    // Atualiza o estado local com a quantidade
     setStock(stockItem?.quantity ?? 0);
   }
 
@@ -74,7 +71,9 @@ export function ItemCard({
             <span className="font-semibold text-sm">Item {index + 1}</span>
 
             <div className="ml-auto flex items-center gap-1">
+              {/* botão collapse */}
               <button
+                data-testid="collapse-button"
                 type="button"
                 onClick={() => setCollapsed(!collapsed)}
                 className="p-1 hover:text-muted-foreground text-gray-500 transition"
@@ -86,7 +85,9 @@ export function ItemCard({
                 )}
               </button>
 
+              {/* botão remover */}
               <button
+                data-testid="remove-button"
                 type="button"
                 onClick={handleRemove}
                 className="p-1 hover:text-red-500 text-gray-400 transition"
@@ -111,7 +112,7 @@ export function ItemCard({
                   value={item.productId ? item.productId.toString() : undefined}
                   onValueChange={(v) => onProductChange(Number(v))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="product-trigger">
                     <SelectValue placeholder="Produto" />
                   </SelectTrigger>
 
@@ -127,7 +128,7 @@ export function ItemCard({
                   </SelectContent>
                 </Select>
 
-                {/* ESTOQUE DISPONÍVEL */}
+                {/* ESTOQUE */}
                 {stock !== null && (
                   <div className="text-xs text-muted-foreground mt-1">
                     Estoque disponível: <strong>{stock}</strong> unidade(s)
@@ -136,9 +137,11 @@ export function ItemCard({
 
                 {/* QUANTIDADE / PREÇO */}
                 <div className="grid grid-cols-2 gap-3">
+                  {/* QUANTIDADE */}
                   <div>
-                    <Label>Quantidade</Label>
+                    <Label htmlFor={`qty-${index}`}>Quantidade</Label>
                     <Input
+                      id={`qty-${index}`}
                       type="number"
                       min={1}
                       value={item.quantity}
@@ -149,9 +152,11 @@ export function ItemCard({
                     />
                   </div>
 
+                  {/* PREÇO UNITÁRIO */}
                   <div>
-                    <Label>Preço Unitário</Label>
+                    <Label htmlFor={`unitPrice-${index}`}>Preço Unitário</Label>
                     <Input
+                      id={`unitPrice-${index}`}
                       type="number"
                       step="0.01"
                       value={item.unitPrice}
@@ -162,6 +167,7 @@ export function ItemCard({
                   </div>
                 </div>
 
+                {/* SUBTOTAL */}
                 <div className="text-sm text-muted-foreground">
                   Subtotal: <strong>R$ {itemTotals[index].toFixed(2)}</strong>
                 </div>
