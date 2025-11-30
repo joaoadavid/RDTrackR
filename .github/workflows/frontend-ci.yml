@@ -60,12 +60,10 @@ jobs:
             -Dsonar.organization=joaoadavid
             -Dsonar.projectKey=joaoadavid_rdtrackr-frontend
             
-            # === Paths ===
             -Dsonar.sources=RDTrackr/frontend/RDTrackR-Frontend/src
             -Dsonar.tests=RDTrackr/frontend/RDTrackR-Frontend/src/tests
             -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
             
-            # === Exclusões de código fonte ===
             -Dsonar.exclusions=\
               **/node_modules/**,\
               **/generated/**,\
@@ -73,7 +71,6 @@ jobs:
               **/*.svg,\
               **/assets/**
 
-            # === Exclusões de coverage ===
             -Dsonar.coverage.exclusions=\
               **/generated/**,\
               **/context/**,\
