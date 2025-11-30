@@ -27,9 +27,6 @@ import {
 
 import { api } from "@/lib/api";
 
-// =======================================================
-// 🔥 Componente de senha com mostrar/ocultar
-// =======================================================
 function PasswordInput({ value, onChange, placeholder }: any) {
   const [show, setShow] = useState(false);
 
@@ -60,9 +57,6 @@ function PasswordInput({ value, onChange, placeholder }: any) {
   );
 }
 
-// =======================================================
-// 🔥 EditUserDialog
-// =======================================================
 interface EditUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -115,7 +109,6 @@ export function EditUserDialog({
   async function handleSubmit() {
     if (!user?.id) return;
 
-    // 🔐 validação da senha
     if (changePassword) {
       if (!form.newPassword || !passwordConfirm) {
         alert("Preencha a nova senha e a confirmação.");
@@ -151,7 +144,6 @@ export function EditUserDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Nome */}
           <div>
             <label className="text-sm font-medium">Nome</label>
             <Input
@@ -160,7 +152,6 @@ export function EditUserDialog({
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="text-sm font-medium">Email</label>
             <Input
@@ -170,7 +161,6 @@ export function EditUserDialog({
             />
           </div>
 
-          {/* Papel */}
           <div>
             <label className="text-sm font-medium">Papel</label>
             <Select
@@ -187,7 +177,6 @@ export function EditUserDialog({
             </Select>
           </div>
 
-          {/* Status */}
           <div>
             <label className="text-sm font-medium">Status</label>
             <Select
@@ -204,7 +193,6 @@ export function EditUserDialog({
             </Select>
           </div>
 
-          {/* TROCAR SENHA */}
           <div className="border-t pt-4 space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input

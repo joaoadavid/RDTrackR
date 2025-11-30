@@ -151,7 +151,6 @@ export function WarehouseDetailsDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de confirmação */}
       <DeleteWarehouseItemDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}

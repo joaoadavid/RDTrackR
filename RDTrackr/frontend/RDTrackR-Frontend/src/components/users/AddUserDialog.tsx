@@ -49,7 +49,7 @@ export function AddUserDialog({
   async function handleSubmit() {
     const payload = new RequestAdminCreateUserJson(form);
 
-    await api.create(payload); // <-- correto
+    await api.create(payload);
     onSuccess();
     onOpenChange(false);
   }
@@ -65,46 +65,62 @@ export function AddUserDialog({
         <div className="space-y-4">
           {/* Nome */}
           <div>
-            <label className="text-sm font-medium">Nome</label>
+            <label htmlFor="user-name" className="text-sm font-medium">
+              Nome
+            </label>
             <Input
+              id="user-name"
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Nome completo"
+              required
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="text-sm font-medium">Email</label>
+            <label htmlFor="user-email" className="text-sm font-medium">
+              Email
+            </label>
             <Input
+              id="user-email"
               value={form.email}
               type="email"
               onChange={(e) => handleChange("email", e.target.value)}
               placeholder="email@exemplo.com"
+              required
             />
           </div>
 
           {/* Senha */}
           <div>
-            <label className="text-sm font-medium">Senha</label>
+            <label htmlFor="user-password" className="text-sm font-medium">
+              Senha
+            </label>
             <Input
+              id="user-password"
               value={form.password}
               type="password"
               onChange={(e) => handleChange("password", e.target.value)}
               placeholder="Senha temporária"
+              required
             />
           </div>
 
           {/* Papel */}
           <div>
-            <label className="text-sm font-medium">Papel</label>
+            <label htmlFor="user-role" className="text-sm font-medium">
+              Papel
+            </label>
+
             <Select
               value={form.role}
               onValueChange={(v) => handleChange("role", v)}
             >
-              <SelectTrigger>
+              <SelectTrigger id="user-role">
                 <SelectValue placeholder="Selecione um papel" />
               </SelectTrigger>
+
               <SelectContent>
                 <SelectItem value="Admin">Admin / Gerente</SelectItem>
                 <SelectItem value="User">Usuário Padrão</SelectItem>

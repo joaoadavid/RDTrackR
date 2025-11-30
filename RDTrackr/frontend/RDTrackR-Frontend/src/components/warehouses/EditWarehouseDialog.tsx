@@ -87,8 +87,9 @@ export function EditWarehouseDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Nome</Label>
+            <Label htmlFor="warehouse-name">Nome</Label>
             <Input
+              id="warehouse-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -96,8 +97,9 @@ export function EditWarehouseDialog({
           </div>
 
           <div>
-            <Label>Localização</Label>
+            <Label htmlFor="warehouse-location">Localização</Label>
             <Input
+              id="warehouse-location"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
               required
@@ -106,8 +108,9 @@ export function EditWarehouseDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Capacidade</Label>
+              <Label htmlFor="warehouse-capacity">Capacidade</Label>
               <Input
+                id="warehouse-capacity"
                 type="number"
                 value={form.capacity}
                 onChange={(e) => setForm({ ...form, capacity: e.target.value })}
@@ -116,8 +119,9 @@ export function EditWarehouseDialog({
             </div>
 
             <div>
-              <Label>Itens Armazenados</Label>
+              <Label htmlFor="warehouse-items">Itens Armazenados</Label>
               <Input
+                id="warehouse-items"
                 type="number"
                 value={form.items}
                 onChange={(e) => setForm({ ...form, items: e.target.value })}

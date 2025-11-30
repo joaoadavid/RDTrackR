@@ -35,13 +35,6 @@ vi.mock("@/lib/api", () => ({
   },
 }));
 
-// MOCK DOS DIALOGS
-vi.mock("@/components/users/AddUserDialog", () => ({
-  AddUserDialog: (props: any) => (
-    <div data-testid="add-user-dialog" {...props} />
-  ),
-}));
-
 vi.mock("@/components/users/EditUserDialog", () => ({
   EditUserDialog: (props: any) => (
     <div data-testid="edit-user-dialog" {...props} />
