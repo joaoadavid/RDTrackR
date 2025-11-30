@@ -44,21 +44,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      # ⬇️ Coloca o coverage dentro da pasta do frontend para o Sonar encontrar
       - uses: actions/download-artifact@v4
         with:
           name: frontend-coverage
-          path: coverage/
+          path: RDTrackr/frontend/RDTrackR-Frontend/coverage/
 
       - name: SonarCloud Scan - Frontend
         uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: RDTrackr/frontend/RDTrackR-Frontend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
-            -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=joaoadavid
             -Dsonar.projectKey=joaoadavid_rdtrackr-frontend
-            -Dsonar.sources=RDTrackr/frontend/RDTrackR-Frontend/src
+            -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
