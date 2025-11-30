@@ -64,7 +64,7 @@ export function OrderConfirmPaymentDialog({
           <DialogTitle>Confirmar Pagamento</DialogTitle>
           <DialogDescription>
             Ao confirmar pagamento, o sistema irá baixar o estoque
-            automaticamente criando uma movimentação <strong>OUTBOUND</strong>.
+            automaticamente criando uma movimentação de <strong>Saída</strong>.
           </DialogDescription>
         </DialogHeader>
 

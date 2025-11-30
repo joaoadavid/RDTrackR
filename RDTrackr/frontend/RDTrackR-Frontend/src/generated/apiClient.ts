@@ -209,7 +209,7 @@ export interface IApiClient {
      * @param body (optional) 
      * @return No Content
      */
-    items(id: number, body?: RequestUpdatePurchaseOrderItemsJson | undefined, signal?: AbortSignal): Promise<void>;
+    itemsPUT(id: number, body?: RequestUpdatePurchaseOrderItemsJson | undefined, signal?: AbortSignal): Promise<void>;
 
     /**
      * @param page (optional) 
@@ -361,6 +361,11 @@ export interface IApiClient {
      * @return OK
      */
     itemsAll(id: number, signal?: AbortSignal): Promise<ResponseWarehouseStockItemJson[]>;
+
+    /**
+     * @return No Content
+     */
+    itemsDELETE(itemId: number, signal?: AbortSignal): Promise<void>;
 }
 
 export class ApiClient implements IApiClient {
@@ -1822,7 +1827,7 @@ export class ApiClient implements IApiClient {
      * @param body (optional) 
      * @return No Content
      */
-    items(id: number, body?: RequestUpdatePurchaseOrderItemsJson | undefined, signal?: AbortSignal): Promise<void> {
+    itemsPUT(id: number, body?: RequestUpdatePurchaseOrderItemsJson | undefined, signal?: AbortSignal): Promise<void> {
         let url_ = this.baseUrl + "/purchaseorder/{id}/items";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1841,11 +1846,11 @@ export class ApiClient implements IApiClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processItems(_response);
+            return this.processItemsPUT(_response);
         });
     }
 
-    protected processItems(response: Response): Promise<void> {
+    protected processItemsPUT(response: Response): Promise<void> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 204) {
@@ -3082,6 +3087,50 @@ export class ApiClient implements IApiClient {
             });
         }
         return Promise.resolve<ResponseWarehouseStockItemJson[]>(null as any);
+    }
+
+    /**
+     * @return No Content
+     */
+    itemsDELETE(itemId: number, signal?: AbortSignal): Promise<void> {
+        let url_ = this.baseUrl + "/warehouse/items/{itemId}";
+        if (itemId === undefined || itemId === null)
+            throw new globalThis.Error("The parameter 'itemId' must be defined.");
+        url_ = url_.replace("{itemId}", encodeURIComponent("" + itemId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            signal,
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processItemsDELETE(_response);
+        });
+    }
+
+    protected processItemsDELETE(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 204) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            let result404: any = null;
+            let resultData404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
     }
 }
 
@@ -6406,6 +6455,7 @@ export interface IResponseWarehouseJsonPagedResponse {
 }
 
 export class ResponseWarehouseStockItemJson implements IResponseWarehouseStockItemJson {
+    id?: number;
     productId?: number;
     sku?: string | undefined;
     productName?: string | undefined;
@@ -6424,6 +6474,7 @@ export class ResponseWarehouseStockItemJson implements IResponseWarehouseStockIt
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.productId = _data["productId"];
             this.sku = _data["sku"];
             this.productName = _data["productName"];
@@ -6442,6 +6493,7 @@ export class ResponseWarehouseStockItemJson implements IResponseWarehouseStockIt
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["productId"] = this.productId;
         data["sku"] = this.sku;
         data["productName"] = this.productName;
@@ -6453,6 +6505,7 @@ export class ResponseWarehouseStockItemJson implements IResponseWarehouseStockIt
 }
 
 export interface IResponseWarehouseStockItemJson {
+    id?: number;
     productId?: number;
     sku?: string | undefined;
     productName?: string | undefined;

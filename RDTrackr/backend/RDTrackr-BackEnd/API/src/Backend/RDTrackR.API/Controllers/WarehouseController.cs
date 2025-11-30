@@ -81,5 +81,17 @@ namespace RDTrackR.API.Controllers
             var result = await useCase.Execute(id);
             return Ok(result);
         }
+
+        [HttpDelete("items/{itemId:long}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteItem(
+        long itemId,
+        [FromServices] IDeleteWarehouseItemUseCase useCase)
+        {
+            await useCase.Execute(itemId);
+            return NoContent();
+        }
+
     }
 }

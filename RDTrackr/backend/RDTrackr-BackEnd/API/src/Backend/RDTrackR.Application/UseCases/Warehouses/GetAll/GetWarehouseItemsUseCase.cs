@@ -25,6 +25,7 @@ namespace RDTrackR.Application.UseCases.Warehouses.GetAll
 
             return items.Select(i => new ResponseWarehouseStockItemJson
             {
+                Id = i.Id,
                 ProductId = i.ProductId,
                 Sku = i.Product.Sku,
                 ProductName = i.Product.Name,

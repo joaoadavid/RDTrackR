@@ -125,6 +125,7 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:5173",
+                "http://localhost:8080",
                 "http://3.129.244.42:5173"
             )
             .AllowAnyHeader()

@@ -6,5 +6,6 @@ namespace RDTrackR.Domain.Repositories.StockItems
     {
         Task AddAsync(StockItem stockItem);
         Task UpdateAsync(StockItem stockItem);
+        Task DeleteAsync(StockItem item);
     }
 }

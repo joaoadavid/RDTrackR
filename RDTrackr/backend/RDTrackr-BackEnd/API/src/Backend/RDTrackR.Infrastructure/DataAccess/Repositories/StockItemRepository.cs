@@ -24,6 +24,13 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return Task.CompletedTask;
         }
 
+        public async Task DeleteAsync(StockItem item)
+        {
+            _context.StockItems.Remove(item);
+            await Task.CompletedTask;
+        }
+
+
         public async Task<List<StockItem>> GetAllAsync(User user)
         {
             return await _context.StockItems

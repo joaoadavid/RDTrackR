@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
 import { ResponseWarehouseJson } from "@/generated/apiClient";
 
 interface DeleteWarehouseDialogProps {
@@ -26,10 +25,17 @@ export function DeleteWarehouseDialog({
   if (!warehouse) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onCancel}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        // quando o modal FECHAR -> chama cancel
+        if (!isOpen) onCancel();
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Excluir Depósito</DialogTitle>
+
           <DialogDescription>
             Tem certeza que deseja excluir o depósito{" "}
             <strong>{warehouse.name}</strong>?
@@ -42,6 +48,7 @@ export function DeleteWarehouseDialog({
           <Button variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
+
           <Button variant="destructive" onClick={onConfirm}>
             Excluir
           </Button>

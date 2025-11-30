@@ -34,14 +34,6 @@ namespace RDTrackR.API.Controllers
             return NoContent();
         }
 
-        //[HttpGet]
-        //[ProducesResponseType(typeof(List<ResponseOrderJson>), StatusCodes.Status200OK)]
-        //public async Task<IActionResult> GetAll(
-        //    [FromServices] IGetAllOrdersUseCase useCase)
-        //{
-        //    return Ok(await useCase.Execute());
-        //}
-
         [HttpGet]
         [ProducesResponseType(typeof(PagedResponse<ResponseOrderJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Get(

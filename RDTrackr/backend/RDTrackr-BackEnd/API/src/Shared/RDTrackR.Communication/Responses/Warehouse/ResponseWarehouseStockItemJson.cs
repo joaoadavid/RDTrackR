@@ -2,6 +2,7 @@
 {
     public class ResponseWarehouseStockItemJson
     {
+        public long Id { get; set; }
         public long ProductId { get; set; }
         public string Sku { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;

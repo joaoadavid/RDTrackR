@@ -144,7 +144,7 @@ namespace RDTrackR.Application
             services.AddScoped<IDeleteWarehouseUseCase, DeleteWarehouseUseCase>();
             services.AddScoped<IGetWarehouseByIdUseCase, GetWarehouseByIdUseCase>();
             services.AddScoped<IGetWarehouseItemsUseCase, GetWarehouseItemsUseCase>();
-
+            services.AddScoped<IDeleteWarehouseItemUseCase, DeleteWarehouseItemUseCase>();
         }
 
         private static void AddSuppliersesUseCases(IServiceCollection services)

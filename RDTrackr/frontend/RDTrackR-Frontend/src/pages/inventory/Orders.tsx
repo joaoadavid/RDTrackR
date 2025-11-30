@@ -7,6 +7,7 @@ import {
   Eye,
   Check,
   X,
+  Trash,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ import { NewOrderDialog } from "@/components/orders/NewOrderDialog";
 import { OrderConfirmPaymentDialog } from "@/components/orders/OrderConfirmPaymentDialog";
 import { OrderCancelDialog } from "@/components/orders/OrderCancelDialog";
 import { OrderDetailsDialog } from "@/components/orders/OrderDetailsDialog";
+import { OrderDeleteDialog } from "@/components/orders/OrderDeleteDialog";
 
 const statusMap = {
   PENDING: { label: "Pendente", variant: "secondary" as const },
@@ -87,6 +89,7 @@ export default function Orders() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<ResponseOrderJson | null>(
     null
@@ -141,7 +144,7 @@ export default function Orders() {
       <NewOrderDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSuccess={() => loadOrders()}
+        onSuccess={loadOrders}
       />
 
       <OrderConfirmPaymentDialog
@@ -162,6 +165,13 @@ export default function Orders() {
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         order={selectedOrder}
+      />
+
+      <OrderDeleteDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        order={selectedOrder}
+        onSuccess={loadOrders}
       />
 
       {/* LISTA */}
@@ -315,6 +325,19 @@ export default function Orders() {
                             Cancelar Pedido
                           </DropdownMenuItem>
                         )}
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setIsDeleteOpen(true);
+                          }}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Excluir Pedido
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
