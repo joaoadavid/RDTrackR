@@ -151,7 +151,6 @@ namespace CommonTestUtilities.Repositories.PurchaseOrders
             return this;
         }
 
-        // 🔥 NOVO (sem quebrar o antigo)
         public PurchaseOrderRepositoryBuilder WithSupplier(Supplier supplier)
         {
             _supplier = supplier;
