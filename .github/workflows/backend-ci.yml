@@ -10,6 +10,7 @@ env:
   DOTNET_VERSION: "8.0.x"
   BACKEND_ROOT: RDTrackr/backend/RDTrackr-BackEnd
   API_ROOT: RDTrackr/backend/RDTrackr-BackEnd/API
+  API_SRC: RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
 
 jobs:
 
@@ -29,13 +30,11 @@ jobs:
       - name: Build solution
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "➡️ Construindo solução..."
           dotnet build --configuration Debug
 
       - name: Run tests with coverage (dotnet-coverage)
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "➡️ Executando testes com coverage..."
           dotnet-coverage collect "dotnet test --no-build --logger trx" \
             -f xml \
             -o coverage.xml
@@ -43,9 +42,7 @@ jobs:
       - name: Debug coverage.xml
         working-directory: ${{ env.API_ROOT }}
         run: |
-          echo "== Conteúdo da pasta =="
           ls -lha
-          echo "== Verificando coverage.xml =="
           test -f coverage.xml && echo "✔️ coverage.xml encontrado" || echo "❌ Não encontrado"
 
       - name: Upload Coverage Artifacts
@@ -71,7 +68,6 @@ jobs:
 
       - name: Debug Coverage Files
         run: |
-          echo "== Coverage encontrado =="
           ls -R backend-coverage
 
       - name: SonarCloud Scan - Backend
@@ -85,18 +81,12 @@ jobs:
             -Dsonar.organization=joaoadavid
             -Dsonar.host.url=https://sonarcloud.io
 
-            # 📌 ANALISAR TODO BACKEND (API + Application + Domain + Infra)
             -Dsonar.sources=${{ env.BACKEND_ROOT }}
 
-            # 📌 PASTA DOS TESTES (muito importante)
             -Dsonar.tests=${{ env.BACKEND_ROOT }}/Tests
             -Dsonar.test.inclusions=**/*Test.cs,**/*Tests.cs
 
-            # 📌 Caminho do arquivo de coverage
             -Dsonar.cs.vscoveragexml.reportsPaths=backend-coverage/coverage.xml
 
-            # 📌 Excluir coisas irrelevantes
             -Dsonar.exclusions=**/Migrations/**,**/wwwroot/**,**/frontend/**
-
-            # 📌 Excluir da cobertura arquivos auto-gerados
             -Dsonar.coverage.exclusions=**/Migrations/**,**/Program.cs,**/Startup.cs,**/*Designer.cs,**/*AssemblyInfo.cs
