@@ -41,6 +41,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
+
         public async Task<StockItem?> GetByIdAsync(long id)
         {
             return await _context.StockItems

@@ -26,4 +26,8 @@
     <ProjectReference Include="..\RDTrackR.Domain\RDTrackR.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="UseCases\User\Delete\" />
+  </ItemGroup>
+
 </Project>

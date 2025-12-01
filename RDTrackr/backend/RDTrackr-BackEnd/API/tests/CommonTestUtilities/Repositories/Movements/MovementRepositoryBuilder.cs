@@ -54,6 +54,7 @@ namespace CommonTestUtilities.Repositories.Movements
             return this;
         }
 
+
         public MovementRepositoryBuilder WithProduct(Product product)
         {
             _product = product;
@@ -115,11 +116,25 @@ namespace CommonTestUtilities.Repositories.Movements
             return this;
         }
 
-        public MovementRepositoryBuilder Count(int count, User user)
+        public MovementRepositoryBuilder CountAsync(int count)
         {
-            _readMock.Setup(r => r.CountAsync(user)).ReturnsAsync(count);
+            _readMock
+                .Setup(r => r.CountAsync(It.IsAny<User>()))
+                .ReturnsAsync(count);
+
             return this;
         }
+
+        public MovementRepositoryBuilder CountAsync(int count, User user)
+        {
+            _readMock
+                .Setup(r => r.CountAsync(
+                    It.Is<User>(u => u.Id == user.Id && u.OrganizationId == user.OrganizationId)))
+                .ReturnsAsync(count);
+
+            return this;
+        }
+
 
         public MovementRepositoryBuilder Add()
         {

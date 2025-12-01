@@ -9,11 +9,6 @@ namespace CommonTestUtilities.Repositories.StockItems
         private readonly Mock<IStockItemReadOnlyRepository> _readMock = new();
         private readonly Mock<IStockItemWriteOnlyRepository> _writeMock = new();
         private StockItem? _lastInserted;
-
-        // =====================================================================
-        // READ METHODS
-        // =====================================================================
-
         public StockItemRepositoryBuilder GetById(StockItem item)
         {
             _readMock
@@ -133,21 +128,52 @@ namespace CommonTestUtilities.Repositories.StockItems
         }
 
 
-        public StockItemRepositoryBuilder Count(
-            int total,
-            User user,
-            string? search = null)
+        // versão genérica
+        public StockItemRepositoryBuilder Count(int total)
         {
             _readMock
-                .Setup(r => r.CountAsync(user, search))
+                .Setup(r => r.CountAsync(It.IsAny<User>(), It.IsAny<string?>()))
                 .ReturnsAsync(total);
 
             return this;
         }
 
-        // =====================================================================
-        // WRITE METHODS
-        // =====================================================================
+        public StockItemRepositoryBuilder GetAll(List<StockItem> items)
+        {
+            _readMock
+                .Setup(r => r.GetAllAsync(It.IsAny<User>()))
+                .ReturnsAsync(items);
+
+            return this;
+        }
+
+
+        // versão específica por usuário
+        public StockItemRepositoryBuilder Count(int total, User user)
+        {
+            _readMock
+                .Setup(r => r.CountAsync(
+                    It.Is<User>(u => u.Id == user.Id && u.OrganizationId == user.OrganizationId),
+                    It.IsAny<string?>()
+                ))
+                .ReturnsAsync(total);
+
+            return this;
+        }
+
+        // versão completa, com filtro de search
+        public StockItemRepositoryBuilder Count(int total, User user, string? search)
+        {
+            _readMock
+                .Setup(r => r.CountAsync(
+                    It.Is<User>(u => u.Id == user.Id && u.OrganizationId == user.OrganizationId),
+                    search
+                ))
+                .ReturnsAsync(total);
+
+            return this;
+        }
+
 
 
         public StockItemRepositoryBuilder Add()
@@ -173,6 +199,7 @@ namespace CommonTestUtilities.Repositories.StockItems
 
             return this;
         }
+
 
         public IStockItemReadOnlyRepository BuildRead() => _readMock.Object;
         public IStockItemWriteOnlyRepository BuildWrite() => _writeMock.Object;

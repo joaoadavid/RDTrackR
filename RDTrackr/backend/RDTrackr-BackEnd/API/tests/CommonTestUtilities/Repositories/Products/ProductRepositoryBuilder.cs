@@ -42,6 +42,16 @@ namespace CommonTestUtilities.Repositories.Products
             return this;
         }
 
+        public ProductRepositoryBuilder CountAsync(int count)
+        {
+            _readMock
+                .Setup(r => r.CountAsync(It.IsAny<User>(), It.IsAny<string?>()))
+                .ReturnsAsync(count);
+
+            return this;
+        }
+
+
         public IProductReadOnlyRepository BuildRead() => _readMock.Object;
         public IProductWriteOnlyRepository BuildWrite() => _writeMock.Object;
     }

@@ -105,6 +105,28 @@ namespace CommonTestUtilities.Repositories.Warehouses
             return this;
         }
 
+        public WarehouseRepositoryBuilder CountAsync(int count)
+        {
+            _readMock
+                .Setup(r => r.CountAsync(It.IsAny<User>(), It.IsAny<string?>()))
+                .ReturnsAsync(count);
+
+            return this;
+        }
+
+        public WarehouseRepositoryBuilder CountAsync(User user, string? search, int count)
+        {
+            _readMock
+                .Setup(r => r.CountAsync(
+                    It.Is<User>(u => u.Id == user.Id && u.OrganizationId == user.OrganizationId),
+                    It.Is<string?>(s => s == search)
+                ))
+                .ReturnsAsync(count);
+
+            return this;
+        }
+
+
         public WarehouseRepositoryBuilder WithList(User user, List<Warehouse> warehouses)
         {
             foreach (var w in warehouses)

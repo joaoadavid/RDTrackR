@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using MyRecipeBook.Application.UseCases.Token;
 using MyRecipeBook.Application.UseCases.User.ChangePassword;
-using MyRecipeBook.Application.UseCases.User.Delete.Delete;
 using MyRecipeBook.Application.UseCases.User.Delete.Request;
 using MyRecipeBook.Application.UseCases.User.Profile;
 using MyRecipeBook.Application.UseCases.User.Register;
@@ -113,7 +112,6 @@ namespace RDTrackR.Application
             services.AddScoped<IUpdateUserUseCase, UpdateUserUseCase>();
             services.AddScoped<IChangePasswordUseCase, ChangePasswordUseCase>();
             services.AddScoped<IUpdateUserUseCase, UpdateUserUseCase>();
-            services.AddScoped<IDeleteUserAccountUseCase, DeleteUserAccountUseCase>();
             services.AddScoped<IRequestDeleteUserUseCase, RequestDeleteUserUseCase>();
             services.AddScoped<IUseRefreshTokenUseCase, UseRefreshTokenUseCase>();
             services.AddScoped<IGetOverviewUseCase, GetOverviewUseCase>();
