@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyRecipeBook.API.Token;
-using RDTrackR.API.BackgroundServices;
 using RDTrackR.API.Converters;
 using RDTrackR.API.Filters;
 using RDTrackR.API.Middleware;
@@ -133,9 +132,6 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
-
-
-builder.Services.AddHostedService<DeleteUserService>();
 
 var app = builder.Build();
 
