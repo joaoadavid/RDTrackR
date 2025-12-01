@@ -8,8 +8,8 @@ on:
 
 env:
   DOTNET_VERSION: "8.0.x"
+  BACKEND_ROOT: RDTrackr/backend/RDTrackr-BackEnd
   API_ROOT: RDTrackr/backend/RDTrackr-BackEnd/API
-  API_SRC: RDTrackr/backend/RDTrackr-BackEnd/API/src/Backend/RDTrackR.API
 
 jobs:
 
@@ -84,6 +84,19 @@ jobs:
             -Dsonar.projectKey=joaoadavid_rdtrackr-backend
             -Dsonar.organization=joaoadavid
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.sources=${{ env.API_SRC }}
+
+            # 📌 ANALISAR TODO BACKEND (API + Application + Domain + Infra)
+            -Dsonar.sources=${{ env.BACKEND_ROOT }}
+
+            # 📌 PASTA DOS TESTES (muito importante)
+            -Dsonar.tests=${{ env.BACKEND_ROOT }}/Tests
+            -Dsonar.test.inclusions=**/*Test.cs,**/*Tests.cs
+
+            # 📌 Caminho do arquivo de coverage
             -Dsonar.cs.vscoveragexml.reportsPaths=backend-coverage/coverage.xml
-            -Dsonar.exclusions=**/frontend/**
+
+            # 📌 Excluir coisas irrelevantes
+            -Dsonar.exclusions=**/Migrations/**,**/wwwroot/**,**/frontend/**
+
+            # 📌 Excluir da cobertura arquivos auto-gerados
+            -Dsonar.coverage.exclusions=**/Migrations/**,**/Program.cs,**/Startup.cs,**/*Designer.cs,**/*AssemblyInfo.cs
