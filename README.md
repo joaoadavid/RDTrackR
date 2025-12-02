@@ -2,18 +2,19 @@
 
 ## Índice
 
--   Sobre o Projeto
--   Como Acessar o Sistema em Produção
--   Usuário Demo para Testes
--   Funcionalidades Principais
--   Screenshots
--   Arquitetura e Stack Tecnológica
--   Modelagem (UML e C4)
--   Requisitos Funcionais e Não Funcionais
--   Segurança
--   Próximos Passos
--   Documentação Completa
--   Autor
+## Índice
+- [Sobre o Projeto](#sobre-o-projeto)
+- [Como Acessar o Sistema em Produção](#como-acessar-o-sistema-em-produção)
+- [Usuário Demo para Testes](#usuário-demo-para-testes)
+- [Funcionalidades Principais](#funcionalidades-principais)
+- [Screenshots](#screenshots)
+- [Arquitetura e Stack Tecnológica](#arquitetura-e-stack-tecnológica)
+- [Modelagem (UML e C4)](#modelagem-uml-e-c4)
+- [Requisitos Funcionais e Não Funcionais](#requisitos-funcionais-e-não-funcionais)
+- [Segurança](#segurança)
+- [Próximos Passos](#próximos-passos)
+- [Documentação Completa](docs/rdtrackr-doc.md)
+- [Autor](#autor)
 
 ## Sobre o Projeto
 
