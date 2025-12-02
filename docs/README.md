@@ -115,7 +115,7 @@ Baseado em Rezende (2008), o RDTrackr promove **monitoramento contínuo**, **ale
 
 O sistema é representado com o modelo **C4**, detalhando os níveis de **Contexto**, **Containers** e **Componentes**, facilitando a compreensão da arquitetura e suas interações.
 
-![Modelagem C4](docs/ModelagemC4.png)
+![Modelagem C4](ModelagemC4.png)
 
 ---
 
