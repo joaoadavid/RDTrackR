@@ -1,4 +1,4 @@
-# RDTrackR --- Sistema Gestão de Estoque Empresarial
+# RDTrackR - Sistema Gestão de Estoque Empresarial
 
 ## Índice
 
