@@ -40,20 +40,41 @@ Baseado em Rezende (2008), o RDTrackr promove **monitoramento contínuo**, **ale
 ##  Especificação Técnica
 
 ### Requisitos Funcionais
-- **RF01:** Cadastrar e editar itens de estoque;  
-- **RF02:** Registrar entradas e saídas;  
-- **RF03:** Consultar saldos e movimentações;  
-- **RF04:** Emitir alertas automáticos;  
-- **RF05:** Manter histórico completo;  
-- **RF06:** Gerar relatórios e dashboards.  
+| **Código** | **Descrição**                                                                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RF01**   | Permitir o cadastro, edição, ativação e desativação de itens de estoque, incluindo SKU, descrição, unidade e informações de categorização.    |
+| **RF02**   | Registrar movimentações de entrada e saída de estoque, especificando origem, destino, quantidade, tipo da movimentação e usuário responsável. |
+| **RF03**   | Consultar o saldo atualizado de cada item, considerando movimentações, depósitos, produtos ativos e níveis mínimos de reposição.              |
+| **RF04**   | Emitir alertas automáticos para itens com estoque baixo ou movimentações críticas, exibindo notificações em tempo real via SignalR.           |
+| **RF05**   | Manter histórico completo de todas as movimentações, incluindo dados de auditoria (data, responsável, antes/depois).                          |
+| **RF06**   | Disponibilizar uma interface totalmente responsiva que permita acesso via desktop, tablet e dispositivos móveis.                              |
+| **RF07**   | Permitir a configuração de perfis de usuário e permissões baseadas em papéis (roles), controlando ações permitidas no sistema.                |
+| **RF08**   | Disponibilizar uma API REST documentada (Swagger/OpenAPI) para integrações externas com outros sistemas.                                      |
+| **RF09**   | Permitir o cadastro e gerenciamento de depósitos/almoxarifados, vinculando itens à localização física.                                        |
+| **RF10**   | Registrar e gerenciar pedidos de compra (Purchase Orders – PO), incluindo fornecedores, itens, quantidades, status e workflow de aprovação.   |
+| **RF11**   | Registrar pedidos de saída (requisições internas), atualizando o estoque dos depósitos conforme autorização.                                  |
+| **RF12**   | Exibir dashboards e relatórios com métricas atualizadas (produtos ativos, movimentações, saldo total, entradas vs saídas, itens críticos).    |
+| **RF13**   | Registrar logs operacionais e de auditoria, permitindo rastreamento de ações críticas (ex.: login, cadastro, movimentações, alterações).      |
+| **RF14**   | Permitir autenticação de usuários via JWT, garantindo sessão válida e segura.                                                                 |
+| **RF15**   | Permitir busca filtrada e paginação em listagens de produtos, fornecedores, movimentações e depósitos.                                        |
+| **RF16**   | Permitir anexar ou futuramente vincular documentos às movimentações ou pedidos, permitindo extensibilidade.                                   |
+ 
 
 ### Requisitos Não Funcionais
-- **RNF01:** Tempo de resposta inferior a 500ms;  
-- **RNF02:** Comunicação em tempo real com **SignalR**;  
-- **RNF03:** Autenticação via **JWT** e controle **RBAC**;  
-- **RNF04:** Interface responsiva (**React + Tailwind**);  
-- **RNF05:** Documentação da API com **Swagger/OpenAPI**;  
-- **RNF06:** Suporte a **containerização (Docker/Podman)**.  
+| **Código** | **Descrição**                                                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RNF01**  | O sistema deve garantir tempo de resposta inferior a 500ms em operações de consulta comuns, desde que executadas em condições normais de rede e carga.                                                                                                   |
+| **RNF02**  | A plataforma deve oferecer comunicação em tempo real para eventos relevantes (ex.: movimentações de estoque, pedidos), utilizando SignalR como mecanismo de notificação.                                                                                 |
+| **RNF03**  | O acesso deve ser protegido por autenticação baseada em JWT, incluindo controle de permissões por papéis (roles) definidos no backend.                                                                                                                   |
+| **RNF04**  | A interface deve ser totalmente responsiva, garantindo boa experiência de uso em desktops, tablets e dispositivos móveis.                                                                                                                                |
+| **RNF05**  | O sistema deve registrar logs estruturados em todas as operações críticas, permitindo rastreabilidade e auditoria. Os logs devem seguir padrão centralizado e estar preparados para futura integração com Elastic Stack, CloudWatch ou outra ferramenta. |
+| **RNF06**  | A API deve seguir o padrão REST e ser documentada utilizando OpenAPI/Swagger, atualizada automaticamente a partir dos controladores.                                                                                                                     |
+| **RNF07**  | O banco de dados deve garantir transações ACID para operações de escrita, assegurando integridade dos dados.                                                                                                                                             |
+| **RNF08**  | O sistema deve ser totalmente conteinerizável, permitindo execução via Docker e Docker Compose para facilitar deploy e padronização de ambiente.                                                                                                         |
+| **RNF09**  | O sistema deve permitir escalabilidade horizontal futura, especialmente no backend, facilitando o uso de balanceamento de carga em ambientes como AWS ECS, EKS ou EC2 Auto Scaling.                                                                      |
+| **RNF10**  | A aplicação frontend deve ser empacotada e servida por servidor web otimizado (ex.: NGINX) em ambientes de produção, garantindo desempenho, cache e compressão adequados.                                                                                |
+| **RNF11**  | A API deve suportar CORS configurável para permitir integrações de frontends hosteados em domínios distintos.                                                                                                                                            |
+
 
 ---
 
@@ -82,13 +103,13 @@ Baseado em Rezende (2008), o RDTrackr promove **monitoramento contínuo**, **ale
  Diagramas de Caso de Uso (UML)
 
 ### Caso de Uso 1: Processo de Compra
-![Caso de Uso 1](docs/CasoDeUso-ProcessoCompra.png)
+![Caso de Uso 1](CasoDeUso-ProcessoCompra.png)
 
 ### Caso de Uso 2: Movimentação e Cadastro de Produtos
-![Caso de Uso 2](docs/CasoDeUso-MovimentacaoCadastro.jpg)
+![Caso de Uso 2](CasoDeUso-MovimentacaoCadastro.jpg)
 
 ### Caso de Uso 3: Gestão de Estoque e Alertas
-![Caso de Uso 3](docs/CasoDeUso-GestaoEstoque.png)
+![Caso de Uso 3](CasoDeUso-GestaoEstoque.png)
 
 ## Modelagem C4
 
