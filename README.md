@@ -1,163 +1,171 @@
-# RDTrackr: Sistema de Gerenciamento de Estoque para Empresas
+🚀 RDTrackR — Sistema Gestão de Estoque Empresarial
 
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![React](https://img.shields.io/badge/React-18.0-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v3-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![SignalR](https://img.shields.io/badge/SignalR-WebSockets-5C2D91?logo=visualstudio&logoColor=white)](https://learn.microsoft.com/aspnet/core/signalr)
-[![Code Quality](https://img.shields.io/badge/SonarCloud-Quality%20Check-blue?logo=sonarcloud)](https://sonarcloud.io/)
 
----
+📌 Índice
 
-## Resumo
+Sobre o Projeto
+Como Acessar o Sistema em Produção
+Usuário Demo para Testes
+Funcionalidades Principais
+Screenshots
+Arquitetura e Stack Tecnológica
+Modelagem (UML e C4)
+Requisitos Funcionais e Não Funcionais
+Segurança
+Próximos Passos
+Documentação Completa
+Autor
 
-O **RDTrackr** é um sistema web de gerenciamento de estoque desenvolvido para **empresas de usinagem**, oferecendo **rastreabilidade completa**, **alertas automáticos** e **atualização em tempo real**.  
-Sua arquitetura é baseada em **.NET 8 Web API** com **Entity Framework Core** e **SQL Server**, e o frontend utiliza **React + TypeScript + Vite + Tailwind**.  
-A comunicação em tempo real é garantida pelo **SignalR**, permitindo notificações instantâneas de movimentações e alertas de estoque.  
-A solução prioriza **automação, segurança e confiabilidade**, reduzindo perdas e aumentando a eficiência produtiva.
+📙 Sobre o Projeto
 
----
+O RDTrackR é um sistema web profissional de gestão de estoque voltado para empresas de usinagem, indústrias e operações logísticas.
+Ele oferece rastreabilidade completa, operações em tempo real, controle multi-depósito, gestão de pedidos de compra, notificações automáticas e um dashboard tático.
 
-## Introdução
+Desenvolvido com:
+Backend: .NET 8 (Clean Architecture + EF Core + SQL Server)
+Frontend: React + TypeScript + Vite + Tailwind
+Notificações: SignalR em tempo real
+Qualidade: Testes automatizados + SonarCloud
+Ambiente: Docker + GitHub Actions (CI/CD)
 
-### Contexto  
-Empresas de usinagem enfrentam desafios complexos no controle de insumos e ferramentas.  
-A ausência de controle em tempo real e a dependência de planilhas comprometem a produtividade.  
-O RDTrackr foi criado para resolver esses problemas com uma solução moderna, escalável e automatizada.
+A solução reduz perdas, melhora rastreamento e aumenta eficiência operacional.
+🌐 Como Acessar o Sistema em Produção
+A aplicação está disponível em ambiente cloud:
+http://3.129.244.42:5173/(em breve https://rdtrackr.com.br)
+🔐 Usuário Demo para Testes
+Para facilitar a avaliação do sistema:
+👤 Usuário: usinagemrd2@hotmail.com
+🔑 Senha: Demo@123
 
-### Justificativa  
-Falhas na rastreabilidade e gestão de estoque geram **custos, atrasos e desperdícios**.  
-Baseado em Rezende (2008), o RDTrackr promove **monitoramento contínuo**, **alertas preventivos** e **integração total entre setores**, otimizando o processo produtivo.
+Este usuário possui permissões completas e pode:
 
-### Objetivos  
-- Desenvolver um **sistema modular e responsivo** para controle de estoque;  
-- Implementar **notificações em tempo real** com SignalR;  
-- Gerar **relatórios e dashboards estratégicos**;  
-- Garantir **autenticação segura (JWT + RBAC)**;  
-- Melhorar a **rastreabilidade e automação operacional**.  
+✔️ Criar produtos
+✔️ Registrar movimentações
+✔️ Criar pedidos de compra
+✔️ Ver notificações em tempo real
+✔️ Explorar dashboards
 
----
+✨ Funcionalidades Principais
+🔧 Gestão de Produtos
+Cadastro completo (SKU, unidade, localização, categorias)
+Controle de ativos/inativos
+Estoque mínimo e ponto de reposição
 
-##  Especificação Técnica
+📦 Movimentações de Estoque
+Entradas e saídas
+Depósito origem/destino
+Auditoria automática
+Atualizações em tempo real
 
-### Requisitos Funcionais
-- **RF01:** Cadastrar e editar itens de estoque;  
-- **RF02:** Registrar entradas e saídas;  
-- **RF03:** Consultar saldos e movimentações;  
-- **RF04:** Emitir alertas automáticos;  
-- **RF05:** Manter histórico completo;  
-- **RF06:** Gerar relatórios e dashboards.  
+🏭 Multi-Depósito
+Gerenciamento de almoxarifados
+Vínculo de produtos por localização
+Visão consolidada e detalhada
 
-### Requisitos Não Funcionais
-- **RNF01:** Tempo de resposta inferior a 500ms;  
-- **RNF02:** Comunicação em tempo real com **SignalR**;  
-- **RNF03:** Autenticação via **JWT** e controle **RBAC**;  
-- **RNF04:** Interface responsiva (**React + Tailwind**);  
-- **RNF05:** Documentação da API com **Swagger/OpenAPI**;  
-- **RNF06:** Suporte a **containerização (Docker/Podman)**.  
+🛒 Pedidos de Compra (PO)
+Fluxo completo de criação, aprovação, itens e fornecedores
+Totais automáticos
+Histórico e acompanhamento
 
----
+📊 Dashboard Inteligente
+Produtos ativos
+Movimentações recentes
+Itens críticos
+Total em estoque
+Comparações e evolução
 
-## Arquitetura e Stack Tecnológica
+🔔 Notificações em Tempo Real
+Implementado com SignalR
+Alertas de estoque baixo
+Movimentações instantâneas
 
-### Padrões de Design
-- **Monólito Modular:** backend organizado em camadas (Domain, Application, Infrastructure);  
-- **Clean Architecture:** isolamento de regras de negócio;  
-- **Event-Driven:** uso de **SignalR** para notificações assíncronas.
+🔐 Autenticação e Segurança
+JWT
+RBAC (perfís e permissões)
 
-### Stack Utilizada
+Algumas Funcionalidades
 
-| Camada | Tecnologias |
-|--------|--------------|
-| **Backend** | [.NET 8 Web API](https://dotnet.microsoft.com/), [Entity Framework Core](https://learn.microsoft.com/ef/core/) |
-| **Frontend** | [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/), [Tailwind CSS](https://tailwindcss.com/) |
-| **Banco de Dados** | [SQL Server](https://learn.microsoft.com/sql/) |
-| **Comunicação** | [SignalR (WebSockets)](https://learn.microsoft.com/aspnet/core/signalr) |
-| **Autenticação** | [JWT](https://jwt.io/) |
-| **CI/CD** | [GitHub Actions](https://github.com/features/actions) |
-| **Qualidade** | [SonarCloud](https://www.sonarsource.com/products/sonarcloud/) |
-| **Containerização** | [Docker](https://www.docker.com/) / [Podman](https://podman.io/) |
+Tela de Dashboard
+![Tela de Dashboard](docs/Estoque-visão-geral.png)
+A tela de Dashboard apresenta uma visão geral do sistema, reunindo métricas essenciais para análise rápida:
+Resumo geral de estoque
+Itens com baixa disponibilidade
+Indicadores de movimentações recentes
+Gráficos e estatísticas de desempenho
+Acompanhamento rápido das principais KPIs do sistema
+Ideal para que o usuário tenha uma visão completa da operação em poucos segundos.
 
----
+Cadastro de Produtos
+![Cadastro de Produtos](docs/itens.png)
 
- Diagramas de Caso de Uso (UML)
+A tela de Cadastro de Produtos permite gerenciar todo o catálogo de itens do sistema:
+Inserção de novos produtos
+Edição de informações existentes
+Controle de SKU, nome, categorias e unidades
+Gerenciamento de níveis mínimos de estoque
+Consulta rápida via busca e filtros avançados
+É a base para garantir que os itens estejam devidamente registrados no sistema.
 
-### Caso de Uso 1: Processo de Compra
-![Caso de Uso 1](docs/CasoDeUso-ProcessoCompra.png)
+Movimentações do Estoque
+![Movimentações](docs/movimentações.png)
+A tela de Movimentações registra todas as entradas e saídas de estoque:
+Entrada manual de produtos
+Saída por consumo, perda, ajuste ou transferência
+Histórico completo e auditável
+Filtros por data, tipo de movimentação e produto
+Informações detalhadas para rastreamento de operações
+Permite acompanhar o fluxo real de mercadorias no sistema com total transparência.
 
-### Caso de Uso 2: Movimentação e Cadastro de Produtos
-![Caso de Uso 2](docs/CasoDeUso-MovimentacaoCadastro.jpg)
+Pedidos de Compra (PO)
+![Pedidos de Compra (PO)](docs/movimentações.png)
+A tela de Pedidos de Compra (Purchase Orders) centraliza todo o processo de aquisição:
+Criação de novos pedidos para fornecedores
+Definição de quantidades, preços e prazos
+Status do PO (Criado, Enviado, Recebido, Cancelado)
+Histórico completo de negociações
+Integração com movimentações de entrada
+Facilita o controle de aquisição de materiais e reposição do estoque.
 
-### Caso de Uso 3: Gestão de Estoque e Alertas
-![Caso de Uso 3](docs/CasoDeUso-GestaoEstoque.png)
+🧱 Arquitetura e Stack Tecnológica
+Padrões
+Clean Architecture
+Domain-Driven Design (DDD Light)
+Repository Pattern
+Event-driven com SignalR
 
-## Modelagem C4
+Stack
+Camada	Tecnologias
+Frontend	React, TypeScript, Vite, Tailwind, ShadCN
+Backend	.NET 8 API, EF Core, FluentValidation
+Banco	SQL Server / PostgreSQL
+Comunicação	SignalR (WebSockets)
+Infra	Docker, Docker Compose, GitHub Actions
+Qualidade	Testes Automatizados + SonarCloud
+🧩 Modelagem (UML e C4)
+Diagramas de Caso de Uso
 
-O sistema é representado com o modelo **C4**, detalhando os níveis de **Contexto**, **Containers** e **Componentes**, facilitando a compreensão da arquitetura e suas interações.
+🔒 Considerações de Segurança
+Uso obrigatório de HTTPS
+Tokens JWT com validade curta
+Controle por papéis (RBAC)
+Logs estruturados
+Policies CORS controladas por ambiente
+Prevenção contra SQL Injection e XSS
 
-![Modelagem C4](docs/ModelagemC4.png)
+📚 Documentação Completa
 
----
+Toda a documentação detalhada está disponível em:
 
-## Considerações de Segurança
+[Documentação ](docs/rdtrackr-doc.md)
 
-- **HTTPS (TLS/SSL)** para tráfego seguro;  
-- **JWT ** para autenticação e autorização;  
-- **Logs estruturados e auditáveis**;  
-- **Validação e sanitização de dados** contra SQL Injection e XSS.
+Incluindo:
+✔️ Requisitos
+✔️ Diagramas UML
+✔️ C4
+✔️ Estudos e justificativas
+✔️ Arquitetura completa
 
----
-
-## Próximos Passos
-
-- Configurar **CI/CD com GitHub Actions**;  
-- Criar ambiente de **homologação e testes automatizados**;  
-- Realizar **deploy containerizado** e documentação final.  
-
----
-
-## Referências
-
-### Frameworks e Bibliotecas
-- [.NET 8 Web API](https://dotnet.microsoft.com/)  
-- [Entity Framework Core](https://learn.microsoft.com/ef/core/)  
-- [React](https://react.dev/)  
-- [TypeScript](https://www.typescriptlang.org/)  
-- [Vite](https://vitejs.dev/)  
-- [Tailwind CSS](https://tailwindcss.com/)  
-- [SignalR](https://learn.microsoft.com/aspnet/core/signalr)  
-- [JWT (JSON Web Token)](https://jwt.io/)
-
----
-
-### Ferramentas de Desenvolvimento e Gestão
-- [GitHub Actions](https://github.com/features/actions)  
-- [SonarCloud](https://www.sonarsource.com/products/sonarcloud/)  
-- [Docker](https://www.docker.com/) / [Podman](https://podman.io/)  
-- [Visual Studio Code](https://code.visualstudio.com/)  
-- [Postman](https://www.postman.com/)  
-- [SQL Server Management Studio (SSMS)](https://learn.microsoft.com/sql/ssms/)  
-- [Git](https://git-scm.com/)  
-
----
-
-### Documentação e Guias Técnicos
-- [.NET Documentation](https://learn.microsoft.com/dotnet/)  
-- [Entity Framework Core Docs](https://learn.microsoft.com/ef/core/)  
-- [SignalR Documentation](https://learn.microsoft.com/aspnet/core/signalr)  
-- [React Learn](https://react.dev/learn)  
-- [Tailwind CSS Docs](https://tailwindcss.com/docs)  
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)  
-- [Vite Guide](https://vitejs.dev/guide/)  
-
----
-
-### Trabalhos Acadêmicos
-- REZENDE, Juliana Pinheiro. *Gestão de Estoque: um estudo de caso em uma empresa de materiais para construção*. Monografia (Administração de Empresas) — UniCEUB, Brasília, 2008.
-
----
-
-## Autor
-
-**João Antonio David**  
-Curso: Engenharia de Software – Católica de Santa Catarina  
+👤 Autor
+João Antonio David
+Engenharia de Software – Católica de Santa Catarina
 Orientador: Prof. Diogo Vinícius Winck
