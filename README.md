@@ -40,8 +40,7 @@ operacional.
 ## Como Acessar o Sistema em Produção
 
 A aplicação está disponível em ambiente cloud:\
-**http://3.129.244.42:5173/**\
-*(em breve: https://rdtrackr.com.br)*
+**https://rdtrackr.com.br/**\
 
 ------------------------------------------------------------------------
 
