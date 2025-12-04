@@ -80,7 +80,14 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "RDTrackR API",
+        Version = "v1"
+    });
+
     options.OperationFilter<IdsFilter>();
+
     options.AddSecurityDefinition(AUTHENTICATION_TYPE, new OpenApiSecurityScheme
     {
         Description = @"JWT Authorization header using the Bearer scheme.",
@@ -106,6 +113,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
 builder.Services.AddMvc(options =>
     options.Filters.Add(typeof(ExceptionFilter)));
 
@@ -123,15 +131,17 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
+                "https://rdtrackr.com.br",
+                "https://www.rdtrackr.com.br",
                 "http://localhost:5173",
-                "http://localhost:8080",
-                "http://3.129.244.42:5173"
+                "http://localhost:8080"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
+
 
 var app = builder.Build();
 
@@ -140,7 +150,12 @@ app.MapHub<NotificationHub>("/hub/notifications");
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "RDTrackR API v1");
+        c.RoutePrefix = "api/swagger";
+    });
+
 }
 
 app.UseMiddleware<CultureMiddleware>();
