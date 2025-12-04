@@ -26,12 +26,11 @@ export default defineConfig(({ mode }) => ({
       reporter: ["text", "html", "lcov"],
       reportsDirectory: path.resolve(__dirname, "./coverage"),
 
-      // 👇 IGNORA TUDO DA PASTA generated
       exclude: [
         "src/generated/**",
         "generated/**",
         "**/generated/**",
-        "**/*.d.ts", // opcional
+        "**/*.d.ts",
         "node_modules/**",
         "dist/**",
       ],

@@ -147,16 +147,15 @@ var app = builder.Build();
 
 app.MapHub<NotificationHub>("/hub/notifications");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "RDTrackR API v1");
-        c.RoutePrefix = "api/swagger";
-    });
+// Habilita Swagger sempre (produção e desenvolvimento)
+app.UseSwagger();
 
-}
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "RDTrackR API v1");
+    c.RoutePrefix = "swagger"; // URL final: /swagger/index.html
+});
+
 
 app.UseMiddleware<CultureMiddleware>();
 
