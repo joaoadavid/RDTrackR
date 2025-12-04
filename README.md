@@ -39,8 +39,8 @@ operacional.
 
 ## Como Acessar o Sistema em Produção
 
-A aplicação está disponível em ambiente cloud:\
-**https://rdtrackr.com.br/**\
+A aplicação está disponível em ambiente cloud:
+https://rdtrackr.com.br/
 
 ------------------------------------------------------------------------
 
