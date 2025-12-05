@@ -1,7 +1,4 @@
 # RDTrackR - Sistema Gestão de Estoque Empresarial
-
-## Índice
-
 ## Índice
 - [Sobre o Projeto](#sobre-o-projeto)
 - [Como Acessar o Sistema em Produção](#como-acessar-o-sistema-em-produção)
