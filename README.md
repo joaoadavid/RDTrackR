@@ -45,7 +45,7 @@ https://rdtrackr.com.br/
 
 Para facilitar a avaliação do sistema:
 
-- **Usuário:** `usinagemrd2@hotmail.com`\
+- **Usuário:** `usinagemrd2@hotmail.com`
 - **Senha:** `Demo@123`
 
 Este usuário possui permissões completas e pode:
