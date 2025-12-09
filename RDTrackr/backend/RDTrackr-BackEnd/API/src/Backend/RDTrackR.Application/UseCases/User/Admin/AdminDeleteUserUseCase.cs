@@ -3,6 +3,9 @@ using RDTrackR.Domain.Repositories;
 using RDTrackR.Exceptions.ExceptionBase;
 using RDTrackR.Exceptions;
 using RDTrackR.Domain.Services.LoggedUser;
+using RDTrackR.Domain.Entities;
+using RDTrackR.Domain.Services.Notification;
+using RDTrackR.Domain.Services.Audit;
 
 namespace RDTrackR.Application.UseCases.User.Admin
 {
@@ -11,16 +14,22 @@ namespace RDTrackR.Application.UseCases.User.Admin
         private readonly ILoggedUser _loggedUser;
         private readonly IUserReadOnlyRepository _readRepo;
         private readonly IUserWriteOnlyRepository _writeRepo;
+        private readonly INotificationService _notificationService;
+        private readonly IAuditService _auditService;
         private readonly IUnitOfWork _unitOfWork;
 
         public AdminDeleteUserUseCase(
             ILoggedUser loggedUser,
             IUserReadOnlyRepository readRepo,
             IUserWriteOnlyRepository writeRepo,
+            INotificationService notificationService,
+            IAuditService auditService,
             IUnitOfWork unitOfWork)
         {
             _loggedUser = loggedUser;
             _readRepo = readRepo;
+            _notificationService = notificationService;
+            _auditService = auditService;
             _writeRepo = writeRepo;
             _unitOfWork = unitOfWork;
         }
@@ -36,6 +45,9 @@ namespace RDTrackR.Application.UseCases.User.Admin
 
             await _writeRepo.Delete(user.Id);
             await _unitOfWork.Commit();
+
+            await _notificationService.Notify($" usuario deletado com sucesso");
+            await _auditService.Log(Domain.Enums.AuditActionType.DELETE, $" usuario deletado com sucesso");
         }
     }
 

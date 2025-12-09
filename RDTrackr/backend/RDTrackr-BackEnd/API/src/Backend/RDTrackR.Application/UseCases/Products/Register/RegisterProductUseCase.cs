@@ -6,6 +6,7 @@ using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Products;
 using RDTrackR.Domain.Services.Audit;
 using RDTrackR.Domain.Services.LoggedUser;
+using RDTrackR.Domain.Services.Notification;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
 
@@ -15,6 +16,7 @@ namespace RDTrackR.Application.UseCases.Products.Register
     {
         private readonly IProductWriteOnlyRepository _repository;
         private readonly IProductReadOnlyRepository _readOnlyRepository;
+        private readonly INotificationService _notificationService;
         private readonly ILoggedUser _loggedUser;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditService _auditService;
@@ -23,6 +25,7 @@ namespace RDTrackR.Application.UseCases.Products.Register
         public RegisterProductUseCase(
             IProductWriteOnlyRepository repository,
             IProductReadOnlyRepository readOnlyRepository,
+            INotificationService notificationService,
             ILoggedUser loggedUser,
             IUnitOfWork unitOfWork,
             IAuditService auditService,
@@ -30,6 +33,7 @@ namespace RDTrackR.Application.UseCases.Products.Register
         {
             _repository = repository;
             _readOnlyRepository = readOnlyRepository;
+            _notificationService = notificationService;
             _loggedUser = loggedUser;
             _unitOfWork = unitOfWork;
             _auditService = auditService;
@@ -54,7 +58,8 @@ namespace RDTrackR.Application.UseCases.Products.Register
 
             product.CreatedBy = loggedUser;
 
-            await _auditService.Log(Domain.Enums.AuditActionType.CREATE, "Criado um novo produto.");
+            await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Criado um novo produto {product.Name}.");
+            await _notificationService.Notify($" Criado um novo produto {product.Name}");
 
             await _unitOfWork.Commit();
 

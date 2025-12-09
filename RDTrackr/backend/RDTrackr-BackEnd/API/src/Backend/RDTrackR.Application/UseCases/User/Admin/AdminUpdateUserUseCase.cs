@@ -1,9 +1,12 @@
 ﻿using FluentValidation;
 using RDTrackR.Application.UseCases.Users.Validators;
 using RDTrackR.Communication.Requests.User;
+using RDTrackR.Domain.Entities;
 using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.Users;
 using RDTrackR.Domain.Security.Cryptography;
+using RDTrackR.Domain.Services.Audit;
+using RDTrackR.Domain.Services.Notification;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
 
@@ -14,17 +17,23 @@ namespace RDTrackR.Application.UseCases.User.Admin
         private readonly IUserReadOnlyRepository _readRepository;
         private readonly IUserUpdateOnlyRepository _updateRepository;
         private readonly IPasswordEncripter _passwordEncripter;
+        private readonly INotificationService _notificationService;
+        private readonly IAuditService _auditService;
         private readonly IUnitOfWork _unitOfWork;
 
         public AdminUpdateUserUseCase(
             IUserReadOnlyRepository readRepository,
             IUserUpdateOnlyRepository updateRepository,
             IPasswordEncripter passwordEncripter,
+            INotificationService notificationService,
+            IAuditService auditService,
             IUnitOfWork unitOfWork)
         {
             _readRepository = readRepository;
             _updateRepository = updateRepository;
             _passwordEncripter = passwordEncripter;
+            _notificationService = notificationService;
+            _auditService = auditService;
             _unitOfWork = unitOfWork;
         }
 
@@ -47,6 +56,9 @@ namespace RDTrackR.Application.UseCases.User.Admin
 
             await _updateRepository.Update(user);
             await _unitOfWork.Commit();
+
+            await _notificationService.Notify($" Usuario {user.Name} atualizado com sucesso");
+            await _auditService.Log(Domain.Enums.AuditActionType.UPDATE, $" Usuario {user.Name} atualizado com sucesso");
         }
 
         private async Task Validate(long id, RequestAdminUpdateUserJson request)

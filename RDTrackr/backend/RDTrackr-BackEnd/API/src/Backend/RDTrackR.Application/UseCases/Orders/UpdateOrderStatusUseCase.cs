@@ -63,8 +63,9 @@ namespace RDTrackR.Application.UseCases.Orders
                         WarehouseId = 1
                     });
 
-                    await _notificationService.Notify($"Novo status de pedido #{order.Status}");
-                    await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Order Status {order.Status} foi alterado {user.Name}");
+                    var status = GetStatusDescription(OrderStatus.PAID);
+                    await _notificationService.Notify($"Novo status de pedido #{status}");
+                    await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Order Status {status} foi alterado {user.Name}");
                 }
             }
 
@@ -82,8 +83,9 @@ namespace RDTrackR.Application.UseCases.Orders
                         WarehouseId = 1
                     });
 
-                    await _notificationService.Notify($"Novo status de pedido #{order.Status}");
-                    await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Order Status {order.Status} foi alterado {user.Name}");
+                    var status = GetStatusDescription(OrderStatus.CANCELLED);
+                    await _notificationService.Notify($"Novo status de pedido #{status}");
+                    await _auditService.Log(Domain.Enums.AuditActionType.UPDATE, $"Order Status {status} foi alterado {user.Name}");
                 }
             }
 
@@ -91,6 +93,17 @@ namespace RDTrackR.Application.UseCases.Orders
 
             await _writeRepo.Update(order);
             await _uow.Commit();
+        }
+
+        private string GetStatusDescription(OrderStatus status)
+        {
+            return status switch
+            {
+                OrderStatus.PENDING => "Pendente",
+                OrderStatus.PAID => "Pago",
+                OrderStatus.CANCELLED => "Cancelado",
+                _ => "Desconhecido"
+            };
         }
     }
 

@@ -44,14 +44,12 @@ export function Topbar() {
         <SidebarTrigger />
 
         <div className="flex flex-1 items-center justify-between">
-          {/* CENTRO ABSOLUTO */}
           {user?.organizationName && (
             <span className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-primary">
               {user.organizationName}
             </span>
           )}
 
-          {/* LOGO */}
           <div className="flex items-center gap-3">
             <img
               src={LogoRDTrackR}
@@ -70,7 +68,6 @@ export function Topbar() {
               </span>
             )}
 
-            {/* TEMA */}
             <Button
               variant="ghost"
               size="icon"
@@ -79,7 +76,6 @@ export function Topbar() {
               {theme === "dark" ? <Sun /> : <Moon />}
             </Button>
 
-            {/* NOTIFICAÇÕES */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
@@ -112,7 +108,6 @@ export function Topbar() {
                   ))
                 )}
 
-                {/* 🔥 Botão de marcar todas como lidas */}
                 {notifications.length > 0 && (
                   <>
                     <DropdownMenuSeparator />
@@ -133,7 +128,6 @@ export function Topbar() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* USER MENU */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="h-9 w-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center">

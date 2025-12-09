@@ -52,8 +52,7 @@ export function useNotifications() {
     const token = localStorage.getItem("accessToken");
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://3.129.244.42:8080/hub/notifications", {
-        //.withUrl("https://localhost:7148/hub/notifications", {
+      .withUrl("https://api.rdtrackr.com.br/hub/notifications", {
         accessTokenFactory: () => token ?? "",
       })
       .withAutomaticReconnect()

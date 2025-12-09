@@ -58,8 +58,10 @@ public class UpdatePurchaseOrderStatusUseCase : IUpdatePurchaseOrderStatusUseCas
             throw new ErrorOnValidationException([ResourceMessagesException.ORDER_STATUS_INVALID_TRANSITION]);
 
         order.Status = newStatus;
-        await _notificationService.Notify($"Novo status de pedido de compra #{order.Status}");
-        await _auditService.Log(AuditActionType.CREATE, $"Pedido de compra Status {order.Status} foi alterado {loggedUser.Name}");
+        var status = GetStatusDescription(order.Status);
+
+        await _notificationService.Notify($"Novo status de pedido de compra #{status}");
+        await _auditService.Log(AuditActionType.UPDATE, $"Pedido de compra Status {status} foi alterado {loggedUser.Name}");
 
         await _writeRepository.UpdateAsync(order);
 
@@ -84,5 +86,16 @@ public class UpdatePurchaseOrderStatusUseCase : IUpdatePurchaseOrderStatusUseCas
         }
 
         await _unitOfWork.Commit();
+    }
+
+    private string GetStatusDescription(PurchaseOrderStatus status)
+    {
+        return status switch
+        {
+            PurchaseOrderStatus.PENDING => "Pendente",
+            PurchaseOrderStatus.APPROVED => "Aprovado",
+            PurchaseOrderStatus.RECEIVED => "Recebido",
+            _ => "Desconhecido"
+        };
     }
 }

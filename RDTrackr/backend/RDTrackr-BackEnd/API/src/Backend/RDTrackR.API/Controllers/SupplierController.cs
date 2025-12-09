@@ -30,15 +30,6 @@ namespace RDTrackR.API.Controllers
             return Created(string.Empty, result);
         }
 
-        //[HttpGet]
-        //[ProducesResponseType(typeof(List<ResponseSupplierJson>), StatusCodes.Status200OK)]
-        //public async Task<IActionResult> GetAll(
-        //    [FromServices] IGetAllSuppliersUseCase useCase)
-        //{
-        //    var result = await useCase.Execute();
-        //    return Ok(result);
-        //}
-
         [HttpGet]
         [ProducesResponseType(typeof(PagedResponse<ResponseSupplierJson>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(

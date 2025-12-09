@@ -156,6 +156,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger"; // URL final: /swagger/index.html
 });
 
+app.MapHealthChecks("/health");
 
 app.UseMiddleware<CultureMiddleware>();
 

@@ -9,6 +9,8 @@ using AutoMapper;
 using RDTrackR.Domain.Extensions;
 using RDTrackR.Exceptions.ExceptionBase;
 using RDTrackR.Exceptions;
+using RDTrackR.Domain.Services.Notification;
+using RDTrackR.Domain.Services.Audit;
 
 namespace RDTrackR.Application.UseCases.Suppliers.Register
 {
@@ -16,18 +18,24 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
     {
         private readonly ISupplierWriteOnlyRepository _writeRepository;
         private readonly ISupplierReadOnlyRepository _readOnlyRepository;
+        private readonly INotificationService _notificationService;
+        private readonly IAuditService _auditService;
         private readonly ILoggedUser _loggedUser;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
         public RegisterSupplierUseCase(ISupplierWriteOnlyRepository writeRepository,
             ISupplierReadOnlyRepository readOnlyRepository,
+            INotificationService notificationService,
+            IAuditService auditService,
             ILoggedUser loggedUser,
             IUnitOfWork unitOfWork,
             IMapper mapper)
         {
             _writeRepository = writeRepository;
             _readOnlyRepository = readOnlyRepository;
+            _notificationService = notificationService;
+            _auditService = auditService;
             _loggedUser = loggedUser;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -46,7 +54,8 @@ namespace RDTrackR.Application.UseCases.Suppliers.Register
             await _unitOfWork.Commit();
 
             supplier.CreatedBy = user;
-
+            await _notificationService.Notify($"Novo depósito {supplier.Name} foi cadastrado com sucesso.");
+            await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Novo depósito {supplier.Name} foi cadastrado com sucesso.");
             return _mapper.Map<ResponseSupplierJson>(supplier);
         }
 

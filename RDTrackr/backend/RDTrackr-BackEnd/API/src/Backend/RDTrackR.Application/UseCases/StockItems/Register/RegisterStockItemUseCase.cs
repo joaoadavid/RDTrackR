@@ -4,7 +4,9 @@ using RDTrackR.Communication.Responses.StockItem;
 using RDTrackR.Domain.Entities;
 using RDTrackR.Domain.Repositories;
 using RDTrackR.Domain.Repositories.StockItems;
+using RDTrackR.Domain.Services.Audit;
 using RDTrackR.Domain.Services.LoggedUser;
+using RDTrackR.Domain.Services.Notification;
 using RDTrackR.Exceptions.ExceptionBase;
 
 namespace RDTrackR.Application.UseCases.StockItems.Register
@@ -13,6 +15,8 @@ namespace RDTrackR.Application.UseCases.StockItems.Register
     {
         private readonly IStockItemWriteOnlyRepository _writeRepository;
         private readonly IStockItemReadOnlyRepository _readRepository;
+        private readonly INotificationService _notificationService;
+        private readonly IAuditService _auditService;
         private readonly ILoggedUser _loggedUser;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -20,12 +24,16 @@ namespace RDTrackR.Application.UseCases.StockItems.Register
         public RegisterStockItemUseCase(
             IStockItemWriteOnlyRepository writeRepository,
             IStockItemReadOnlyRepository readRepository,
+            INotificationService notificationService,
+            IAuditService auditService,
             ILoggedUser loggedUser,
             IUnitOfWork unitOfWork,
             IMapper mapper)
         {
             _writeRepository = writeRepository;
             _readRepository = readRepository;
+            _notificationService = notificationService;
+            _auditService = auditService;
             _loggedUser = loggedUser;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -59,12 +67,12 @@ namespace RDTrackR.Application.UseCases.StockItems.Register
 
             await _writeRepository.AddAsync(stockItem);
             await _unitOfWork.Commit();
+            await _notificationService.Notify($"Novo {stockItem.Product.Name} foi adicionado ao estoque.");
+            await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Novo {stockItem.Product.Name} foi adicionado ao estoque.");
 
             var reloaded = await _readRepository.GetByIdAsync(stockItem.Id);
 
             return _mapper.Map<ResponseStockItemJson>(reloaded);
-
-
         }
 
     }

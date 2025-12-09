@@ -70,7 +70,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
 
             await _movementWriteRepository.AddAsync(movement);
             await UpdateStock(request, loggedUser);
-            await _notificationService.Notify($"Novo item movido no estoque");
+            await _notificationService.Notify($"Novo item {movement.Product.Name} foi movido no estoque");
             await _unitOfWork.Commit();
 
             movement = await _movementReadRepository.GetByIdAsync(movement.Id);
