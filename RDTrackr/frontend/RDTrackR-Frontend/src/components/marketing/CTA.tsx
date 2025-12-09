@@ -19,13 +19,14 @@ export function CTA() {
             negócios com mais eficiência e autonomia.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Button variant="hero" size="lg" asChild>
+            <Button variant="default" size="lg" asChild>
               <Link to="/register">
                 Começar agora gratuitamente
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
-            <Button variant="outline-white" size="lg" onClick={enterApp}>
+
+            <Button variant="default" size="lg" onClick={enterApp}>
               Entrar na aplicação
             </Button>
           </div>
