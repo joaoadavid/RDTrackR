@@ -35,6 +35,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+builder.Services.AddHealthChecks();
 
 builder.Services.AddAuthentication(options =>
 {
