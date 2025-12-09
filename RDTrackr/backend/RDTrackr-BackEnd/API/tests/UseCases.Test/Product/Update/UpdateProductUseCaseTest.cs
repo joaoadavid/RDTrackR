@@ -55,8 +55,10 @@ namespace UseCases.Test.Product.Update
             var auditLog = new AuditServiceBuilder().Build();
             var repositoryWrite = new ProductRepositoryBuilder().BuildWrite();
             var repositoryRead = new ProductRepositoryBuilder().GetById(product, user).BuildRead();
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
-            return new UpdateProductUseCase(repositoryRead, repositoryWrite, loggedUser, unitOfWork, mapper);
+            return new UpdateProductUseCase(repositoryRead, repositoryWrite,notificationService,auditService, loggedUser, unitOfWork, mapper);
         }
     }
 }

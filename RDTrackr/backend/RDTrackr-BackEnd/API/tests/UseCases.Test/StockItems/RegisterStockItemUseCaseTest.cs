@@ -1,11 +1,13 @@
 ﻿using CommonTestUtilities.Entities;
 using CommonTestUtilities.Entities.Products;
+using CommonTestUtilities.Entities.StockItems;
 using CommonTestUtilities.Entities.Warehouses;
 using CommonTestUtilities.LoggedUser;
 using CommonTestUtilities.Mapper;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.StockItems;
 using CommonTestUtilities.Requests.StockItem;
+using CommonTestUtilities.Services.Audit;
 using RDTrackR.Application.UseCases.StockItems.Register;
 using RDTrackR.Domain.Entities;
 using RDTrackR.Exceptions;
@@ -23,7 +25,7 @@ namespace UseCases.Test.StockItems
 
             var product = ProductBuilder.Build(1, createdBy: user);
             var warehouse = WarehouseBuilder.Build(createdBy: user, 1);
-
+            var stockItem = StockItemBuilder.Build(product,warehouse);
             var request = RequestRegisterStockItemJsonBuilder.Build(product.Id, warehouse.Id);
 
             var useCase = CreateUseCase(user, product, warehouse);
@@ -99,10 +101,10 @@ namespace UseCases.Test.StockItems
         }
 
         private static RegisterStockItemUseCase CreateUseCase(
-        RDTrackR.Domain.Entities.User user,
-        RDTrackR.Domain.Entities.Product product,
-        RDTrackR.Domain.Entities.Warehouse warehouse,
-        StockItem? existingStock = null)
+         RDTrackR.Domain.Entities.User user,
+         RDTrackR.Domain.Entities.Product product,
+         RDTrackR.Domain.Entities.Warehouse warehouse,
+         StockItem? existingStock = null)
         {
             var builder = new StockItemRepositoryBuilder();
 
@@ -120,8 +122,8 @@ namespace UseCases.Test.StockItems
             }
 
             builder
-                .Add()                // AddAsync captura o StockItem criado pelo UseCase
-                .EnableAutoGetById(); // GetById retorna EXATAMENTE esse objeto
+                .Add(product, warehouse)  // 👈 garante navegação preenchida ao salvar
+                .EnableAutoGetById();     // 👈 retorna exatamente o mesmo objeto preenchido
 
             var readRepo = builder.BuildRead();
             var writeRepo = builder.BuildWrite();
@@ -129,9 +131,12 @@ namespace UseCases.Test.StockItems
             var loggedUser = LoggedUserBuilder.Build(user);
             var mapper = MapperBuilder.Build();
             var uow = UnitOfWorkBuilder.Build();
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
-            return new RegisterStockItemUseCase(writeRepo, readRepo, loggedUser, uow, mapper);
+            return new RegisterStockItemUseCase(writeRepo, readRepo, notificationService, auditService, loggedUser, uow, mapper);
         }
+
 
 
     }

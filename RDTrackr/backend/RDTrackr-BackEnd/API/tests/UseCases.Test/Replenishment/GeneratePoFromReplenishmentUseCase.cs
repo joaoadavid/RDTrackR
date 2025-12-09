@@ -2,10 +2,13 @@
 using CommonTestUtilities.Entities.Products;
 using CommonTestUtilities.LoggedUser;
 using CommonTestUtilities.PurchaseOrders;
+using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.Products;
 using CommonTestUtilities.Repositories.StockItems;
 using CommonTestUtilities.Requests.Replenishment;
+using CommonTestUtilities.Services.Audit;
 using Moq;
+using RDTrackR.Application.UseCases.Product.Delete;
 using RDTrackR.Application.UseCases.Replenishment.Register;
 using RDTrackR.Communication.Requests.PurchaseOrders;
 using RDTrackR.Communication.Responses.PurchaseOrders;
@@ -45,11 +48,15 @@ namespace UseCases.Test.Replenishment
                 .BuildMock();
 
             var loggedUser = LoggedUserBuilder.Build(user);
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
             var useCase = new GeneratePoFromReplenishmentUseCase(
                 createPo.Object,
                 productRepo,
                 stockRepo,
+                notificationService,
+                auditService,
                 loggedUser
             );
 
@@ -78,11 +85,15 @@ namespace UseCases.Test.Replenishment
             var poUseCase = new RegisterPurchaseOrderUseCaseBuilder().Build();
 
             var loggedUser = LoggedUserBuilder.Build(user);
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
             var useCase = new GeneratePoFromReplenishmentUseCase(
                 poUseCase,
                 productRepo,
                 stockRepo,
+                notificationService,
+                auditService,
                 loggedUser
             );
 
@@ -104,6 +115,8 @@ namespace UseCases.Test.Replenishment
             var stockRepo = new StockItemRepositoryBuilder().BuildRead();
 
             var mockPo = new RegisterPurchaseOrderUseCaseBuilder().Build();
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
             var loggedUser = LoggedUserBuilder.Build(user);
 
@@ -111,6 +124,8 @@ namespace UseCases.Test.Replenishment
                 mockPo,
                 productRepo,
                 stockRepo,
+                notificationService,
+                auditService,
                 loggedUser
             );
 

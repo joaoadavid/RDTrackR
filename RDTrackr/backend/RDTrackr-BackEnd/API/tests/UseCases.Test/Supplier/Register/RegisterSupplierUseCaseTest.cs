@@ -4,6 +4,7 @@ using CommonTestUtilities.Mapper;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.Suppliers;
 using CommonTestUtilities.Requests.Supplier;
+using CommonTestUtilities.Services.Audit;
 using RDTrackR.Application.UseCases.Suppliers.Register;
 using RDTrackR.Exceptions;
 using RDTrackR.Exceptions.ExceptionBase;
@@ -49,8 +50,10 @@ namespace UseCases.Test.Supplier.Register
             var mapper = MapperBuilder.Build();
             var unitOfWork = UnitOfWorkBuilder.Build();
             var loggedUser = LoggedUserBuilder.Build(user);
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
-            return new RegisterSupplierUseCase(writeRepository, readRepository,loggedUser,unitOfWork,mapper);
+            return new RegisterSupplierUseCase(writeRepository, readRepository, notificationService, auditService, loggedUser, unitOfWork, mapper);
         }
     }
 }

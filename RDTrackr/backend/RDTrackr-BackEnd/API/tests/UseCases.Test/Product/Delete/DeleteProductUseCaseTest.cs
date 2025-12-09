@@ -3,6 +3,7 @@ using CommonTestUtilities.Entities.Products;
 using CommonTestUtilities.LoggedUser;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Repositories.Products;
+using CommonTestUtilities.Services.Audit;
 using RDTrackR.Application.UseCases.Product.Delete;
 using RDTrackR.Domain.Entities;
 using RDTrackR.Exceptions;
@@ -51,13 +52,15 @@ namespace UseCases.Test.Product.Delete
             var repositoryBuilder = new ProductRepositoryBuilder();
             var repositoryWriteBuilder = new ProductRepositoryBuilder().BuildWrite();
             var unitOfWork = UnitOfWorkBuilder.Build();
+            var notificationService = new NotificationServiceBuilder().Build();
+            var auditService = new AuditServiceBuilder().Build();
 
             if (product is not null)
                 repositoryBuilder.GetById(product, user);
 
             var repository = repositoryBuilder.BuildRead();
 
-            return new DeleteProductUseCase(repository, repositoryWriteBuilder, loggedUser, unitOfWork);
+            return new DeleteProductUseCase(repository, repositoryWriteBuilder,notificationService,auditService, loggedUser, unitOfWork);
         }
     }
 }

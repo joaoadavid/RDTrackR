@@ -176,7 +176,7 @@ namespace CommonTestUtilities.Repositories.StockItems
 
 
 
-        public StockItemRepositoryBuilder Add()
+        public StockItemRepositoryBuilder Add(Product? product = null, Warehouse? warehouse = null)
         {
             _writeMock
                 .Setup(r => r.AddAsync(It.IsAny<StockItem>()))
@@ -184,11 +184,24 @@ namespace CommonTestUtilities.Repositories.StockItems
                 {
                     s.Id = 1;
                     _lastInserted = s;
+
+                    if (product != null)
+                    {
+                        _lastInserted.ProductId = product.Id;
+                        _lastInserted.Product = product;
+                    }
+
+                    if (warehouse != null)
+                    {
+                        _lastInserted.WarehouseId = warehouse.Id;
+                        _lastInserted.Warehouse = warehouse;
+                    }
                 })
                 .Returns(Task.CompletedTask);
 
             return this;
         }
+
 
 
         public StockItemRepositoryBuilder Update()

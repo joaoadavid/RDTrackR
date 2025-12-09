@@ -70,9 +70,10 @@ namespace UseCases.Test.Product.Register
             var loggedUser = LoggedUserBuilder.Build(user);
             var auditLog = new AuditServiceBuilder().Build();
             var repositoryWrite = new ProductRepositoryBuilder().BuildWrite();
-            var repositoryRead = new ProductRepositoryBuilder().BuildRead();            
+            var repositoryRead = new ProductRepositoryBuilder().BuildRead();
+            var notificationService = new NotificationServiceBuilder().Build();
 
-            return new RegisterProductUseCase(repositoryWrite,repositoryRead,loggedUser,unitOfWork,auditLog, mapper);
+            return new RegisterProductUseCase(repositoryWrite,repositoryRead,notificationService,loggedUser,unitOfWork,auditLog, mapper);
         }
     }
 }
