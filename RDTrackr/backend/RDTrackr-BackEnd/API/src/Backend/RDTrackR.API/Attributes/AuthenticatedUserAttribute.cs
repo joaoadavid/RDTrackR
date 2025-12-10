@@ -5,10 +5,6 @@ namespace RDTrackR.API.Attributes
 {
     public class AuthenticatedUserAttribute : TypeFilterAttribute
     {
-        //public AuthenticatedUserAttribute() : base(typeof(AuthenticatedUserFilter))
-        //{
-        //}
-
         public AuthenticatedUserAttribute(string roles = "")
             : base(typeof(AuthenticatedUserFilter))
         {

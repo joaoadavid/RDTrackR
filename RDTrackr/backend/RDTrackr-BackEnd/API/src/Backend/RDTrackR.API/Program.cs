@@ -134,6 +134,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "https://rdtrackr.com.br",
                 "https://www.rdtrackr.com.br",
+                "https://api.rdtrackr.com.br",
                 "http://localhost:5173",
                 "http://localhost:8080"
             )
@@ -148,7 +149,6 @@ var app = builder.Build();
 
 app.MapHub<NotificationHub>("/hub/notifications");
 
-// Habilita Swagger sempre (produção e desenvolvimento)
 app.UseSwagger();
 
 app.UseSwaggerUI(c =>
