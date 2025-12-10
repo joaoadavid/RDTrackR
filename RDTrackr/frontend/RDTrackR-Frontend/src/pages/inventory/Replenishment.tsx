@@ -40,34 +40,28 @@ type CriticalFilter = "all" | "critical" | "non_critical";
 export default function Replenishment() {
   const { toast } = useToast();
 
-  // ----------------- filtros -----------------
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
   const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all");
 
-  // ----------------- paginação -----------------
   const [page, setPage] = useState(1);
   const pageSize = 10; // ajuste se quiser
   const [total, setTotal] = useState(0);
 
-  // ----------------- seleção e edição -----------------
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editedQty, setEditedQty] = useState<Record<string, number>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // ----------------- loading states -----------------
   const [apiItems, setApiItems] = useState<ResponseReplenishmentItemJson[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ----------------- debounce busca -----------------
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 400);
     return () => clearTimeout(t);
   }, [searchTerm]);
 
-  // ----------------- LOAD API (server-side pagination + search) -----------------
   async function load() {
     setIsLoading(true);
 
@@ -78,7 +72,6 @@ export default function Replenishment() {
       setApiItems(resp.items ?? []);
       setTotal(resp.total ?? 0);
 
-      // limpa seleção/edição ao trocar de página/resultado
       setSelectedIds(new Set());
       setEditedQty({});
     } catch {
@@ -94,10 +87,8 @@ export default function Replenishment() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch]);
 
-  // ----------------- MAP API → FRONT ITEMS -----------------
   const replenishmentItems: ReplenishmentItem[] = useMemo(() => {
     return apiItems.map((i) => {
       const compoundId = `${i.productId}-${i.warehouseId}`;
@@ -122,7 +113,6 @@ export default function Replenishment() {
     });
   }, [apiItems, editedQty]);
 
-  // ----------------- FILTROS (client-side dentro da página atual) -----------------
   const filteredItems = useMemo(() => {
     return replenishmentItems.filter((item) => {
       const matchesCategory = category === "all" || item.category === category;
@@ -136,7 +126,6 @@ export default function Replenishment() {
     });
   }, [replenishmentItems, category, criticalFilter]);
 
-  // ----------------- KPIs (baseados nos itens filtrados da página atual) -----------------
   const kpis = useMemo(() => {
     const criticalCount = filteredItems.filter((i) => i.isCritical).length;
 
@@ -163,7 +152,6 @@ export default function Replenishment() {
     };
   }, [filteredItems]);
 
-  // ----------------- handlers seleção -----------------
   const handleToggleItem = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -204,7 +192,6 @@ export default function Replenishment() {
     setIsDialogOpen(true);
   };
 
-  // ----------------- CONFIRMAR GERAR PO -----------------
   const handleConfirmPo = async (
     supplierId: string,
     warehouseId: number,
@@ -237,7 +224,7 @@ export default function Replenishment() {
 
       setIsDialogOpen(false);
       setSelectedIds(new Set());
-      load(); // recarrega a página atual
+      load();
     } catch (err: any) {
       toast({
         title: "Erro ao gerar pedido",
@@ -251,10 +238,8 @@ export default function Replenishment() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // ----------------- render -----------------
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -271,7 +256,6 @@ export default function Replenishment() {
         </Button>
       </div>
 
-      {/* FILTROS */}
       <Card>
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
@@ -282,7 +266,6 @@ export default function Replenishment() {
 
         <CardContent>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-            {/* Busca */}
             <input
               type="text"
               placeholder="Buscar por nome ou SKU..."
@@ -294,7 +277,6 @@ export default function Replenishment() {
               className="border rounded px-3 py-2 w-full md:w-72"
             />
 
-            {/* Criticidade */}
             <select
               value={criticalFilter}
               onChange={(e) =>
@@ -314,7 +296,6 @@ export default function Replenishment() {
               className="border rounded px-3 py-2 w-full md:w-56"
             >
               <option value="all">Todas categorias</option>
-              {/* Se quiser popular dinamicamente com base nos itens: */}
               {Array.from(new Set(replenishmentItems.map((i) => i.category)))
                 .filter((c) => c && c !== "all")
                 .map((c) => (
@@ -327,7 +308,6 @@ export default function Replenishment() {
         </CardContent>
       </Card>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Itens críticos"
@@ -351,7 +331,6 @@ export default function Replenishment() {
         />
       </div>
 
-      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Itens de Reposição</CardTitle>
@@ -371,7 +350,6 @@ export default function Replenishment() {
             isLoading={isLoading}
           />
 
-          {/* PAGINAÇÃO */}
           <div className="flex items-center justify-between mt-4">
             <span className="text-sm text-muted-foreground">
               Página {page} de {totalPages} — {total} itens
@@ -402,7 +380,6 @@ export default function Replenishment() {
         </CardContent>
       </Card>
 
-      {/* BOTÃO GERAR PO */}
       {selectedIds.size > 0 && (
         <div className="flex justify-end">
           <Button size="lg" disabled={isSubmitting} onClick={handleGeneratePo}>
@@ -411,7 +388,6 @@ export default function Replenishment() {
         </div>
       )}
 
-      {/* DIALOG */}
       <GeneratePoDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

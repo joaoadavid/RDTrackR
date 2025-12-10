@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/components/ui/use-toast";
 
 import { ReplenishmentItem } from "./ReplenishmentTable";
 import { api } from "@/lib/api";
@@ -35,7 +36,7 @@ interface GeneratePoDialogProps {
     notes: string,
     groupBySupplier: boolean
   ) => void;
-  isSubmitting?: boolean; // 👈 AGORA SUPORTADO
+  isSubmitting?: boolean;
 }
 
 export function GeneratePoDialog({
@@ -43,14 +44,22 @@ export function GeneratePoDialog({
   onOpenChange,
   items,
   onConfirm,
-  isSubmitting = false, // valor padrão
+  isSubmitting = false,
 }: GeneratePoDialogProps) {
+  const { toast } = useToast();
+
   const [supplierId, setSupplierId] = useState("");
   const [warehouseId, setWarehouseId] = useState<number | null>(null);
   const [groupBySupplier, setGroupBySupplier] = useState(false);
 
   const [suppliers, setSuppliers] = useState<ResponseSupplierJson[]>([]);
   const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
+
+  // 📌 Armazéns distintos dos itens selecionados
+  const distinctWarehouses = useMemo(
+    () => [...new Set(items.map((i) => i.warehouseId))],
+    [items]
+  );
 
   useEffect(() => {
     if (open) {
@@ -59,21 +68,42 @@ export function GeneratePoDialog({
     }
   }, [open]);
 
+  // 📌 Evita abrir modal com múltiplos armazéns
+  useEffect(() => {
+    if (open && distinctWarehouses.length > 1) {
+      toast({
+        variant: "destructive",
+        title: "Itens de múltiplos armazéns",
+        description:
+          "Você selecionou itens de armazéns diferentes. Gere pedidos separados.",
+      });
+
+      onOpenChange(false);
+    }
+  }, [open, distinctWarehouses, toast, onOpenChange]);
+
   const totalValue = items.reduce(
     (sum, item) => sum + item.suggestedQty * item.unitPrice,
     0
   );
 
   const handleConfirm = () => {
-    if (!supplierId || !warehouseId || isSubmitting) return; // evita duplo clique
+    if (!supplierId || !warehouseId || isSubmitting) return;
+
+    if (distinctWarehouses.length > 1) {
+      toast({
+        variant: "destructive",
+        title: "Não permitido",
+        description: "Não é permitido gerar pedido com múltiplos armazéns.",
+      });
+      return;
+    }
 
     onConfirm(supplierId, warehouseId, "", groupBySupplier);
 
-    // Reset após envio
     setSupplierId("");
     setWarehouseId(null);
     setGroupBySupplier(false);
-
     onOpenChange(false);
   };
 
@@ -129,10 +159,11 @@ export function GeneratePoDialog({
             </Select>
           </div>
 
-          {/* WAREHOUSE */}
+          {/* ARMAZÉM */}
           <div className="space-y-2">
             <Label>Armazém *</Label>
             <Select
+              disabled={distinctWarehouses.length > 1}
               value={warehouseId?.toString()}
               onValueChange={(v) => setWarehouseId(Number(v))}
             >
@@ -147,6 +178,13 @@ export function GeneratePoDialog({
                 ))}
               </SelectContent>
             </Select>
+
+            {distinctWarehouses.length > 1 && (
+              <p className="text-red-600 text-sm mt-1">
+                🚫 Você selecionou itens de múltiplos armazéns. Gere pedidos
+                separados.
+              </p>
+            )}
           </div>
 
           {/* AGRUPAR */}

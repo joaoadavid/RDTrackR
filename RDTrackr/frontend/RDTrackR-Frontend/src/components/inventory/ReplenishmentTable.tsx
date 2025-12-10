@@ -1,6 +1,18 @@
-// ===============================
-// TIPOS
-// ===============================
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import { useMemo } from "react";
+
 export interface ReplenishmentItem {
   id: string;
   productId: number;
@@ -23,23 +35,6 @@ export interface ReplenishmentItem {
   unitPrice: number;
 }
 
-// ===============================
-// COMPONENTES
-// ===============================
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-
 export interface ReplenishmentTableProps {
   items: ReplenishmentItem[];
   selectedIds: Set<string>;
@@ -59,6 +54,32 @@ export function ReplenishmentTable({
   onQtyChange,
   isLoading,
 }: ReplenishmentTableProps) {
+  const { toast } = useToast();
+
+  // 📌 Warehouse base selecionado
+  const selectedWarehouses = useMemo(() => {
+    const ids = [...selectedIds];
+    const selected = items.filter((i) => ids.includes(i.id));
+    return [...new Set(selected.map((i) => i.warehouseId))];
+  }, [selectedIds, items]);
+
+  const handleSelectItem = (item: ReplenishmentItem) => {
+    // ⚠️ Se já há seleção e warehouse é diferente → bloqueia
+    if (
+      selectedWarehouses.length === 1 &&
+      selectedWarehouses[0] !== item.warehouseId
+    ) {
+      toast({
+        variant: "destructive",
+        title: "Itens de depósitos diferentes",
+        description: "Você só pode selecionar itens do mesmo armazém.",
+      });
+      return;
+    }
+
+    onToggleItem(item.id);
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -69,6 +90,7 @@ export function ReplenishmentTable({
               <Checkbox
                 checked={selectedIds.size === items.length && items.length > 0}
                 onCheckedChange={onToggleAll}
+                disabled={selectedWarehouses.length > 1} // ❗ Selecionar todos bloqueado se conflito
               />
             </TableHead>
 
@@ -100,6 +122,9 @@ export function ReplenishmentTable({
           ) : (
             items.map((item) => {
               const isSelected = selectedIds.has(item.id);
+              const mustDisable =
+                selectedWarehouses.length === 1 &&
+                selectedWarehouses[0] !== item.warehouseId;
 
               return (
                 <TableRow
@@ -107,13 +132,15 @@ export function ReplenishmentTable({
                   className={cn(
                     "transition",
                     item.isCritical &&
-                      "bg-red-50 hover:bg-red-100 border-l-4 border-red-600"
+                      "bg-red-50 hover:bg-red-100 border-l-4 border-red-600",
+                    mustDisable && "opacity-60 cursor-not-allowed"
                   )}
                 >
                   <TableCell>
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => onToggleItem(item.id)}
+                      disabled={mustDisable}
+                      onCheckedChange={() => handleSelectItem(item)}
                     />
                   </TableCell>
 
@@ -127,7 +154,6 @@ export function ReplenishmentTable({
                   </TableCell>
 
                   <TableCell>{item.category}</TableCell>
-
                   <TableCell>{item.warehouseName}</TableCell>
 
                   <TableCell
@@ -163,6 +189,7 @@ export function ReplenishmentTable({
                       onChange={(e) =>
                         onQtyChange(item.id, Number(e.target.value))
                       }
+                      disabled={mustDisable}
                     />
                   </TableCell>
 
