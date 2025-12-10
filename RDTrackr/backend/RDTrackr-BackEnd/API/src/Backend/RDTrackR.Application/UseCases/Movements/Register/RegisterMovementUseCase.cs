@@ -70,11 +70,12 @@ namespace RDTrackR.Application.UseCases.Movements.Register
 
             await _movementWriteRepository.AddAsync(movement);
             await UpdateStock(request, loggedUser);
-            await _notificationService.Notify($"Novo item {movement.Product.Name} foi movido no estoque");
             await _unitOfWork.Commit();
+
 
             movement = await _movementReadRepository.GetByIdAsync(movement.Id);
             await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Novo item movido no estoque {movement.Warehouse.Name} item: {movement.Product.Name}");
+            await _notificationService.Notify($"Novo item {movement.Product.Name} foi movido no estoque");
 
             return _mapper.Map<ResponseMovementJson>(movement);
         }

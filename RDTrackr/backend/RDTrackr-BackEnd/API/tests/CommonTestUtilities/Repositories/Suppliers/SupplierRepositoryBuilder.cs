@@ -70,33 +70,35 @@ namespace CommonTestUtilities.Repositories.Suppliers
             // Default ExistsSupplierWithEmail
             _read.Setup(r => r.ExistsSupplierWithEmail(It.IsAny<string>(), It.IsAny<long>()))
                  .ReturnsAsync((string email, long id) =>
-                     _store.Any(s => s.Email == email && s.Id != id));
+                    _store.Any(s => s.Email == email && s.Id != id));
 
-            // NEW → Paged
             _read.Setup(r => r.GetPagedAsync(
-                It.IsAny<int>(),
-                It.IsAny<int>(),
-                It.IsAny<string?>()))
-            .ReturnsAsync((int page, int pageSize, string search) =>
-            {
-                var query = _store.AsQueryable();
+                     It.IsAny<User>(),
+                     It.IsAny<int>(),
+                     It.IsAny<int>(),
+                     It.IsAny<string?>()
+            ))
+             .ReturnsAsync((User user, int page, int pageSize, string search) =>
+             {
+                 var query = _store
+                     .Where(s => s.OrganizationId == user.OrganizationId && s.Active)
+                     .AsQueryable();
+            
+                 if (!string.IsNullOrWhiteSpace(search))
+                 {
+                     query = query.Where(s =>
+                         s.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                         s.Contact.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                         s.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
+                 }
+            
+                 return query
+                     .OrderBy(s => s.Name)
+                     .Skip((page - 1) * pageSize)
+                     .Take(pageSize)
+                     .ToList();
+             });
 
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    query = query.Where(s =>
-                        s.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                        s.Contact.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                        s.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
-                }
-
-                return query
-                    .OrderBy(s => s.Name)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
-            });
-
-            // NEW → Count
             _read.Setup(r => r.CountAsync(It.IsAny<string?>()))
             .ReturnsAsync((string search) =>
             {

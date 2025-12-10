@@ -37,9 +37,10 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Supplier>> GetPagedAsync(int page, int pageSize, string? search)
+        public async Task<List<Supplier>> GetPagedAsync(User user,int page, int pageSize, string? search)
         {
             var query = _context.Suppliers
+                .Where(s=> s.OrganizationId == user.OrganizationId && s.Active == true)
                 .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(search))

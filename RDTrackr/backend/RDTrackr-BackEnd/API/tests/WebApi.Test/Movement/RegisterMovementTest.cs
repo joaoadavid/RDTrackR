@@ -16,19 +16,21 @@ namespace WebApi.Test.Movement
         private readonly RDTrackR.Domain.Entities.User _user;
         private readonly long _warehouseId;
         private readonly long _productId;
+        private readonly string _movement;
 
         public RegisterMovementTest(CustomWebApplicationFactory factory) : base(factory) 
         {
             _user = factory.GetUser();
             _warehouseId = factory.GetWarehouseId();
             _productId = factory.GetProductId();
-
+            _movement = factory.GetMovementProduct();
         }
 
         [Fact]
         public async Task Success()
         {
             var request = RequestRegisterMovementJsonBuilder.Build();
+
             request.ProductId = _productId;
             request.WarehouseId = _warehouseId;
             var token = JwtTokenGeneratorBuilder.Build().Generate(_user);

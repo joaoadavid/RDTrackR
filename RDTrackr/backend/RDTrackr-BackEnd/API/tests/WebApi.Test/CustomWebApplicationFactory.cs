@@ -1,5 +1,6 @@
 ﻿using CommonTestUtilities.BlobStorage;
 using CommonTestUtilities.Entities;
+using CommonTestUtilities.Entities.Movements;
 using CommonTestUtilities.Entities.Products;
 using CommonTestUtilities.Entities.Warehouses;
 using CommonTestUtilities.Organizations;
@@ -17,6 +18,7 @@ namespace WebApi.Test
     {
         private RDTrackR.Domain.Entities.User _user = default!;
         private RDTrackR.Domain.Entities.Warehouse _warehouse = default!;
+        private RDTrackR.Domain.Entities.Movement _movement = default!;
         private RDTrackR.Domain.Entities.Product _product = default!;
         private RDTrackR.Domain.Entities.PurchaseOrder _purchaseOrder = default!;
         private RDTrackR.Domain.Entities.Organization _organization = default!;
@@ -55,6 +57,7 @@ namespace WebApi.Test
         public string GetEmail() => _user.Email;
         public Guid GetUserIdentifier() => _user.UserIdentifier;
         public string GetPassword() => _password;
+        public string GetMovementProduct () => _movement.Product.Name;
         public string GetName() => _user.Name;
         public RDTrackR.Domain.Entities.User GetUser() => _user;
         public long GetProductId() => _product.Id;
@@ -72,12 +75,14 @@ namespace WebApi.Test
             _product = ProductBuilder.Build(createdBy: _user);
             _purchaseOrder = PurchaseOrderBuilder.Build(createdByUserId:_user.Id,productId:_product.Id);
             _organization = OrganizationBuilder.Build();
+            _movement = MovementBuilder.Build(_user,_product,_warehouse);
 
             dbContext.Users.Add(_user);
             dbContext.Warehouses.Add(_warehouse);
             dbContext.Products.Add(_product);
             dbContext.PurchaseOrders.Add(_purchaseOrder);
             dbContext.Organizations.Add(_organization);
+            dbContext.Movements.Add(_movement);
 
             dbContext.SaveChanges();
         }
