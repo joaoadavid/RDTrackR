@@ -87,6 +87,10 @@ namespace UseCases.Test.Movements
                 .GetById(warehouse, user)
                 .BuildRead();
 
+            var warehouseWriteRepository = new WarehouseRepositoryBuilder()
+                .GetById(warehouse, user)
+                .BuildWrite();
+
             var notificationService = new NotificationServiceBuilder().Build();
             var auditService = new AuditServiceBuilder().Build();
 
@@ -103,6 +107,7 @@ namespace UseCases.Test.Movements
                 stockItemWriteRepository,
                 productRepository,
                 warehouseRepository,
+                warehouseWriteRepository,
                 loggedUser,
                 unitOfWork,
                 mapper

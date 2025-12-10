@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { api } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +10,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
-  RequestCreateOrderJson,
   RequestCreateOrderItemJson,
+  RequestCreateOrderJson,
   ResponseProductJson,
+  ResponseWarehouseJson,
 } from "@/generated/apiClient";
 
 import { useToast } from "@/hooks/use-toast";
 import { OrderItemCard } from "./OrderItemCard";
+import { api } from "@/lib/api";
 
 interface Props {
   open: boolean;
@@ -31,106 +39,83 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
   const { toast } = useToast();
 
   const [products, setProducts] = useState<ResponseProductJson[]>([]);
+  const [warehouses, setWarehouses] = useState<ResponseWarehouseJson[]>([]);
+
   const [customerName, setCustomerName] = useState("");
-  const [items, setItems] = useState<RequestCreateOrderItemJson[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [warehouseId, setWarehouseId] = useState<number | null>(null);
 
-  const [nameError, setNameError] = useState(false);
+  const [isValidCustomer, setIsValidCustomer] = useState(false);
 
-  // Carrega produtos apenas uma vez
+  // 🔍 Validação de nome do cliente
   useEffect(() => {
-    api.productGET().then((res) => setProducts(res.items ?? []));
-  }, []);
+    setIsValidCustomer(customerName.trim().length >= 3);
+  }, [customerName]);
+
+  // 🔄 Carregar dados ao abrir modal
+  useEffect(() => {
+    if (open) {
+      api.productGET().then((res) => setProducts(res.items ?? []));
+      api.warehouseGET().then((res) => setWarehouses(res.items ?? []));
+      setItems([{ productId: 0, quantity: 1, price: 0, availableStock: 0 }]);
+      setCustomerName("");
+      setIsValidCustomer(false);
+      setWarehouseId(null);
+    }
+  }, [open]);
+
+  // 🧼 Reset de estoque ao trocar depósito
+  useEffect(() => {
+    setItems((prev) => prev.map((i) => ({ ...i, availableStock: 0 })));
+  }, [warehouseId]);
 
   function addItem() {
     setItems((prev) => [
       ...prev,
-      new RequestCreateOrderItemJson({
-        productId: 0,
-        price: 0,
-        quantity: 1,
-      }),
+      { productId: 0, quantity: 1, price: 0, availableStock: 0 },
     ]);
   }
 
   function updateItem(index: number, field: string, value: any) {
-    const clone = [...items];
-    (clone[index] as any)[field] = value;
-    setItems(clone);
+    setItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
   }
 
-  const itemTotals = useMemo(
-    () => items.map((i) => i.quantity * i.price),
+  function removeItem(index: number) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  const grandTotal = useMemo(
+    () => items.reduce((sum, i) => sum + i.quantity * i.price, 0),
     [items]
   );
 
-  const grandTotal = useMemo(
-    () => itemTotals.reduce((a, b) => a + b, 0),
-    [itemTotals]
+  // ✔ regra do botão: cliente válido + armazém + itens válidos
+  const hasInvalidItem = items.some(
+    (i) => !i.productId || i.quantity <= 0 || i.price <= 0
   );
+  const isFormValid = isValidCustomer && warehouseId && !hasInvalidItem;
 
   async function handleSubmit() {
-    if (!customerName || customerName.trim().length < 3) {
-      setNameError(true);
-      return toast({
-        title: "Nome inválido",
-        description: "O nome do cliente deve ter pelo menos 3 caracteres.",
-        variant: "destructive",
-      });
-    }
-    setNameError(false);
+    if (!isFormValid) return;
 
-    if (items.length === 0) {
-      return toast({
-        title: "Nenhum item no pedido",
-        description: "Adicione ao menos um item.",
-        variant: "destructive",
-      });
-    }
+    const formattedItems = items.map(
+      (i) =>
+        new RequestCreateOrderItemJson({
+          productId: i.productId,
+          quantity: i.quantity,
+          price: i.price,
+        })
+    );
 
-    for (const item of items) {
-      if (!item.productId) {
-        return toast({
-          title: "Produto obrigatório",
-          description: "Selecione um produto antes de continuar.",
-          variant: "destructive",
-        });
-      }
-
-      if (item.quantity <= 0) {
-        return toast({
-          title: "Quantidade inválida",
-          description: "A quantidade deve ser maior que zero.",
-          variant: "destructive",
-        });
-      }
-
-      if (item.price <= 0) {
-        return toast({
-          title: "Preço inválido",
-          description: "O valor unitário deve ser maior que zero.",
-          variant: "destructive",
-        });
-      }
-
-      // 🔥 Validação de estoque aqui!
-      const product = products.find((p) => p.id === item.productId);
-      const available = product?.totalStock ?? 0;
-
-      if (item.quantity > available) {
-        return toast({
-          title: "Estoque insuficiente",
-          description: `O produto possui apenas ${available} unidade(s) disponíveis.`,
-          variant: "destructive",
-        });
-      }
-    }
+    const payload = new RequestCreateOrderJson({
+      customerName,
+      warehouseId,
+      items: formattedItems,
+    });
 
     try {
-      const payload = new RequestCreateOrderJson({
-        customerName,
-        items,
-      });
-
       await api.ordersPOST(payload);
 
       toast({
@@ -140,9 +125,9 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
 
       onSuccess();
       onOpenChange(false);
-      setCustomerName("");
-      setItems([]);
     } catch (error: any) {
+      console.error(error);
+
       toast({
         title: "Erro ao registrar pedido",
         description: error?.result?.message ?? "Falha ao registrar o pedido.",
@@ -157,55 +142,93 @@ export function NewOrderDialog({ open, onOpenChange, onSuccess }: Props) {
         <DialogHeader>
           <DialogTitle>Novo Pedido</DialogTitle>
           <DialogDescription>
-            Preencha as informações do cliente e os itens do pedido.
+            Escolha os itens e o armazém corretamente.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* CLIENTE */}
-          <div className="space-y-2">
-            <Label>Nome do Cliente</Label>
+          <div className="relative">
+            <Label>Cliente *</Label>
             <Input
               placeholder="Ex: João Silva"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className={nameError ? "border-red-500" : ""}
+              className={`
+                ${customerName && !isValidCustomer && "border-red-500"}
+                ${isValidCustomer && "border-green-500 pr-8"}
+              `}
             />
+
+            {isValidCustomer && (
+              <span className="absolute right-2 top-9 text-green-600 font-bold"></span>
+            )}
+
+            {customerName && !isValidCustomer && (
+              <p className="text-xs text-red-500 mt-1">
+                Informe pelo menos 3 caracteres.
+              </p>
+            )}
+          </div>
+
+          {/* ARMAZÉM */}
+          <div>
+            <Label>Armazém *</Label>
+            <Select
+              value={warehouseId?.toString()}
+              onValueChange={(v) => setWarehouseId(Number(v))}
+            >
+              <SelectTrigger
+                className={`${!warehouseId ? "border-red-500" : ""}`}
+              >
+                <SelectValue placeholder="Selecione o armazém" />
+              </SelectTrigger>
+              <SelectContent>
+                {warehouses.map((w) => (
+                  <SelectItem key={w.id} value={String(w.id)}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* ITENS */}
-          <div className="space-y-3 pb-2">
-            <Label>Itens do Pedido</Label>
+          {items.map((item, i) => (
+            <OrderItemCard
+              key={i}
+              index={i}
+              item={item}
+              products={products}
+              warehouseId={warehouseId}
+              itemTotal={item.quantity * item.price}
+              updateItem={updateItem}
+              removeItem={() => removeItem(i)}
+            />
+          ))}
 
-            {items.map((item, i) => (
-              <OrderItemCard
-                key={i}
-                index={i}
-                item={item}
-                products={products}
-                itemTotal={itemTotals[i]}
-                updateItem={updateItem}
-                removeItem={() =>
-                  setItems((prev) => prev.filter((_, idx) => idx !== i))
-                }
-              />
-            ))}
-
-            <Button variant="outline" onClick={addItem} className="w-full">
-              + Adicionar Item
-            </Button>
-          </div>
+          <Button variant="outline" onClick={addItem} className="w-full">
+            + Adicionar Item
+          </Button>
 
           {/* TOTAL */}
-          <div className="text-right text-lg font-bold pb-3">
+          <div className="text-right text-lg font-bold">
             Total do Pedido: R$ {grandTotal.toFixed(2)}
           </div>
 
+          {/* FOOTER */}
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit}>Criar Pedido</Button>
+
+            <Button
+              disabled={!isFormValid}
+              onClick={handleSubmit}
+              className={!isFormValid ? "opacity-50 cursor-not-allowed" : ""}
+            >
+              Criar Pedido
+            </Button>
           </DialogFooter>
         </div>
       </DialogContent>

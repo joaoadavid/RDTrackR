@@ -27,6 +27,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
         private readonly IStockItemWriteOnlyRepository _stockItemWriteRepository;
         private readonly IProductReadOnlyRepository _productRepository;
         private readonly IWarehouseReadOnlyRepository _warehouseRepository;
+        private readonly IWarehouseWriteOnlyRepository _warehouseWriteRepository;
         private readonly ILoggedUser _loggedUser;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -40,6 +41,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
             IStockItemWriteOnlyRepository stockItemWriteRepository,
             IProductReadOnlyRepository productRepository,
             IWarehouseReadOnlyRepository warehouseRepository,
+            IWarehouseWriteOnlyRepository warehouseWriteRepository,
             ILoggedUser loggedUser,
             IUnitOfWork unitOfWork,
             IMapper mapper)
@@ -52,6 +54,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
             _stockItemWriteRepository = stockItemWriteRepository;
             _productRepository = productRepository;
             _warehouseRepository = warehouseRepository;
+            _warehouseWriteRepository = warehouseWriteRepository;
             _loggedUser = loggedUser;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -70,6 +73,7 @@ namespace RDTrackR.Application.UseCases.Movements.Register
 
             await _movementWriteRepository.AddAsync(movement);
             await UpdateStock(request, loggedUser);
+            await UpdateWarehouseItems(request.WarehouseId, loggedUser);
             await _unitOfWork.Commit();
 
 
@@ -173,8 +177,23 @@ namespace RDTrackR.Application.UseCases.Movements.Register
             await _movementWriteRepository.AddAsync(movement);
 
             await UpdateStock(request, loggedUser);
+            await UpdateWarehouseItems(request.WarehouseId, loggedUser);
 
             return movement;
         }
+
+        private async Task UpdateWarehouseItems(long warehouseId, Domain.Entities.User user)
+        {
+            var sum = await _stockItemReadRepository.SumQuantityByWarehouseAsync(warehouseId);
+
+            var warehouse = await _warehouseRepository.GetByIdAsync(warehouseId, user);
+
+            warehouse!.Items = sum;
+            warehouse.Utilization = warehouse.Capacity > 0 ? (decimal)sum / warehouse.Capacity : 0;
+
+            await _warehouseWriteRepository.UpdateAsync(warehouse);
+        }
+
+
     }
 }

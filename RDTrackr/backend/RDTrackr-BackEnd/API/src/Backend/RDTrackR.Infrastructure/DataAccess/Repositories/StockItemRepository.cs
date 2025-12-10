@@ -65,6 +65,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
         public async Task<StockItem?> GetByProductAndWarehouseAsync(long productId, long warehouseId)
         {
             return await _context.StockItems
+                .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.ProductId == productId && s.WarehouseId == warehouseId);
         }
 
@@ -129,8 +130,11 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
             return await query.CountAsync();
         }
 
-
-
-
+        public async Task<int> SumQuantityByWarehouseAsync(long warehouseId)
+        {
+            return await _context.StockItems
+                .Where(s => s.WarehouseId == warehouseId)
+                .SumAsync(s => s.Quantity);
+        }
     }
 }

@@ -37,6 +37,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .Where(p => p.OrganizationId == user.OrganizationId && p.Active == true)
                 .Include(p => p.CreatedBy)
                 .Include(p => p.StockItems)
+                .ThenInclude(si => si.Warehouse)
                 .ToListAsync();
         }
 
@@ -46,6 +47,7 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
                 .Where(p => p.OrganizationId == user.OrganizationId && p.Active == true)
                 .Include(p => p.CreatedBy)
                 .Include(p => p.StockItems)
+                .ThenInclude(si => si.Warehouse)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))

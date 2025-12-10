@@ -8,7 +8,7 @@
         public int Quantity { get; set; }
         public DateTime UpdatedAt { get; set; }
         public long ProductId { get; set; }
-
+        public long WarehouseId { get; set; }
         public long CreatedByUserId { get; set; }
         public string? CreatedByName { get; set; }
     }

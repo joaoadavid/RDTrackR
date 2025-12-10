@@ -15,6 +15,7 @@ namespace RDTrackR.Communication.Responses.Product
         public DateTime UpdatedAt { get; set; }
         public bool Active { get; set; }
         public long CreatedByUserId { get; set; }
+        public long WarehouseId { get; set; }
         public string? CreatedByName { get; set; }
 
         public List<ResponseStockItemJson> StockItems { get; set; } = new();

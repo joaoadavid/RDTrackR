@@ -60,11 +60,11 @@ namespace RDTrackR.Application.UseCases.Orders
                         Quantity = item.Quantity,
                         Type = MovementType.OUTBOUND,
                         Reference = order.OrderNumber,
-                        WarehouseId = 1
+                        WarehouseId = order.WarehouseId
                     });
 
                     var status = GetStatusDescription(OrderStatus.PAID);
-                    await _notificationService.Notify($"Novo status de pedido #{status}");
+                    await _notificationService.Notify($"Novo status de pedido {status}");
                     await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Order Status {status} foi alterado {user.Name}");
                 }
             }
@@ -80,11 +80,11 @@ namespace RDTrackR.Application.UseCases.Orders
                         Quantity = item.Quantity,
                         Type = MovementType.INBOUND,
                         Reference = "CANCEL-" + order.OrderNumber,
-                        WarehouseId = 1
+                        WarehouseId = order.WarehouseId
                     });
 
                     var status = GetStatusDescription(OrderStatus.CANCELLED);
-                    await _notificationService.Notify($"Novo status de pedido #{status}");
+                    await _notificationService.Notify($"Novo status de pedido {status}");
                     await _auditService.Log(Domain.Enums.AuditActionType.UPDATE, $"Order Status {status} foi alterado {user.Name}");
                 }
             }

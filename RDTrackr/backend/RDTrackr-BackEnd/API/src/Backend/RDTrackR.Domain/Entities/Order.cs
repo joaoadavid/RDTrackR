@@ -10,6 +10,7 @@ namespace RDTrackR.Domain.Entities
         public string CustomerName { get; set; } = "";
 
         public OrderStatus Status { get; set; } = OrderStatus.PENDING;
+        public long WarehouseId { get; set; }
 
         public decimal Total { get; set; }
 

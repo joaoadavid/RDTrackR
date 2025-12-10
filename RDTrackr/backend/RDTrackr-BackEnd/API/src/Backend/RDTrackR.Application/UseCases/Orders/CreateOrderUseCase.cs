@@ -51,6 +51,7 @@ namespace RDTrackR.Application.UseCases.Orders
             {
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}",
                 CustomerName = request.CustomerName,
+                WarehouseId = request.WarehouseId,
                 OrganizationId = user.OrganizationId,
                 CreatedByUserId = user.Id
             };
@@ -78,7 +79,7 @@ namespace RDTrackR.Application.UseCases.Orders
             await _repo.Add(order);
             await _uow.Commit();
 
-            await _notificationService.Notify($"Novo pedido #{order.Id} criado");
+            await _notificationService.Notify($"Novo pedido {order.Id} criado");
             await _auditService.Log(Domain.Enums.AuditActionType.CREATE, $"Order #{order.Id} created by user {user.Name}");
 
             return _mapper.Map<ResponseOrderJson>(order);

@@ -20,10 +20,11 @@ namespace RDTrackR.Infrastructure.DataAccess.Repositories
 
         public async Task UpdateAsync(Warehouse warehouse)
         {
-            _context.Warehouses.Update(warehouse);
+            _context.Entry(warehouse).State = EntityState.Modified;
         }
 
-        public async Task DeleteAsync(Warehouse warehouse) 
+
+        public async Task DeleteAsync(Warehouse warehouse)
         {
             _context.Warehouses.Remove(warehouse);
         }

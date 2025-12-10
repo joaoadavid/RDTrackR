@@ -26,7 +26,7 @@ namespace RDTrackR.Infrastructure.Security.Tokens.Access.Generator
                 new Claim(JwtRegisteredClaimNames.Jti, tokenId),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim(ClaimTypes.Name, user.Name),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),                 
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),           
                 new Claim("orgId", user.OrganizationId.ToString())
             };
 
